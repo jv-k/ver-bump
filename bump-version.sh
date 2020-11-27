@@ -58,8 +58,6 @@
 #     https://gist.github.com/mareksuscak/1f206fbc3bb9d97dec9c
 #
 
-SCRIPT_VER="0.1.0"
-
 NOW="$(date +'%B %d, %Y')"
 
 # ANSI/VT100 colours

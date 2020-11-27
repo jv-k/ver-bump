@@ -18,7 +18,7 @@
 #     - Updates "version" : "x.x.x" tag in JSON files if [-v file1 -v file2...] argument is supplied.
 #
 # Usage: 
-#   ./bump-version.sh [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-h]
+#   ./bump-version.sh [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-b] [-h]
 #
 # Options:
 #   -v <version number>	  Specify a manual version number

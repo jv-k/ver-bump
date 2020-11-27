@@ -284,7 +284,7 @@ bump-json-files() {
           echo -e "\n${I_OK} ${S_NOTICE}Updated file: <${S_NOTICE}$FILE${S_LIGHT}> from ${S_NORM}$V_OLD -> $V_USR_INPUT"
           rm -f ${FILE}.temp          
           # Add file change to commit message:
-          GIT_MSG+="${GIT_MSG}Updated $FILE, "
+          GIT_MSG+="Updated $FILE, "
         else
           echo -e "\n${I_STOP} ${S_ERROR}Error\n$PUSH_MSG\n"
         fi

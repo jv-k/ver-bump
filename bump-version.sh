@@ -391,7 +391,7 @@ do-branch() {
 do-commit() {
   [ "$FLAG_NOCOMMIT" = true ] && return
 
-  GIT_MSG+=get-commit-msg
+  GIT_MSG+="$(get-commit-msg)" 
   echo -e "\n${S_NOTICE}Committing..."
   COMMIT_MSG=`git commit -m "${GIT_MSG}" 2>&1`
   if [ ! "$?" -eq 0 ]; then

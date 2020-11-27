@@ -114,7 +114,7 @@ usage() {
   echo -e " $S_WARN-m$S_NORM <release message>\tCustom release message."
   echo -e " $S_WARN-f$S_NORM <filename.json>\tUpdate version number inside JSON files."\
           "\n\t\t\t* For multiple files, add a separate -f option for each one,"\
-          "\n\t\t\t* For example: ./bump-version.sh -f src/plugin/package.json -f composer.json"\
+          "\n\t\t\t* For example: ./bump-version.sh -f src/plugin/package.json -f composer.json"
   echo -e " $S_WARN-p$S_NORM \t\t\tPush commits to ORIGIN. "
   echo -e " $S_WARN-n$S_NORM \t\t\tDon't perform a commit automatically. "\
           "\n\t\t\t* You may want to do that manually after checking everything, for example."

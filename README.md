@@ -24,7 +24,7 @@ You may need to set execute permissions for the script, eg `$ chmod 755 bump-ver
 
 ## Usage
 ```
-$ ./bump-version.sh [-v <version no>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-h]
+$ ./bump-version.sh [-v <version no>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-b] [-h]
 
 Options:
 

@@ -1,3 +1,8 @@
+## 0.1.3 (November 27, 2020)
+- Updated VERSION, Updated CHANGELOG.md, Bumped 0.1.2 –> 0.1.3
+- Fixed: Docs: Added -b to usage
+- Merge branch 'release-0.1.2' into develop
+
 ## 0.1.2 (November 27, 2020)
 - Updated VERSION, Updated CHANGELOG.md, Bumped 0.1.1 –> 0.1.2
 - Fix: line break issue in help msg

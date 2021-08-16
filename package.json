@@ -1,6 +1,6 @@
 {
   "name": "ver-bump",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "This script automates bumping the git software project's version using automation. It does several things that are typically required for releasing a Git repository, like git tagging, automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files.",
   "author": "John Valai <git@jvk.to>",
   "homepage": "https://github.com/jv-k/ver-bump",
@@ -13,7 +13,6 @@
   "scripts": {
     "dev-clean": "rm -f CHANGELOG.md VERSION && rm -rf .git && git init && git add ver-bump.sh README.md LICENSE && git commit -m \"🚀  Initial commit\" && git branch develop && git branch release-v0.1.0 && cp -rf .git .git-clean",
     "dev-restore": "rm -f CHANGELOG.md VERSION && rm -rf .git && cp -r .git-clean .git",
-    "dev-watch-help": "npx watch-execute",
     "get-pkg-ver": "cross-env echo $npm_package_version",
     "get-pkg-auth": "cross-env echo $npm_package_author_name",
     "get-pkg-email": "cross-env echo $npm_package_author_email",

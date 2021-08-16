@@ -427,10 +427,10 @@ do-push() {
 
 #### Initiate Script ###########################
 
-check-commits-exist
 
 # Process and prepare
 process-arguments "$@"
+check-commits-exist
 process-version
 
 check-branch-exist

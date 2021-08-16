@@ -58,40 +58,11 @@
 #     https://gist.github.com/mareksuscak/1f206fbc3bb9d97dec9c
 #
 
+MODULE_DIR="$(dirname "$(realpath "$0")")"
+
+source $MODULE_DIR/lib/helper.sh
+
 NOW="$(date +'%B %d, %Y')"
-
-# ANSI/VT100 colours
-YELLOW='\033[1;33m'
-LIGHTYELLOW='\033[0;33m'
-RED='\033[0;31m'
-LIGHTRED='\033[1;31m'
-GREEN='\033[0;32m'
-LIGHTGREEN='\033[1;32m'
-BLUE='\033[0;34m'
-LIGHTBLUE='\033[1;34m'
-PURPLE='\033[0;35m'
-LIGHTPURPLE='\033[1;35m'
-CYAN='\033[0;36m'
-LIGHTCYAN='\033[1;36m'
-WHITE='\033[1;37m'
-LIGHTGRAY='\033[0;37m'
-DARKGRAY='\033[1;30m'
-BOLD="\033[1m"
-INVERT="\033[7m"
-RESET='\033[0m'
-
-# Default options
-FLAG_JSON="false"
-FLAG_PUSH="false"
-
-I_OK="✅"; I_STOP="🚫"; I_ERROR="❌"; I_END="👋🏻"
-
-S_NORM="${WHITE}"
-S_LIGHT="${LIGHTGRAY}"
-S_NOTICE="${GREEN}"
-S_QUESTION="${YELLOW}"
-S_WARN="${LIGHTRED}"
-S_ERROR="${RED}"
 
 V_SUGGEST="0.1.0" # This is suggested in case VERSION file or user supplied version via -v is missing
 GIT_MSG=""

@@ -1,7 +1,9 @@
 #!/bin/bash
-#
-# █▄▄ █░█ █▀▄▀█ █▀█ ▄▄ █░█ █▀▀ █▀█ █▀ █ █▀█ █▄░█
-# █▄█ █▄█ █░▀░█ █▀▀ ░░ ▀▄▀ ██▄ █▀▄ ▄█ █ █▄█ █░▀█
+
+#  _ _  ___  ___       ___  _ _  __ __  ___  
+# | | || __>| . \ ___ | . >| | ||  \  \| . \
+# | ' || _> |   /|___|| . \| ' ||     ||  _/
+# |__/ |___>|_\_\     |___/\___/|_|_|_||_|  
 #
 # Description:
 #   - This script automates bumping the git software project's version using automation.
@@ -18,14 +20,14 @@
 #     - Updates "version" : "x.x.x" tag in JSON files if [-v file1 -v file2...] argument is supplied.
 #
 # Usage: 
-#   ./bump-version.sh [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-b] [-h]
+#   ./ver-bump.sh [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-b] [-h]
 #
 # Options:
 #   -v <version number>	  Specify a manual version number
 #   -m <release message>	Custom release message.
 #   -f <filename.json>	  Update version number inside JSON files.
 # 			                  * For multiple files, add a separate -f option for each one,
-#	  		                  * For example: ./bump-version.sh -f src/plugin/package.json -f composer.json
+#	  		                  * For example: ./ver-bump.sh -f src/plugin/package.json -f composer.json
 #   -p <repository alias> Push commits to remote repository, eg `-p origin`
 #   -n 	                  Don't perform a commit automatically.
 #	  		                  * You may want to do that yourself, for example.
@@ -48,10 +50,10 @@
 #
 #   – Optionally pushes the commit to remote repository
 #
-#   – Make sure to set execute permissions for the script, eg `$ chmod 755 bump-version.sh`
+#   – Make sure to set execute permissions for the script, eg `$ chmod 755 ver-bump.sh`
 #
 # Credits:
-#   – https://github.com/jv-k/bump-version
+#   – https://github.com/jv-k/ver-bump
 #
 #   - Inspired by the scripts from @pete-otaqui and @mareksuscak
 #     https://gist.github.com/pete-otaqui/4188238
@@ -72,27 +74,40 @@ PUSH_DEST="origin"
 
 # Show credits & help
 usage() { 
-  echo -e "$GREEN"\
-          "\n █▄▄ █░█ █▀▄▀█ █▀█ ▄▄ █░█ █▀▀ █▀█ █▀ █ █▀█ █▄░█  "\
-          "\n █▄█ █▄█ █░▀░█ █▀▀ ░░ ▀▄▀ ██▄ █▀▄ ▄█ █ █▄█ █░▀█  "\
-          "\n\t\t\t\t\t$LIGHTGRAY v${SCRIPT_VER}"\
+  local SCRIPT_VER SCRIPT_AUTH_EMAIL SCRIPT_AUTH_NAME SCRIPT_HOME
+  # NPM environment variables are fetched with cross-platform tool cross-env 
+  SCRIPT_VER=`cd $MODULE_DIR && npm run get-pkg-ver -s`
+  SCRIPT_AUTH_NAME=`cd $MODULE_DIR && npm run get-pkg-auth -s` 
+  SCRIPT_AUTH_EMAIL=`cd $MODULE_DIR && npm run get-pkg-email -s`
+  SCRIPT_NAME=`cd $MODULE_DIR && npm run get-pkg-name -s`
+  SCRIPT_HOME=`cd $MODULE_DIR && npm run get-pkg-page -s`
 
-  echo -e " ${S_NORM}${BOLD}Usage:${RESET}"\
-          "\n $0 [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-h]" 1>&2; 
+  echo -e "${GREEN}"\
+             "_ _  ___  ___       ___  _ _  __ __  ___  "\
+          "\n| | || __>| . \ ___ | . >| | ||  \  \| . \ "\
+          "\n| ' || _> |   /|___|| . \| ' ||     ||  _/ "\
+          "\n|__/ |___>|_\_\     |___/\___/|_|_|_||_|   "\
+          "\n\t\t\t${LIGHTGRAY}    ${BOLD}Version: $S_WARN${SCRIPT_VER}"
+
+  echo -e "${S_NORM}${BOLD}Description:${RESET}"\
+          "\nThis script automates bumping the git software project's version automatically."\
+          "\nIt does several things that are typically required for releasing a Git repository, like git tagging, automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files."
+
+  echo -e "\n${S_NORM}${BOLD}Usage:${RESET}"\
+          "\n${SCRIPT_NAME} [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-h]" 1>&2; 
   
-  echo -e "\n ${S_NORM}${BOLD}Options:${RESET}"
-  echo -e " $S_WARN-v$S_NORM <version number>\tSpecify a manual version number"
-  echo -e " $S_WARN-m$S_NORM <release message>\tCustom release message."
-  echo -e " $S_WARN-f$S_NORM <filename.json>\tUpdate version number inside JSON files."\
-          "\n\t\t\t* For multiple files, add a separate -f option for each one,"\
-          "\n\t\t\t* For example: ./bump-version.sh -f src/plugin/package.json -f composer.json"
-  echo -e " $S_WARN-p$S_NORM \t\t\tPush commits to ORIGIN. "
-  echo -e " $S_WARN-n$S_NORM \t\t\tDon't perform a commit automatically. "\
-          "\n\t\t\t* You may want to do that manually after checking everything, for example."
-  echo -e " $S_WARN-b$S_NORM \t\t\tDon't create automatic \`release-<version>\` branch"
-  echo -e " $S_WARN-h$S_NORM \t\t\tShow this help message. "
-  echo -e "\n ${S_NORM}${BOLD}Author:$S_LIGHT https://github.com/jv-t/bump-version $RESET\n"
+  echo -e "\n${S_NORM}${BOLD}Options:${RESET}"
+  echo -e "$S_WARN-v$S_NORM <version number>\tSpecify a manual version number"
+  echo -e "$S_WARN-m$S_NORM <release message>\tCustom release message."
+  echo -e "$S_WARN-f$S_NORM <filename.json>\tUpdate version number inside JSON files."\
+          "\n\t\t\tFor multiple files, add a separate -f option for each one, for example:"\
+          "\n\t\t\t${S_NORM}ver-bump -f src/plugin/package.json -f composer.json"
+  echo -e "$S_WARN-p$S_NORM \t\t\tPush commits to ORIGIN. "
+  echo -e "$S_WARN-h$S_NORM \t\t\tShow this help message. \n"
 
+  echo -e "${S_NORM}${BOLD}Credits:${S_LIGHT}"\
+          "\n${SCRIPT_AUTH_NAME} <${SCRIPT_AUTH_EMAIL}> ${RESET}"\
+          "\n${SCRIPT_HOME}\n"
 }
 
 # If there are no commits in repo, quit, because you can't tag with zero commits.
@@ -110,7 +125,6 @@ get-commit-msg() {
 }
 
 exit_abnormal() {
-  echo -e " ${S_LIGHT}––––––"
   usage # Show help
   exit 1
 }

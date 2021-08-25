@@ -1,3 +1,12 @@
+## 0.2.0 (August 25, 2021)
+- Updated package.json, Updated CHANGELOG.md, Bumped 0.1.4 –> 0.2.0
+- Move helper functions to separate file
+- Read version from package.json Remove default fetch of version from VERSION file Updated comments
+- Saving commit
+- Merge branch 'release-0.1.4' into develop
+- Updated VERSION, Updated CHANGELOG.md, Bumped 0.1.3 –> 0.1.4
+- Updated VERSION, Updated CHANGELOG.md, Bumped 0.1.3 –> 0.1.4
+
 ## 0.1.4 (August 17, 2021)
 - Updated VERSION, Updated CHANGELOG.md, Bumped 0.1.3 –> 0.1.4
 - Renamed script + update docs

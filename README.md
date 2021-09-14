@@ -6,7 +6,7 @@
 
 ```
 
-[![Node.js Package](https://github.com/jv-k/ver-bump/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/jv-k/ver-bump/actions/workflows/npm-publish.yml)
+[![Node.js Package](https://github.com/jv-k/ver-bump/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/jv-k/ver-bump/actions/workflows/npm-publish.yml) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 ## Description:
 This script automates bumping the git software project's version using automation. It's written in 100% pure bash and npm, the NodeJS task runner.

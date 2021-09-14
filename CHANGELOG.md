@@ -1,3 +1,22 @@
+## 0.2.2 (September 15, 2021)
+- Updated package.json, Updated CHANGELOG.md, Bumped 0.2.1 –> 0.2.2
+- Merge branch 'npm-publish-action' into develop
+- Added badges to docs
+- Update npm-publish.yml
+- Update npm-publish.yml
+- Merge pull request #3 from jv-k/release-0.2.1
+- Merge branch 'release-0.2.1' into develop
+- Update README.md
+- Merge pull request #2 from jv-k/jv-k-patch-1
+- Add NPM publish badge
+- Create npm-publish.yml
+- Merge pull request #1 from jv-k/release-0.2.0
+- Merge branch 'release-0.1.4' into main
+- Merge branch 'release-0.1.3' into master
+- Merge branch 'release-0.1.3'
+- Merge branch 'release-0.1.2'
+- Merge branch 'release-0.1.0'
+
 ## 0.2.1 (September 14, 2021)
 - Updated package.json, Updated CHANGELOG.md, Bumped 0.2.0 –> 0.2.1
 - 🧹 comments

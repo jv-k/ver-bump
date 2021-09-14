@@ -5,6 +5,9 @@
 |__/ |___>|_\_\     |___/\___/|_|_|_||_|  
 
 ```
+
+[![Node.js Package](https://github.com/jv-k/ver-bump/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/jv-k/ver-bump/actions/workflows/npm-publish.yml)
+
 ## Description:
 This script automates bumping the git software project's version using automation. It's written in 100% pure bash and npm, the NodeJS task runner.
      

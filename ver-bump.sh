@@ -7,51 +7,6 @@
 #
 # Description:
 #   - This script automates bumping the git software project's version using automation.
-
-#   - It does several things that are typically required for releasing a Git repository, like git tagging, 
-#     automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files.
-
-#     - Increments / suggests the current software project's version number
-#     - Adds a Git tag, named after the chosen version number
-#     - Updates CHANGELOG.md
-#     - Updates VERSION file
-#     - Commits files to a new branch  
-#     - Pushes to remote (optionally)
-#     - Updates "version" : "x.x.x" tag in JSON files if [-v file1 -v file2...] argument is supplied.
-#
-# Usage: 
-#   ./ver-bump.sh [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-b] [-h]
-#
-# Options:
-#   -v <version number>	  Specify a manual version number
-#   -m <release message>	Custom release message.
-#   -f <filename.json>	  Update version number inside JSON files.
-# 			                  * For multiple files, add a separate -f option for each one,
-#	  		                  * For example: ./ver-bump.sh -f src/plugin/package.json -f composer.json
-#   -p <repository alias> Push commits to remote repository, eg `-p origin`
-#   -n 	                  Don't perform a commit automatically.
-#	  		                  * You may want to do that yourself, for example.
-#   -b                    Don't create automatic `release-<version>` branch
-#   -h 	                  Show help message.
-
-#
-# Detailed notes:
-#   – The contents of the `VERSION` file which should be a semantic version number such as "1.2.3" 
-#     or even "1.2.3-beta+001.ab"
-#   
-#   – It pulls a list of changes from git history & prepends to a file called CHANGELOG.md 
-#     under the title of the new version # number, allows the user to review and update the changelist
-#
-#   – Creates a Git tag with the version number
-#
-#   - Creates automatic `release-<version>` branch
-#
-#   – Commits the new version to the current repository
-#
-#   – Optionally pushes the commit to remote repository
-#
-#   – Make sure to set execute permissions for the script, eg `$ chmod 755 ver-bump.sh`
-#
 # Credits:
 #   – https://github.com/jv-k/ver-bump
 #

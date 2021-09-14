@@ -1,3 +1,8 @@
+## 0.2.1 (September 14, 2021)
+- Updated package.json, Updated CHANGELOG.md, Bumped 0.2.0 –> 0.2.1
+- 🧹 comments
+- Merge branch 'release-0.2.0' into develop
+
 ## 0.2.0 (August 25, 2021)
 - Updated package.json, Updated CHANGELOG.md, Bumped 0.1.4 –> 0.2.0
 - Move helper functions to separate file

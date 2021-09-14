@@ -5,8 +5,7 @@
 |__/ |___>|_\_\     |___/\___/|_|_|_||_|  
 
 ```
-
-[![Node.js Package](https://github.com/jv-k/ver-bump/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/jv-k/ver-bump/actions/workflows/npm-publish.yml) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![Publish NPM Package](https://github.com/jv-k/ver-bump/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/jv-k/ver-bump/actions/workflows/npm-publish.yml) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) [![License](https://img.shields.io/npm/l/@jsdevtools/npm-publish.svg)](LICENSE)
 
 ## Description:
 This script automates bumping the git software project's version using automation. It's written in 100% pure bash and npm, the NodeJS task runner.

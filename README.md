@@ -22,11 +22,17 @@ It does several things that are typically required for releasing a Git repositor
 - Updates `"version" : "x.x.x"` tag in JSON files if [-v file1 -v file2...] argument is supplied.
 
 ## Installation
+
+**NOTE: These instructions are out of date and will be updated very soon. In the meantime, please install the package globally via `npm i -g ver-bump` and use in any project.**
+
 Simply clone the repo and copy `ver-bump.sh` to your project's root.
 
 You may need to set execute permissions for the script, eg `$ chmod 755 ver-bump.sh`
 
 ## Usage
+
+**NOTE: These instructions are out of date and will be updated very soon!**
+
 ```
 $ ./ver-bump.sh [-v <version no>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-b] [-h]
 

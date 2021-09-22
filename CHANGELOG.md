@@ -1,3 +1,13 @@
+## 0.2.3 (September 22, 2021)
+- Updated package.json, Updated CHANGELOG.md, Bumped 0.2.2 –> 0.2.3
+- 📕 Add temporary instructions
+- 📕 Add npm version badge
+- Add issue and Feature request templates
+- Merge pull request #6 from jv-k/add-code-of-conduct-1
+- Create CODE_OF_CONDUCT.md
+- Merge pull request #5 from jv-k/release-0.2.2
+- Merge pull request #4 from jv-k/npm-publish-action
+
 ## 0.2.2 (September 15, 2021)
 - Updated package.json, Updated CHANGELOG.md, Bumped 0.2.1 –> 0.2.2
 - Merge branch 'npm-publish-action' into develop

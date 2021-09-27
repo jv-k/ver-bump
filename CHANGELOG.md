@@ -1,3 +1,9 @@
+## 1.0.0 (September 27, 2021)
+- Updated package.json, Updated CHANGELOG.md, Bumped 0.2.4 –> 1.0.0
+- Bugfix: commit history since last tag wasn't working correctly - missing `v` in tag name
+- Updated code comment
+- Merge branch 'release-0.2.4' into develop
+
 ## 0.2.4 (September 27, 2021)
 - Updated package.json, Updated CHANGELOG.md, Bumped 0.2.3 –> 0.2.4
 - Cleaned up code comment

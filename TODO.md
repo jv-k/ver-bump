@@ -1,15 +1,15 @@
-# Project Name
+# Todo
 
-Project Description
-
-### Todo
+## Update Documentation
 
   - [ ] Docs: Create GIF screenshot  
-  - [ ] Docs: Improve! For example, inform user about how the script works in the current branch, and creates a new one
+  - [x] Docs: Inform user how the script works in the current branch
+  - [x] Docs: Local `npm` install
+  - [x] Docs: Semver + Gh branching model 
+  - [ ] Docs: Document all remain switches
 
-### In Progress
+## Features
+  - [ ] Switch to disable logging
 
-
-### Done ✓
-
-
+## Code
+  - [ ] Tests: Unit tests (with https://github.com/bats-core/bats-core)

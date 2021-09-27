@@ -20,6 +20,18 @@ BOLD="\033[1m"
 INVERT="\033[7m"
 RESET='\033[0m'
 
+RAINBOW=(
+  "$(printf '\033[38;5;196m')"
+  "$(printf '\033[38;5;202m')"
+  "$(printf '\033[38;5;226m')"
+  "$(printf '\033[38;5;082m')"
+  "$(printf '\033[38;5;021m')"
+  "$(printf '\033[38;5;093m')"
+  "$(printf '\033[38;5;163m')"
+)
+
+RAINBOW_RST=$(printf $RESET)
+
 # Some preset styles
 S_NORM="${WHITE}"
 S_LIGHT="${LIGHTGRAY}"

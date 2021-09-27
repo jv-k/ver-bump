@@ -10,7 +10,7 @@ is_number() {
 # Show credits & help
 usage() { 
   local SCRIPT_VER SCRIPT_AUTH_EMAIL SCRIPT_AUTH_NAME SCRIPT_HOME
-  # NPM environment variables are fetched with cross-platform tool cross-env 
+  # NPM environment variables are fetched with cross-platform tool cross-env (overkill to use a dependency, but seems the only way AFAIK to get npm vars)
   SCRIPT_VER=`cd $MODULE_DIR && npm run get-pkg-ver -s`
   SCRIPT_AUTH_NAME=`cd $MODULE_DIR && npm run get-pkg-auth -s` 
   SCRIPT_AUTH_EMAIL=`cd $MODULE_DIR && npm run get-pkg-email -s`

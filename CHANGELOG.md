@@ -1,3 +1,68 @@
+## 0.2.4 (September 27, 2021)
+- Updated package.json, Updated CHANGELOG.md, Bumped 0.2.3 –> 0.2.4
+- Cleaned up code comment
+- Bugfix: works now with no previous tags
+- Added option to disable committing - For debug purposes. Not yet decided to put it in docs, it's not really useful for general usage.
+- Update ver-bump CLI credits logo - Stole it from oh-my-zsh..!
+- Updated docs From todos:   - [x] Docs: Inform user how the script works in the current branch   - [x] Docs: Local `npm` install   - [x] Docs: Semver + Gh branching model
+- Removed placeholder CoC - not required for now!
+- Merge branch 'release-0.2.3' into develop
+- Updated package.json, Updated CHANGELOG.md, Bumped 0.2.2 –> 0.2.3
+- 📕 Add temporary instructions
+- 📕 Add npm version badge
+- Add issue and Feature request templates
+- Merge pull request #6 from jv-k/add-code-of-conduct-1
+- Create CODE_OF_CONDUCT.md
+- Merge pull request #5 from jv-k/release-0.2.2
+- Merge branch 'release-0.2.2' into develop
+- Updated package.json, Updated CHANGELOG.md, Bumped 0.2.1 –> 0.2.2
+- Merge branch 'npm-publish-action' into develop
+- Added badges to docs
+- Merge pull request #4 from jv-k/npm-publish-action
+- Update npm-publish.yml
+- Update npm-publish.yml
+- Merge pull request #3 from jv-k/release-0.2.1
+- Merge branch 'release-0.2.1' into develop
+- Updated package.json, Updated CHANGELOG.md, Bumped 0.2.0 –> 0.2.1
+- 🧹 comments
+- Update README.md
+- Merge pull request #2 from jv-k/jv-k-patch-1
+- Add NPM publish badge
+- Create npm-publish.yml
+- Merge pull request #1 from jv-k/release-0.2.0
+- Merge branch 'release-0.2.0' into develop
+- Updated package.json, Updated CHANGELOG.md, Bumped 0.1.4 –> 0.2.0
+- Move helper functions to separate file
+- Read version from package.json Remove default fetch of version from VERSION file Updated comments
+- Saving commit
+- Merge branch 'release-0.1.4' into main
+- Merge branch 'release-0.1.4' into develop
+- Updated VERSION, Updated CHANGELOG.md, Bumped 0.1.3 –> 0.1.4
+- Renamed script + update docs
+- Move bash colours/styles to separate file
+- Allow help to show without a commit present
+- Merge branch 'release-0.1.3' into master
+- Merge branch 'release-0.1.3' into develop
+- Fix: Git message was repeating
+- Merge branch 'release-0.1.3'
+- Merge branch 'release-0.1.3' into develop
+- Updated VERSION, Updated CHANGELOG.md, Bumped 0.1.2 –> 0.1.3
+- Fixed: Docs: Added -b to usage
+- Merge branch 'release-0.1.2'
+- Merge branch 'release-0.1.2' into develop
+- Updated VERSION, Updated CHANGELOG.md, Bumped 0.1.1 –> 0.1.2
+- Fix: line break issue in help msg
+- Removed hard-coded version no. in script
+- Fixed CHANGELOG commit message bug
+- Merge branch 'release-0.1.1' into develop
+- Updated VERSION, Updated CHANGELOG.md, get-commit-msg
+- Docs: Added entry for -b argument (disables branch creation)
+- Merge branch 'release-0.1.0'
+- Merge branch 'release-0.1.0' into develop
+- Added gitignore
+- Created VERSION, Created CHANGELOG.md, get-commit-msg
+- 🚀 Initial commit
+
 ## 0.2.3 (September 22, 2021)
 - Updated package.json, Updated CHANGELOG.md, Bumped 0.2.2 –> 0.2.3
 - 📕 Add temporary instructions

@@ -10,26 +10,27 @@ is_number() {
 # Show credits & help
 usage() { 
   local SCRIPT_VER SCRIPT_AUTH_EMAIL SCRIPT_AUTH_NAME SCRIPT_HOME
-  # NPM environment variables are fetched with cross-platform tool cross-env 
+  # NPM environment variables are fetched with cross-platform tool cross-env (overkill to use a dependency, but seems the only way AFAIK to get npm vars)
   SCRIPT_VER=`cd $MODULE_DIR && npm run get-pkg-ver -s`
   SCRIPT_AUTH_NAME=`cd $MODULE_DIR && npm run get-pkg-auth -s` 
   SCRIPT_AUTH_EMAIL=`cd $MODULE_DIR && npm run get-pkg-email -s`
   SCRIPT_NAME=`cd $MODULE_DIR && npm run get-pkg-name -s`
   SCRIPT_HOME=`cd $MODULE_DIR && npm run get-pkg-page -s`
 
-  echo -e "${GREEN}"\
-             "_ _  ___  ___       ___  _ _  __ __  ___  "\
-          "\n| | || __>| . \ ___ | . >| | ||  \  \| . \ "\
-          "\n| ' || _> |   /|___|| . \| ' ||     ||  _/ "\
-          "\n|__/ |___>|_\_\     |___/\___/|_|_|_||_|   "\
-          "\n\t\t\t${LIGHTGRAY}    ${BOLD}Version: $S_WARN${SCRIPT_VER}"
+  # rip off the oh-my-zsh logo, clearly ;)
+  printf  "%s _ _  %s___  %s___ %s     %s ___  %s_ _ %s __ __ %s ___  %s\n" "${RAINBOW[@]}" $RAINBOW_RST
+  printf  "%s| | |%s| __>%s| . \%s ___ %s| . >%s| | |%s|  \  \%s| . \ %s\n" "${RAINBOW[@]}" $RAINBOW_RST
+  printf  "%s| ' |%s| _> %s|   /%s|___|%s| . \%s| ' |%s|     |%s|  _/ %s\n" "${RAINBOW[@]}" $RAINBOW_RST
+  printf  "%s|__/ %s|___>%s|_\_\%s     %s|___/%s\___/%s|_|_|_|%s|_|   %s\n" "${RAINBOW[@]}" $RAINBOW_RST
+
+  echo -e "\t\t\t${LIGHTGRAY}    Version: $S_WARN${SCRIPT_VER}"
 
   echo -e "${S_NORM}${BOLD}Description:${RESET}"\
           "\nThis script automates bumping the git software project's version automatically."\
           "\nIt does several things that are typically required for releasing a Git repository, like git tagging, automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files."
 
   echo -e "\n${S_NORM}${BOLD}Usage:${RESET}"\
-          "\n${SCRIPT_NAME} [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-h]" 1>&2; 
+          "\n${SCRIPT_NAME} [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-c] [-p] [-h]" 1>&2; 
   
   echo -e "\n${S_NORM}${BOLD}Options:${RESET}"
   echo -e "$S_WARN-v$S_NORM <version number>\tSpecify a manual version number"
@@ -102,6 +103,10 @@ process-arguments() {
       b )
         FLAG_NOBRANCH=true
         echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable committing to new branch."
+      ;;
+      c )
+        FLAG_NOCHANGELOG=true
+        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable updating CHANGELOG.md file."
       ;;
       \? )
         echo -e "\n${I_ERROR}${S_ERROR} Invalid option: ${S_WARN}-$OPTARG" >&2
@@ -262,10 +267,12 @@ do-versionfile() {
 
 # Dump git log history to CHANGELOG.md
 do-changelog() {  
+  [ "$FLAG_NOCHANGELOG" = true ] && return
 
   # Log latest commits to CHANGELOG.md:
-  # Get latest commits since last versio
-  LOG_MSG=`git log --pretty=format:"- %s" $([ -n "$V_PREV" ] && echo "v${V_PREV}...HEAD") 2>&1`
+  # Get latest commits since last version
+  
+  LOG_MSG=`git log --pretty=format:"- %s" $([ $(git tag -l "$V_PREV") ] && echo "v${V_PREV}...HEAD") 2>&1`
   if [ ! "$?" -eq 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error getting commit history since last version bump for logging to CHANGELOG.\n\n$LOG_MSG\n"
     exit 1

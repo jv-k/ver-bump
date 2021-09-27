@@ -272,7 +272,8 @@ do-changelog() {
   # Log latest commits to CHANGELOG.md:
   # Get latest commits since last version
   
-  LOG_MSG=`git log --pretty=format:"- %s" $([ $(git tag -l "$V_PREV") ] && echo "v${V_PREV}...HEAD") 2>&1`
+  LOG_MSG=`git log --pretty=format:"- %s" $([ $(git tag -l "v${V_PREV}") ] && echo "v${V_PREV}...HEAD") 2>&1`
+
   if [ ! "$?" -eq 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error getting commit history since last version bump for logging to CHANGELOG.\n\n$LOG_MSG\n"
     exit 1

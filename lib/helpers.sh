@@ -30,7 +30,7 @@ usage() {
           "\nIt does several things that are typically required for releasing a Git repository, like git tagging, automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files."
 
   echo -e "\n${S_NORM}${BOLD}Usage:${RESET}"\
-          "\n${SCRIPT_NAME} [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-h]" 1>&2; 
+          "\n${SCRIPT_NAME} [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-c] [-p] [-h]" 1>&2; 
   
   echo -e "\n${S_NORM}${BOLD}Options:${RESET}"
   echo -e "$S_WARN-v$S_NORM <version number>\tSpecify a manual version number"
@@ -103,6 +103,10 @@ process-arguments() {
       b )
         FLAG_NOBRANCH=true
         echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable committing to new branch."
+      ;;
+      c )
+        FLAG_NOCHANGELOG=true
+        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable updating CHANGELOG.md file."
       ;;
       \? )
         echo -e "\n${I_ERROR}${S_ERROR} Invalid option: ${S_WARN}-$OPTARG" >&2
@@ -263,6 +267,7 @@ do-versionfile() {
 
 # Dump git log history to CHANGELOG.md
 do-changelog() {  
+  [ "$FLAG_NOCHANGELOG" = true ] && return
 
   # Log latest commits to CHANGELOG.md:
   # Get latest commits since last versio

@@ -17,12 +17,13 @@ usage() {
   SCRIPT_NAME=`cd $MODULE_DIR && npm run get-pkg-name -s`
   SCRIPT_HOME=`cd $MODULE_DIR && npm run get-pkg-page -s`
 
-  echo -e "${GREEN}"\
-             "_ _  ___  ___       ___  _ _  __ __  ___  "\
-          "\n| | || __>| . \ ___ | . >| | ||  \  \| . \ "\
-          "\n| ' || _> |   /|___|| . \| ' ||     ||  _/ "\
-          "\n|__/ |___>|_\_\     |___/\___/|_|_|_||_|   "\
-          "\n\t\t\t${LIGHTGRAY}    ${BOLD}Version: $S_WARN${SCRIPT_VER}"
+  # rip off the oh-my-zsh logo, clearly ;)
+  printf  "%s _ _  %s___  %s___ %s     %s ___  %s_ _ %s __ __ %s ___  %s\n" "${RAINBOW[@]}" $RAINBOW_RST
+  printf  "%s| | |%s| __>%s| . \%s ___ %s| . >%s| | |%s|  \  \%s| . \ %s\n" "${RAINBOW[@]}" $RAINBOW_RST
+  printf  "%s| ' |%s| _> %s|   /%s|___|%s| . \%s| ' |%s|     |%s|  _/ %s\n" "${RAINBOW[@]}" $RAINBOW_RST
+  printf  "%s|__/ %s|___>%s|_\_\%s     %s|___/%s\___/%s|_|_|_|%s|_|   %s\n" "${RAINBOW[@]}" $RAINBOW_RST
+
+  echo -e "\t\t\t${LIGHTGRAY}    Version: $S_WARN${SCRIPT_VER}"
 
   echo -e "${S_NORM}${BOLD}Description:${RESET}"\
           "\nThis script automates bumping the git software project's version automatically."\

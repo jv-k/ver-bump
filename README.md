@@ -9,7 +9,7 @@ It does several things that are typically required for releasing a Git repositor
   - Enforces [Semantic Versioning](https://semver.org/) specification
   - Avoid potential mistakes associated with manual releases, such as forgetting a step
   - Create and update a changelog file automatically
-  - Pushes release to a remotex
+  - Pushes release to a remote
   - Leaves merging the release branch to the development branch to the user
 
 ## Release Steps 👣
@@ -64,7 +64,7 @@ $ npm install -g ver-bump
 
 ### CLI
 ```sh
-$ ver-bumpß [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-b] [-h]
+$ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-b] [-h]
 ```
 
 ## Options

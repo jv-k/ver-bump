@@ -6,7 +6,7 @@
 # |__/ |___>|_\_\     |___/\___/|_|_|_||_|  
 #
 # Description:
-#   - This script automates bumping the git software project's version using automation.
+#   - A handy utility that takes care of releasing Git software projects.
 # Credits:
 #   – https://github.com/jv-k/ver-bump
 #

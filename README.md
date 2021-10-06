@@ -29,7 +29,7 @@ The command `ver-bump` will execute the following steps:
   - Create a Git tag
   - Push release branch + tag to remote
 
-<!-- ## Release Steps: In detail 🔎
+## Release Steps: In detail 🔎
 |                   | Step                  | Description |
 |-------------------|-----------------------|-------------| 
 | Verify and prepare| Process user arguments| Check and store CLI arguments supplied by user for later processing. |

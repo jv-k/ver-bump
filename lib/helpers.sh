@@ -216,6 +216,25 @@ tag() {
   echo -e "\n${I_OK} ${S_NOTICE}Added GIT tag"
 }
 
+do-packagefile-bump() {  
+  NPM_MSG=`npm version ${V_USR_INPUT} --git-tag-version=false 2>&1`
+
+  if [ ! "$?" -eq 0 ]; then
+    echo -e "\n${I_STOP} ${S_ERROR}Error updating <package.json> and/or <package-lock.json>.\n\n$NPM_MSG\n"
+    exit 1
+  else
+    git add package.json
+    GIT_MSG+="Updated package.json, "
+    NOTICE_MSG="<${S_NORM}package.json${S_NOTICE}>"
+    if [ -f package-lock.json ]; then
+      git add package-lock.json
+      GIT_MSG+="Updated package-lock.json, "
+      NOTICE_MSG+=" and <${S_NORM}package-lock.json${S_NOTICE}>"
+    fi
+    echo -e "\n${I_OK} ${S_NOTICE}Bumped version in ${NOTICE_MSG}."
+  fi
+}
+
 # Change `version:` value in JSON files, like packager.json, composer.json, etc
 bump-json-files() {
   # if [ "$FLAG_JSON" != true ]; then return; fi
@@ -239,7 +258,7 @@ bump-json-files() {
           # Add file change to commit message:
           GIT_MSG+="Updated $FILE, "
         else
-          echo -e "\n${I_STOP} ${S_ERROR}Error\n$PUSH_MSG\n"
+          echo -e "\n${I_STOP} ${S_ERROR}Error updating version in file <${S_NORM}$FILE${S_NOTICE}> — Old version ${S_QUESTION}$V_OLD ${S_NOTICE} not found!"
         fi
       fi
 

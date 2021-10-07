@@ -25,7 +25,7 @@ REL_NOTE=""
 REL_PREFIX="release-"
 PUSH_DEST="origin"
 
-JSON_FILES=($VER_FILE)
+JSON_FILES=()
 
 #### Initiate Script ###########################
 
@@ -40,6 +40,7 @@ check-tag-exists
 echo -e "\n${S_LIGHT}––––––"
 
 # Update files
+do-packagefile-bump
 bump-json-files
 do-versionfile
 do-changelog

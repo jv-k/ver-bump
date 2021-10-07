@@ -1,3 +1,24 @@
+## 1.0.2 (October 07, 2021)
+- Updated package.json, Updated package-lock.json, Updated CHANGELOG.md, Bumped 1.0.2-beta.1 –> 1.0.2
+- Fixes #12
+- Update README.md
+- Merge pull request #10 from jv-k/release-1.0.2-beta.1
+- Updated package.json, Updated CHANGELOG.md, Bumped 1.0.1 –> 1.0.2-beta.1
+- Updated package.json, Updated CHANGELOG.md, Bumped 1.0.1 –> 1.0.2-beta.1
+
+## 1.0.2-beta.1 (September 28, 2021)
+- Updated package.json, Updated CHANGELOG.md, Bumped 1.0.1 –> 1.0.2-beta.1
+- Merge branch 'main' into develop
+- Update TODO.md
+- Changed webhook for action
+- Added build tast
+- Publish to GitHub Package Registry and NPM
+- Merge branch 'develop' into main
+- Merge branch 'release-1.0.1' into develop
+- Merge branch 'release-1.0.0' into main - First confident release! 🚀✨
+- Merge branch 'release-0.2.4' into main
+- Merge branch 'release-0.2.3' into main
+
 ## 1.0.1 (September 28, 2021)
 - Updated package.json, Updated CHANGELOG.md, Bumped 1.0.0 –> 1.0.1
 - Updated docs

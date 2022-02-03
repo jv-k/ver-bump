@@ -1,3 +1,9 @@
+## 1.0.4 (February 03, 2022)
+- Updated package.json, Updated package-lock.json, Updated CHANGELOG.md, Bumped 1.0.3 –> 1.0.4
+- Merge branch 'release-1.0.3' into develop
+- Updated docs - lil typo
+- Merge branch 'release-1.0.2' into develop
+
 ## 1.0.3 (January 27, 2022)
 - Updated package.json, Updated package-lock.json, Updated CHANGELOG.md, Bumped 1.0.2 –> 1.0.3
 - docs: Updated README to remove duplicate table that shows detailed run steps

@@ -1,3 +1,8 @@
+## 1.0.3 (January 27, 2022)
+- Updated package.json, Updated package-lock.json, Updated CHANGELOG.md, Bumped 1.0.2 –> 1.0.3
+- docs: Updated README to remove duplicate table that shows detailed run steps
+- Merge branch 'release-1.0.2' into main Fixed #12
+
 ## 1.0.2 (October 07, 2021)
 - Updated package.json, Updated package-lock.json, Updated CHANGELOG.md, Bumped 1.0.2-beta.1 –> 1.0.2
 - Fixes #12

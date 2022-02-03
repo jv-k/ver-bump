@@ -30,19 +30,6 @@ The command `ver-bump` will execute the following steps:
   - Push release branch + tag to remote
 
 ## Release Steps: In detail 🔎
-|                   | Step                  | Description |
-|-------------------|-----------------------|-------------| 
-| Verify and prepare| Process user arguments| Check and store CLI arguments supplied by user for later processing. |
-|                   | Check commits         | Verify some commits exist for release. |
-|                   | Determine Release Version | If `<package.json>` doesn't exist, warn + exit.  <br /><br />If `-v` option is specified, set version from that.<br /><br />  Or, grab from version from `package.json`.<br /><br />Suggest incremented version number in the form of `MAJOR.MINOR.PATCH` (incrementing `PATCH`), as per Semver 2.0.0.<br /><br />Give the user the option to modify/confirm suggested version bump. |
-|                   | Check branch exist    | Ensure a release branch with the chosen version number doesn't already exist, if so exit. |
-|                   | Check tag exists      | Ensure a tag with the chosen version number doesn't exist, and exit if it does. |
-| Create Release    | Bump version number   | Update semantic version number in `package.json`, stages changes. |
-|                   | Generate changelog    | Commits since the last release are automatically added to `CHANGELOG.md`, as well as new commit messages for files modified by this script itself. Stage changes for the later commit action. |
-|                   | Create release branch | Create a branch with the name `release-MAJOR.MINOR.PATCH` and switch to it (following the [Git branch-based workflow](https://nvie.com/posts/a-successful-git-branching-model/)). |
-|                   | Commit changed files  | Commits changes to `package.json` and CHANGELOG.md` (staged in the previous steps) to the release branch. |
-|                   | Create Git tag        | Create a Git tag referencing the new release version. |
-|                   | Push                  | Optionally, push the release branch to origin. | -->
 
 <table>
   <thead>

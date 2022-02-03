@@ -188,7 +188,7 @@ $ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>]..
     ```
 
 ## Contributing
-I'd love you to contribute to `@jv-k/ver-bump`, pull requests are welcome! Please see [@jv-k/ver-bump/issues/new/choose](@jv-k/ver-bump/issues/new/choose) for submitting issues and bugs.
+I'd love you to contribute to `@jv-k/ver-bump`, pull requests are welcome! Please see [/jv-k/ver-bump/issues/new/choose](https://github.com/jv-k/ver-bump/issues/new/choose) for submitting issues and bugs.
 
 ## License
-The scripts and documentation in this project are released under the [MIT license.](https://github.com/jv-k/ver-bump.sh/blob/master/LICENSE).
+The scripts and documentation in this project are released under the [MIT license.](https://github.com/jv-k/ver-bump/blob/master/LICENSE).

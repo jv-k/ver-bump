@@ -1,3 +1,8 @@
+## 1.0.5 (February 04, 2022)
+- Updated package.json, Updated package-lock.json, Updated CHANGELOG.md, Bumped 1.0.4 –> 1.0.5
+- fix: Removed cross-env dependency. Unreliable detection of package.json parameters. No dependencies now!
+- Merge branch 'release-1.0.4' into develop
+
 ## 1.0.4 (February 03, 2022)
 - Updated package.json, Updated package-lock.json, Updated CHANGELOG.md, Bumped 1.0.3 –> 1.0.4
 - Merge branch 'release-1.0.3' into develop

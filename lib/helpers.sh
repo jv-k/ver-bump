@@ -11,11 +11,18 @@ is_number() {
 usage() { 
   local SCRIPT_VER SCRIPT_AUTH_EMAIL SCRIPT_AUTH_NAME SCRIPT_HOME
   # NPM environment variables are fetched with cross-platform tool cross-env (overkill to use a dependency, but seems the only way AFAIK to get npm vars)
-  SCRIPT_VER=`cd $MODULE_DIR && npm run get-pkg-ver -s`
-  SCRIPT_AUTH_NAME=`cd $MODULE_DIR && npm run get-pkg-auth -s` 
-  SCRIPT_AUTH_EMAIL=`cd $MODULE_DIR && npm run get-pkg-email -s`
-  SCRIPT_NAME=`cd $MODULE_DIR && npm run get-pkg-name -s`
-  SCRIPT_HOME=`cd $MODULE_DIR && npm run get-pkg-page -s`
+  SCRIPT_VER=`cd $MODULE_DIR && cat package.json | grep version | head -1` 
+  SCRIPT_AUTH=`cd $MODULE_DIR && cat package.json | grep author | head -1`
+  SCRIPT_HOME=`cd $MODULE_DIR && cat package.json | grep homepage | head -1 | sed -ne 's/.*\(http[^"]*\).*/\1/p'`
+  SCRIPT_NAME=`cd $MODULE_DIR && cat package.json | grep name | head -1`
+
+  local env_vars=( SCRIPT_VER SCRIPT_AUTH SCRIPT_NAME )
+
+  for env_var in "${env_vars[@]}"; do
+    env_var_val=$( eval "echo \$${env_var}" | awk -F: '{ print $2 }' | sed 's/[",]//g' | sed "s/^[ \t]*//" )
+
+    eval "${env_var}=\"${env_var_val}\""
+  done
 
   # rip off the oh-my-zsh logo, clearly ;)
   printf  "%s _ _  %s___  %s___ %s     %s ___  %s_ _ %s __ __ %s ___  %s\n" "${RAINBOW[@]}" $RAINBOW_RST
@@ -42,7 +49,7 @@ usage() {
   echo -e "$S_WARN-h$S_NORM \t\t\tShow this help message. \n"
 
   echo -e "${S_NORM}${BOLD}Credits:${S_LIGHT}"\
-          "\n${SCRIPT_AUTH_NAME} <${SCRIPT_AUTH_EMAIL}> ${RESET}"\
+          "\n${SCRIPT_AUTH} ${RESET}"\
           "\n${SCRIPT_HOME}\n"
 }
 

@@ -46,7 +46,7 @@ do-versionfile
 do-changelog
 do-branch
 do-commit
-tag "${V_USR_INPUT}" "${REL_NOTE}"
+do-tag
 do-push
 
 echo -e "\n${S_LIGHT}––––––"

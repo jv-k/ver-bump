@@ -210,15 +210,13 @@ check-tag-exists() {
   fi
 }
 
-# $1 : version
-# $2 : release note
-tag() {
-  if [ -z "$2" ]; then
+do-tag() {
+  if [ -z "${REL_NOTE}" ]; then
     # Default release note
-    git tag -a "v$1" -m "Tag version $1."
+    git tag -a "v${V_NEW}" -m "Tag version ${V_NEW}."
   else
     # Custom release note
-    git tag -a "v$1" -m "$2"
+    git tag -a "v${V_NEW}" -m "${REL_NOTE}"
   fi
   echo -e "\n${I_OK} ${S_NOTICE}Added GIT tag"
 }

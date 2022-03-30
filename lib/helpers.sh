@@ -64,12 +64,7 @@ check-commits-exist() {
 }
 
 get-commit-msg() {
- echo Bumped $([ -n "${V_PREV}" ] && echo "${V_PREV} –>" || echo "to ") "$V_USR_INPUT"
-}
-
-exit_abnormal() {
-  usage # Show help
-  exit 1
+  echo Bumped $([ ! "${V_PREV}" = "${V_NEW}" ] && echo "${V_PREV} –>" || echo "to ") "$V_NEW"
 }
 
 # Process script options
@@ -138,29 +133,29 @@ process-arguments() {
 #   - Grab from package.json
 #   - Suggest incremented number
 #   - Give prompt to user to modify
-# - Set global
+# - Set globally
 
 # According to SemVer 2.0.0, given a version number MAJOR.MINOR.PATCH, suggest incremented value:
 # — MAJOR version when you make incompatible API changes,
 # — MINOR version when you add functionality in a backwards compatible manner, and
 # — PATCH version when you make backwards compatible bug fixes.
 process-version() {
+  # As a minimum pre-requisite ver-bump needs a version number from a JSON file 
+  # to read + bump. If it doesn't exist, throw an error + exit:
+  if [ -f $VER_FILE ] && [ -s $VER_FILE ]; then
+    # Get the existing version number
+    V_PREV=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $VER_FILE )
 
-  # If a version number is supplied by the user with [-v <version number>], then use it 
-  if [ -n "$V_USR_SUPPLIED" ]; then
-    echo -e "\n${S_NOTICE}You selected version using [-v]:" "${S_WARN}${V_USR_SUPPLIED}"      
-    V_USR_INPUT="${V_USR_SUPPLIED}"
-  else
-    if [ -f $VER_FILE ] && [ -s $VER_FILE ]; then    
-      local IS_NO=0
+    if [ -n "$V_PREV" ]; then
 
-      # Get the existing version number
-      V_PREV=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $VER_FILE )
-  
-      if [ -n "$V_PREV" ]; then
+      echo -e "\n${S_NOTICE}Current version read from <${S_QUESTION}${VER_FILE}${S_NOTICE}> file: ${S_QUESTION}$V_PREV"
 
-        echo -e "\n${S_NOTICE}Current version read from <${S_QUESTION}${VER_FILE}${S_NOTICE}> file: ${S_QUESTION}$V_PREV"
-
+      # If the tag for $V_PREV doesn't exist, it could be the first time running ver-bump,
+      # so use previous version without incrementing:
+      TAG_EXISTS=`git tag -l v"$V_PREV"`
+      if [ ! -n "$TAG_EXISTS" ]; then
+        V_SUGGEST=$V_PREV
+      else
         V_PREV_LIST=(`echo $V_PREV | tr '.' ' '`)
         V_MAJOR=${V_PREV_LIST[0]}; V_MINOR=${V_PREV_LIST[1]}; V_PATCH=${V_PREV_LIST[2]};
 
@@ -176,35 +171,43 @@ process-version() {
           # If patch not a number, do nothing
           echo -e "\n${I_WARN} ${S_WARN}Warning: ${S_QUESTION}${V_PREV}${S_WARN} doesn't look like a SemVer compatible version number!\n"
         fi
-      
-      else 
-        echo -e "\n${I_WARN} ${S_ERROR}Warning: <${S_QUESTION}${VER_FILE}${S_WARN}> doesn't contain a 'version' field!\n"
-      fi 
-    else
-      echo -ne "\n${S_WARN}Warning: <${S_QUESTION}${VER_FILE}${S_WARN}> "
-  
-      if [ ! -f $VER_FILE ]; then 
-        echo "was not found!";     
-      elif [ ! -s $VER_FILE ]; then 
-        echo "is empty!";  
       fi
-    fi  
 
+    else 
+      echo -e "\n${I_WARN} ${S_ERROR}Warning: <${S_QUESTION}${VER_FILE}${S_WARN}> doesn't contain a 'version' field!\n"
+    fi 
+  else
+    echo -ne "\n${S_WARN}Warning: <${S_QUESTION}${VER_FILE}${S_WARN}> "
+
+    if [ ! -f $VER_FILE ]; then 
+      echo "was not found!";     
+    elif [ ! -s $VER_FILE ]; then 
+      echo "is empty!";  
+    fi
+  fi  
+
+  # If a version number is supplied by the user with [-v <version number>], then use it 
+  if [ -n "$V_USR_SUPPLIED" ]; then
+    echo -e "\n${S_NOTICE}You selected version using [-v]:" "${S_WARN}${V_USR_SUPPLIED}"      
+    V_NEW="${V_USR_SUPPLIED}"
+  else
     # Confirm it with user
     echo -ne "\n${S_QUESTION}Enter a new version number or press <enter> to use [${S_NORM}$V_SUGGEST${S_QUESTION}]: "
     echo -ne "$S_WARN"
     read V_USR_INPUT
 
     if [ "$V_USR_INPUT" = "" ]; then
-      V_USR_INPUT="${V_SUGGEST}"
+      V_NEW="${V_SUGGEST}"
+    else
+      V_NEW="${V_USR_INPUT}"
     fi
   fi
 }
 
 # Only tag if tag doesn't already exist
 check-tag-exists() {
-  TAG_CHECK_EXISTS=`git tag -l v"$V_USR_INPUT"`
-  if [ -n "$TAG_CHECK_EXISTS" ]; then
+  TAG_MSG=`git tag -l v"$V_NEW"`
+  if [ -n "$TAG_MSG" ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error: A release with that tag version number already exists!\n"
     exit 0
   fi
@@ -222,21 +225,26 @@ do-tag() {
 }
 
 do-packagefile-bump() {  
-  NPM_MSG=`npm version ${V_USR_INPUT} --git-tag-version=false 2>&1`
+  NOTICE_MSG="<${S_NORM}package.json${S_NOTICE}>"
 
-  if [ ! "$?" -eq 0 ]; then
-    echo -e "\n${I_STOP} ${S_ERROR}Error updating <package.json> and/or <package-lock.json>.\n\n$NPM_MSG\n"
-    exit 1
+  if [ "$V_NEW" = "$V_PREV" ]; then
+    echo -e "\n${I_WARN}${NOTICE_MSG}${S_WARN} already contains version ${V_NEW}."
   else
-    git add package.json
-    GIT_MSG+="Updated package.json, "
-    NOTICE_MSG="<${S_NORM}package.json${S_NOTICE}>"
-    if [ -f package-lock.json ]; then
-      git add package-lock.json
-      GIT_MSG+="Updated package-lock.json, "
-      NOTICE_MSG+=" and <${S_NORM}package-lock.json${S_NOTICE}>"
+    NPM_MSG=`npm version ${V_NEW} --git-tag-version=false 2>&1`
+
+    if [ ! "$?" -eq 0 ]; then
+      echo -e "\n${I_STOP} ${S_ERROR}Error updating <package.json> and/or <package-lock.json>.\n\n$NPM_MSG\n"
+      exit 1
+    else
+      git add package.json
+      GIT_MSG+="Updated package.json, "
+      if [ -f package-lock.json ]; then
+        git add package-lock.json
+        GIT_MSG+="Updated package-lock.json, "
+        NOTICE_MSG+=" and <${S_NORM}package-lock.json${S_NOTICE}>"
+      fi
+      echo -e "\n${I_OK} ${S_NOTICE}Bumped version in ${NOTICE_MSG}."
     fi
-    echo -e "\n${I_OK} ${S_NOTICE}Bumped version in ${NOTICE_MSG}."
   fi
 }
 
@@ -251,14 +259,14 @@ bump-json-files() {
       # Get the existing version number
       V_OLD=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $FILE )
 
-      if [ "$V_OLD" = "$V_USR_INPUT" ]; then
+      if [ "$V_OLD" = "$V_NEW" ]; then
         echo -e "\n${I_ERROR} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$V_OLD"
       else
         # Write to output file
-        FILE_MSG=`sed -i .temp "s/\"version\":\(.*\)\"$V_OLD\"/\"version\":\1\"$V_USR_INPUT\"/g" $FILE 2>&1`
+        FILE_MSG=`sed -i .temp "s/\"version\":\(.*\)\"$V_OLD\"/\"version\":\1\"$V_NEW\"/g" $FILE 2>&1`
 
         if [ "$?" -eq 0 ]; then
-          echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$V_OLD ${S_NOTICE}-> ${S_QUESTION}$V_USR_INPUT"
+          echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$V_OLD ${S_NOTICE}-> ${S_QUESTION}$V_NEW"
           rm -f ${FILE}.temp          
           # Add file change to commit message:
           GIT_MSG+="Updated $FILE, "
@@ -280,7 +288,7 @@ bump-json-files() {
 do-versionfile() {
   if [ -f VERSION ]; then
     GIT_MSG+="Updated VERSION, "
-    echo $V_USR_INPUT > VERSION # Overwrite file
+    echo $V_NEW > VERSION # Overwrite file
     # Stage file for commit
     git add VERSION
 
@@ -308,7 +316,7 @@ do-changelog() {
   GIT_MSG+="${ACTION_MSG} CHANGELOG.md, "
  
   # Add heading
-  echo "## $V_USR_INPUT ($NOW)" > tmpfile
+  echo "## $V_NEW ($NOW)" > tmpfile
 
   # Log the bumping commit:
   # - The final commit is done after do-changelog(), so we need to create the log entry for it manually:
@@ -341,9 +349,9 @@ do-changelog() {
 check-branch-exist() {
   [ "$FLAG_NOBRANCH" = true ] && return
 
-  BRANCH_MSG=`git rev-parse --verify "${REL_PREFIX}${V_USR_INPUT}" 2>&1`
+  BRANCH_MSG=`git rev-parse --verify "${REL_PREFIX}${V_NEW}" 2>&1`
   if [ "$?" -eq 0 ]; then
-    echo -e "\n${I_STOP} ${S_ERROR}Error: Branch <${S_NORM}${REL_PREFIX}${V_USR_INPUT}${S_ERROR}> already exists!\n"
+    echo -e "\n${I_STOP} ${S_ERROR}Error: Branch <${S_NORM}${REL_PREFIX}${V_NEW}${S_ERROR}> already exists!\n"
     exit 1
   fi  
 }
@@ -354,12 +362,12 @@ do-branch() {
 
   echo -e "\n${S_NOTICE}Creating new release branch..."
 
-  BRANCH_MSG=`git branch "${REL_PREFIX}${V_USR_INPUT}" 2>&1`
+  BRANCH_MSG=`git branch "${REL_PREFIX}${V_NEW}" 2>&1`
   if [ ! "$?" -eq 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error\n$BRANCH_MSG\n"
     exit 1
   else
-    BRANCH_MSG=`git checkout "${REL_PREFIX}${V_USR_INPUT}" 2>&1`
+    BRANCH_MSG=`git checkout "${REL_PREFIX}${V_NEW}" 2>&1`
     echo -e "\n${I_OK} ${S_NOTICE}${BRANCH_MSG}"
   fi  
   
@@ -395,7 +403,7 @@ do-push() {
   case "$CONFIRM" in
     [yY][eE][sS]|[yY] )
       echo -e "\n${S_NOTICE}Pushing files + tags to <${S_NORM}${PUSH_DEST}${S_NOTICE}>..."
-      PUSH_MSG=`git push "${PUSH_DEST}" v"$V_USR_INPUT" 2>&1` # Push new tag
+      PUSH_MSG=`git push "${PUSH_DEST}" v"$V_NEW" 2>&1` # Push new tag
       if [ ! "$?" -eq 0 ]; then
         echo -e "\n${I_STOP} ${S_WARN}Warning\n$PUSH_MSG"
         # exit 1

@@ -76,7 +76,8 @@ process-arguments() {
     case "$OPTIONS" in
       h )
         # Show help
-        exit_abnormal
+        usage
+        exit 0
       ;;
       v )
         # User has supplied a version number
@@ -113,12 +114,12 @@ process-arguments() {
       \? )
         echo -e "\n${I_ERROR}${S_ERROR} Invalid option: ${S_WARN}-$OPTARG" >&2
         echo
-        exit_abnormal
+        exit 1
       ;;        
       : )
         echo -e "\n${I_ERROR}${S_ERROR} Option ${S_WARN}-$OPTARG ${S_ERROR}requires an argument." >&2
         echo
-        exit_abnormal
+        exit 1
       ;;      
     esac
   done

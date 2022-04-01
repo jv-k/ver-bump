@@ -46,9 +46,9 @@ do-versionfile
 do-changelog
 do-branch
 do-commit
-tag "${V_USR_INPUT}" "${REL_NOTE}"
+do-tag
 do-push
 
 echo -e "\n${S_LIGHT}––––––"
-echo -e "\n${I_OK} ${S_NOTICE}"Bumped $([ -n "${V_PREV}" ] && echo "${V_PREV} –>" || echo "to ") "$V_USR_INPUT"
+echo -e "\n${I_OK} ${S_NOTICE}"Bumped $([ ! "${V_PREV}" = "${V_NEW}" ] && echo "${V_PREV} –>" || echo "to ") "$V_NEW"
 echo -e "\n${I_END} ${GREEN}Done!\n"

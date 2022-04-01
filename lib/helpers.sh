@@ -70,9 +70,9 @@ get-commit-msg() {
 # Process script options
 process-arguments() {
   local OPTIONS OPTIND OPTARG
-    
+
   # Get positional parameters
-  while getopts ":v:p:m:f:hbn" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
+  while getopts ":v:p:m:f:hbnc" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
     case "$OPTIONS" in
       h )
         # Show help

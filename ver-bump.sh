@@ -11,10 +11,10 @@
 #   – https://github.com/jv-k/ver-bump
 #
 
-MODULE_DIR="$(dirname "$(realpath "$0")")"
+MODULE_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 
 source $MODULE_DIR/lib/helpers.sh
-source $MODULE_DIR/lib/styles.sh
+source $MODULE_DIR/lib/icons.sh
 
 NOW="$(date +'%B %d, %Y')"
 
@@ -29,26 +29,34 @@ JSON_FILES=()
 
 #### Initiate Script ###########################
 
-# Process and prepare
-process-arguments "$@"
-check-commits-exist
-process-version
+main() {
+  # Process and prepare
+  process-arguments "$@"
+  check-commits-exist
+  process-version
 
-check-branch-exist
-check-tag-exists
+  check-branch-exist
+  check-tag-exists
+  echo -e "\n${S_LIGHT}––––––"
 
-echo -e "\n${S_LIGHT}––––––"
+  # Update files
+  do-packagefile-bump
+  bump-json-files
+  do-versionfile
+  do-changelog
+  do-branch
+  do-commit
+  do-tag
+  do-push
 
-# Update files
-do-packagefile-bump
-bump-json-files
-do-versionfile
-do-changelog
-do-branch
-do-commit
-do-tag
-do-push
+  echo -e "\n${S_LIGHT}––––––"
+  echo -ne "\n${I_OK} ${S_NOTICE}"
+  get-commit-msg
+  echo -e "\n${I_END} ${GREEN}Done!\n"
+}
 
-echo -e "\n${S_LIGHT}––––––"
-echo -e "\n${I_OK} ${S_NOTICE}"Bumped $([ ! "${V_PREV}" = "${V_NEW}" ] && echo "${V_PREV} –>" || echo "to ") "$V_NEW"
-echo -e "\n${I_END} ${GREEN}Done!\n"
+# Execute script when it is executed as a script, and when it is brought into the environment with source (so it can be tested)
+if [[ "$0" = "$BASH_SOURCE" ]]; then
+  source $MODULE_DIR/lib/styles.sh # only load when not sourced, for tests to work
+  main "$@"
+fi

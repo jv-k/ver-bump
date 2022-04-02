@@ -70,13 +70,14 @@ get-commit-msg() {
 # Process script options
 process-arguments() {
   local OPTIONS OPTIND OPTARG
-    
+
   # Get positional parameters
-  while getopts ":v:p:m:f:hbn" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
+  while getopts ":v:p:m:f:hbnc" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
     case "$OPTIONS" in
       h )
         # Show help
-        exit_abnormal
+        usage
+        exit 0
       ;;
       v )
         # User has supplied a version number
@@ -88,7 +89,6 @@ process-arguments() {
         echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Release note:" ${S_NORM}"'"$REL_NOTE"'"
       ;;
       f )
-        FLAG_JSON=true
         echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}JSON file via [-f]: <${S_NORM}${OPTARG}${S_LIGHT}>"
         # Store JSON filenames(s)
         JSON_FILES+=($OPTARG)
@@ -113,12 +113,12 @@ process-arguments() {
       \? )
         echo -e "\n${I_ERROR}${S_ERROR} Invalid option: ${S_WARN}-$OPTARG" >&2
         echo
-        exit_abnormal
+        exit 1
       ;;        
       : )
         echo -e "\n${I_ERROR}${S_ERROR} Option ${S_WARN}-$OPTARG ${S_ERROR}requires an argument." >&2
         echo
-        exit_abnormal
+        exit 1
       ;;      
     esac
   done
@@ -147,67 +147,70 @@ process-version() {
     V_PREV=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $VER_FILE )
 
     if [ -n "$V_PREV" ]; then
-
       echo -e "\n${S_NOTICE}Current version read from <${S_QUESTION}${VER_FILE}${S_NOTICE}> file: ${S_QUESTION}$V_PREV"
-
-      # If the tag for $V_PREV doesn't exist, it could be the first time running ver-bump,
-      # so use previous version without incrementing:
-      TAG_EXISTS=`git tag -l v"$V_PREV"`
-      if [ ! -n "$TAG_EXISTS" ]; then
-        V_SUGGEST=$V_PREV
-      else
-        V_PREV_LIST=(`echo $V_PREV | tr '.' ' '`)
-        V_MAJOR=${V_PREV_LIST[0]}; V_MINOR=${V_PREV_LIST[1]}; V_PATCH=${V_PREV_LIST[2]};
-
-        is_number $V_MAJOR; (( IS_NO = $? )) 
-        is_number $V_MINOR; (( IS_NO = $? && $IS_NO )) 
-        
-        # If major & minor are numbers, then proceed to increment patch
-        if [ $IS_NO = 1 ]; then
-          is_number $V_PATCH; 
-          [ $? == 1 ] && V_PATCH=$((V_PATCH + 1)) # Increment
-          V_SUGGEST="$V_MAJOR.$V_MINOR.$V_PATCH" 
-        else
-          # If patch not a number, do nothing
-          echo -e "\n${I_WARN} ${S_WARN}Warning: ${S_QUESTION}${V_PREV}${S_WARN} doesn't look like a SemVer compatible version number!\n"
-        fi
-      fi
-
-    else 
-      echo -e "\n${I_WARN} ${S_ERROR}Warning: <${S_QUESTION}${VER_FILE}${S_WARN}> doesn't contain a 'version' field!\n"
-    fi 
-  else
-    echo -ne "\n${S_WARN}Warning: <${S_QUESTION}${VER_FILE}${S_WARN}> "
-
-    if [ ! -f $VER_FILE ]; then 
-      echo "was not found!";     
-    elif [ ! -s $VER_FILE ]; then 
-      echo "is empty!";  
+      set-v-suggest $V_PREV # check + increment patch number
+    else
+      echo -e "\n${I_WARN} ${S_ERROR}Error: <${S_QUESTION}${VER_FILE}${S_WARN}> doesn't contain a 'version' field!\n"
+      exit 1
     fi
-  fi  
+  else
+    echo -ne "\n${S_Error}Error: <${S_QUESTION}${VER_FILE}${S_WARN}> "
+    if [ ! -f $VER_FILE ]; then
+      echo "was not found!";
+    elif [ ! -s $VER_FILE ]; then
+      echo "is empty!";
+    fi
+    exit 1
+  fi
 
-  # If a version number is supplied by the user with [-v <version number>], then use it 
+  # If a version number is supplied by the user with [-v <version number>] — use it!
   if [ -n "$V_USR_SUPPLIED" ]; then
-    echo -e "\n${S_NOTICE}You selected version using [-v]:" "${S_WARN}${V_USR_SUPPLIED}"      
+    echo -e "\n${S_NOTICE}You selected version using [-v]:" "${S_WARN}${V_USR_SUPPLIED}" 
     V_NEW="${V_USR_SUPPLIED}"
   else
-    # Confirm it with user
+    # Display a suggested version
     echo -ne "\n${S_QUESTION}Enter a new version number or press <enter> to use [${S_NORM}$V_SUGGEST${S_QUESTION}]: "
     echo -ne "$S_WARN"
     read V_USR_INPUT
-
-    if [ "$V_USR_INPUT" = "" ]; then
-      V_NEW="${V_SUGGEST}"
+    
+    if [ "$V_USR_INPUT" = "" ]; then 
+      # User accepted the suggested version
+      V_NEW=$V_SUGGEST
     else
-      V_NEW="${V_USR_INPUT}"
+      V_NEW=$V_USR_INPUT
     fi
   fi
 }
 
+set-v-suggest() {
+  local IS_NO=0
+  local V_PREV_LIST=(`echo $1 | tr '.' ' '`)
+  local V_MAJOR=${V_PREV_LIST[0]}; 
+  local V_MINOR=${V_PREV_LIST[1]}; 
+  local V_PATCH=${V_PREV_LIST[2]};
+
+  is_number $V_MAJOR; (( IS_NO = $? ))
+  is_number $V_MINOR; (( IS_NO = $? && $IS_NO ))
+  
+  # If major & minor are numbers, then proceed to increment patch
+  if [ $IS_NO = 1 ]; then
+    is_number $V_PATCH;
+    if [ $? == 1 ]; then 
+      V_PATCH=$((V_PATCH + 1)) # Increment
+      V_SUGGEST="$V_MAJOR.$V_MINOR.$V_PATCH"
+      return;
+    fi
+  fi
+  
+  echo -e "\n${I_WARN} ${S_WARN}Warning: ${S_QUESTION}${1}${S_WARN} doesn't look like a SemVer compatible version number! Couldn't automatically bump the patch value. \n"
+  # If patch not a number, do nothing, keep the input
+  V_SUGGEST=$1
+}
+
 # Only tag if tag doesn't already exist
 check-tag-exists() {
-  TAG_MSG=`git tag -l v"$V_NEW"`
-  if [ -n "$TAG_MSG" ]; then
+  TAG_CHECK_EXISTS=`git tag -l v"$V_NEW"`
+  if [ -n "$TAG_CHECK_EXISTS" ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error: A release with that tag version number already exists!\n"
     exit 0
   fi
@@ -226,12 +229,10 @@ do-tag() {
 
 do-packagefile-bump() {  
   NOTICE_MSG="<${S_NORM}package.json${S_NOTICE}>"
-
   if [ "$V_NEW" = "$V_PREV" ]; then
     echo -e "\n${I_WARN}${NOTICE_MSG}${S_WARN} already contains version ${V_NEW}."
   else
     NPM_MSG=`npm version ${V_NEW} --git-tag-version=false 2>&1`
-
     if [ ! "$?" -eq 0 ]; then
       echo -e "\n${I_STOP} ${S_ERROR}Error updating <package.json> and/or <package-lock.json>.\n\n$NPM_MSG\n"
       exit 1

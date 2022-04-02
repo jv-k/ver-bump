@@ -39,11 +39,3 @@ S_NOTICE="${GREEN}"
 S_QUESTION="${YELLOW}"
 S_WARN="${LIGHTRED}"
 S_ERROR="${RED}"
-
-# Notification icons
-I_OK="✅"; 
-I_TIME="⏳"; 
-I_STOP="🚫"; 
-I_ERROR="❌";
-I_WARN="❗️";
-I_END="🏁";

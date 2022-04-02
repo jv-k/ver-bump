@@ -11,7 +11,8 @@
   "license": "MIT",
   "bin": "./ver-bump.sh",
   "scripts": {
-    "tests": "./test/libs/bats/bin/bats test/ver-bump.bats"
+    "tests:install": "./install_tests.sh",
+    "tests": "./test/bats/bin/bats ./test/ver-bump.bats"
   },
   "keywords": [
     "bash versioning",

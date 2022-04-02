@@ -1,4 +1,4 @@
-#!/usr/bin/env ./test/libs/bats/bin/bats
+#!/usr/bin/env ./test/bats/bin/bats
 
 # UNIT TESTS for VER-BUMP 
 
@@ -9,11 +9,12 @@
 # variable’s value being changed, these changes will not persist 
 # after run completes.
 
-profile_script="./ver-bump.sh"
+profile_script="$PWD/ver-bump.sh"
 
 setup() {
-  load 'libs/bats-support/load'
-  load 'libs/bats-assert/load'
+  load './test_helper/bats-support/load'
+  load './test_helper/bats-assert/load'
+
   F_TEMPS=()
   TEST_F_VER=
   TEST_F_INPUT=
@@ -46,7 +47,6 @@ teardown() {
 @test "can run script" {
   # skip
   source ${profile_script}
-  assert_success
 }
 
 @test "process-arguments: -h: display help message" {
@@ -68,7 +68,7 @@ teardown() {
   local TEST_VER="9.8.7"
   source ${profile_script}
   process-arguments -v "${TEST_VER}"
-  assert_success
+  # assert_success
   assert_equal "${V_USR_SUPPLIED}" "${TEST_VER}"
 }
 
@@ -84,7 +84,6 @@ teardown() {
   local TEST_MSG="This is a custom release note"
   source ${profile_script}
   process-arguments -m "${TEST_MSG}"
-  assert_success
   assert_equal "${REL_NOTE}" "${TEST_MSG}"
 }
 
@@ -100,7 +99,6 @@ teardown() {
   local TEST_FILENAMES=("test1.json" "test2.json" "test3.json")
   source ${profile_script}
   process-arguments -f "${TEST_FILENAMES[0]}" -f "${TEST_FILENAMES[1]}" -f "${TEST_FILENAMES[2]}"
-  assert_success
   assert_equal "${JSON_FILES[0]}" "${TEST_FILENAMES[0]}"
   assert_equal "${JSON_FILES[1]}" "${TEST_FILENAMES[1]}"
   assert_equal "${JSON_FILES[2]}" "${TEST_FILENAMES[2]}"
@@ -108,7 +106,6 @@ teardown() {
   # Test info messages
   JSON_FILES=()
   run process-arguments -f "${TEST_FILENAMES[0]}" -f "${TEST_FILENAMES[1]}" -f "${TEST_FILENAMES[2]}"
-  assert_success
   assert_output --partial "JSON file via [-f]: <${TEST_FILENAMES[0]}>"
   assert_output --partial "JSON file via [-f]: <${TEST_FILENAMES[1]}>"
   assert_output --partial "JSON file via [-f]: <${TEST_FILENAMES[2]}>"
@@ -126,12 +123,10 @@ teardown() {
   local TEST_DEST="other-origin"
   source ${profile_script}
   process-arguments -p "${TEST_DEST}"
-  assert_success
   assert_equal "${PUSH_DEST}" "${TEST_DEST}"
   assert_equal "${FLAG_PUSH}" "true"
 
   run process-arguments -p "${TEST_DEST}"
-  assert_success
   assert_output --partial "Option set: Pushing to <${PUSH_DEST}>, as the last action in this script."
 }
 
@@ -139,11 +134,9 @@ teardown() {
   # skip
   source ${profile_script}
   process-arguments -n
-  assert_success
   assert_equal "${FLAG_NOCOMMIT}" "true"
 
   run process-arguments -n
-  assert_success
   assert_output --partial "Option set: Disable commit after tagging."
 }
 
@@ -151,11 +144,9 @@ teardown() {
   # skip
   source ${profile_script}
   process-arguments -b
-  assert_success
   assert_equal "${FLAG_NOBRANCH}" "true"
 
   run process-arguments -b
-  assert_success
   assert_output --partial "Option set: Disable committing to new branch."
 
 }
@@ -164,11 +155,9 @@ teardown() {
   # skip
   source ${profile_script}
   process-arguments -c
-  assert_success
   assert_equal "${FLAG_NOCHANGELOG}" "true"
 
   run process-arguments -c
-  assert_success
   assert_output --partial "Option set: Disable updating CHANGELOG.md file."
 }
 

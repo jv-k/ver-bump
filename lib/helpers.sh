@@ -331,7 +331,7 @@ do-changelog() {
     # Append existing log
     cat CHANGELOG.md >> tmpfile
   else
-    echo -e "\n${S_WARN}A [${S_NORM}CHANGELOG.md${S_WARN}] file was not found."  
+    echo -e "\n${S_WARN}An existing [${S_NORM}CHANGELOG.md${S_WARN}] file was not found. Creating one..."
   fi
 
   mv tmpfile CHANGELOG.md

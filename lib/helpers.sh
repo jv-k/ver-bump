@@ -347,7 +347,7 @@ do-changelog() {
 }
 
 #
-check-branch-exist() {
+check-branch-notexist() {
   [ "$FLAG_NOBRANCH" = true ] && return
 
   BRANCH_MSG=`git rev-parse --verify "${REL_PREFIX}${V_NEW}" 2>&1`

@@ -35,7 +35,7 @@ main() {
   check-commits-exist
   process-version
 
-  check-branch-exist
+  check-branch-notexist
   check-tag-exists
   echo -e "\n${S_LIGHT}––––––"
 

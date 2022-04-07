@@ -186,6 +186,26 @@ $ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>]..
 
     $ git merge --no-ff release-1.0.1 # Merge the new release branch to your development branch
     ```
+## Project Roadmap 🚧
+
+## Todo — General ⏳
+  - [ ] Docs: Create GIF screenshot  
+  - [ ] Docs: Document all remaining switches
+  - [ ] Docs: Instructions for creating a Gh package
+  - [ ] Docs: General tidy-up of the concepts
+
+## Todo — Project v2.0.0
+  - [ ] New feature: Releasing packages: Create automation for proper gh release
+
+## Doing 🚀
+  - [✔️] Tests: Unit tests (with https://github.com/bats-core/bats-core)
+  - [✔️] Bug: Fix issue with running on v1.0.0, or any other version already present ONLY in package.json and not tagged.
+  - [✔️] New feature: Switch to disable logging
+
+## Done ✔️
+  - [✔️] Docs: Inform user how the script works in the current branch
+  - [✔️] Docs: Local `npm` install
+  - [✔️] Docs: Semver + Gh branching model 
 
 ## Contributing
 I'd love you to contribute to `@jv-k/ver-bump`, [pull requests](https://github.com/jv-k/ver-bump/issues/new/choose) are welcome for submitting issues and bugs!

@@ -258,21 +258,21 @@ bump-json-files() {
   for FILE in "${JSON_FILES[@]}"; do
     if [ -f $FILE ]; then
       # Get the existing version number
-      V_OLD=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $FILE )
+      V_PREV=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $FILE )
 
-      if [ "$V_OLD" = "$V_NEW" ]; then
-        echo -e "\n${I_ERROR} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$V_OLD"
+      if [ ! -n "$V_PREV" ]; then
+        echo -e "\n${I_STOP} ${S_ERROR}Error updating version in file <${S_NORM}$FILE${S_NOTICE}> — a version name/value pair was not found to replace!"
+      elif [ "$V_PREV" = "$V_NEW" ]; then
+        echo -e "\n${I_ERROR} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$V_PREV"
       else
         # Write to output file
-        FILE_MSG=`sed -i .temp "s/\"version\":\(.*\)\"$V_OLD\"/\"version\":\1\"$V_NEW\"/g" $FILE 2>&1`
+        FILE_MSG=`sed -i .temp "s/\"version\":\(.*\)\"$V_PREV\"/\"version\":\1\"$V_NEW\"/g; q" $FILE 2>&1`
 
         if [ "$?" -eq 0 ]; then
-          echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$V_OLD ${S_NOTICE}-> ${S_QUESTION}$V_NEW"
+          echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$V_PREV ${S_NOTICE}-> ${S_QUESTION}$V_NEW"
           rm -f ${FILE}.temp          
           # Add file change to commit message:
           GIT_MSG+="Updated $FILE, "
-        else
-          echo -e "\n${I_STOP} ${S_ERROR}Error updating version in file <${S_NORM}$FILE${S_NOTICE}> — Old version ${S_QUESTION}$V_OLD ${S_NOTICE} not found!"
         fi
       fi
 

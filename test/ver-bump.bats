@@ -9,40 +9,57 @@
 # variable’s value being changed, these changes will not persist 
 # after run completes.
 
-profile_script="$PWD/ver-bump.sh"
-
 setup() {
   load './test_helper/bats-support/load'
   load './test_helper/bats-assert/load'
 
+  repo_dir=$PWD
+  profile_script="$repo_dir/ver-bump.sh"
+
   F_TEMPS=()
   TEST_F_VER=
   TEST_F_INPUT=
-  GIT_CLNUP_CMDS=()
+  CLEANUP_CMDS=()
 }
 
 teardown() {
-  for F in "${F_TEMPS[@]}"; do
-    [ -f $F ] && rm -f $F
-  done
+  run_cleanup_cmds
+
   unset F_TEMPS
   unset TEST_F_VER
   unset TEST_V_PREV
   unset TEST_F_INPUT
   unset VER_FILE
-  run_cleanup_cmds
+  unset CLEANUP_CMDS
 }
-        run_cleanup_cmds() {
-          for (( i = 0; i < ${#GIT_CLNUP_CMDS[@]} ; i++ )); do
-            # Run each command in array 
-            eval "${GIT_CLNUP_CMDS[$i]}"
-          done  
-        }
 
-        get_help_msg() {
-          # skip
-          ${profile_script} -h | grep "This script automates"
-        }
+run_cleanup_cmds() {
+  for F in "${F_TEMPS[@]}"; do
+    [ -f $F ] && rm -f $F && git reset -- $F >&2
+  done  
+
+  for (( i = 0; i < ${#CLEANUP_CMDS[@]} ; i++ )); do
+    # Run each command in array 
+    eval "${CLEANUP_CMDS[$i]}"
+  done
+}
+
+get_help_msg() {
+  ${profile_script} -h | grep "This script automates"
+}
+
+create_ver_file() {
+  F_TEMPS+=($(mktemp ${repo_dir}/XXXXXXXXXXXXXXXXXXXX)) # push
+  F_TMP=${F_TEMPS[${#F_TEMPS[@]}-1]} # last pushed
+  echo "\"version\": \"${V_TEST}\"," > $F_TMP
+  VER_FILE=$F_TMP # set value used in test target
+}
+
+jsonfile_get_ver() {
+  echo $( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $1 )
+}
+
+# Tests #####################################################################
 
 @test "can run script" {
   # skip
@@ -191,40 +208,142 @@ teardown() {
 
   run set-v-suggest "${TEST_V_BAD}" || return 1
   assert_output --partial "Warning: ${TEST_V_BAD} doesn't look like a SemVer compatible version"
-
 }
-
-      create_ver_file() {
-        F_TEMPS+=($(mktemp ./XXXXXXXXXXXXXXXXXXXX)) # push
-        F_TMP=${F_TEMPS[${#F_TEMPS[@]}-1]} # last pushed
-        echo "\"version\": \"${TEST_V_PREV}\"," > $F_TMP
-        VER_FILE=$F_TMP # set value used in test target
-      }
 
 @test "process-version: fail on entering non-SemVer input" {
   # skip
   source ${profile_script}
   
-  TEST_V_PREV="99.88.77"
-  TEST_F_INPUT="12.wrong.1"
+  V_TEST="99.88.77"
+  V_TEST_INPUT="12.wrong.1"
   create_ver_file
 
   # forcing return value because otherwise is_number fires a 'return'
-  process-version <<< $TEST_F_INPUT || return 1
-  assert_equal "${V_PREV}" "${TEST_V_PREV}"
-  assert_equal "${V_USR_INPUT}" "${TEST_F_INPUT}"
+  process-version <<< $V_TEST_INPUT || return 1
+  assert_equal "${V_PREV}" "${V_TEST}"
+  assert_equal "${V_USR_INPUT}" "${V_TEST_INPUT}"
 }
 
 @test "process-version: patch of the version from json file should be bumped +1" {
   # skip
   source ${profile_script}
   
-  TEST_V_PREV="35.12.5"
+  V_TEST="35.12.5"
   create_ver_file
   
   process-version <<< "" || return 1 
-  assert_equal "${V_PREV}" "${TEST_V_PREV}" 
+  assert_equal "${V_PREV}" "${V_TEST}"
   assert_equal "${V_NEW}" "35.12.6" 
 }
 
-# @test "check-version: 
+@test "do-packagefile-bump: can bump version in package.json + lock file" {
+  source ${profile_script}
+    
+  local pkg="${repo_dir}/package.json"
+  local pkg_lock="${repo_dir}/package-lock.json"
+
+  # backup actual files, as this test will change them
+  yes | cp $pkg "${pkg}.backup"
+  yes | cp $pkg_lock "${pkg_lock}.backup"
+  # add restore file cmds for post-test cleanup
+  CLEANUP_CMDS+=("rm ${pkg} ${pkg_lock}")
+  CLEANUP_CMDS+=("mv -f ${pkg}.backup ${pkg}")
+  CLEANUP_CMDS+=("mv -f ${pkg_lock}.backup ${pkg_lock}")
+  CLEANUP_CMDS+=("git reset -- ${pkg}")
+  CLEANUP_CMDS+=("git reset -- ${pkg_lock}")
+
+  V_NEW="35.12.23"
+  run do-packagefile-bump
+  assert_output -p "Bumped version in <package.json> and <package-lock.json>"
+  
+  run jsonfile_get_ver $pkg
+  assert_output "${V_NEW}"
+}
+
+@test "bump-json-files: can bump version in a json file" {
+  source ${profile_script}
+  
+  V_TEST="99.88.77"
+  V_NEW="99.88.78"
+
+  create_ver_file
+  JSON_FILES=( "${VER_FILE}" )
+  
+  run bump-json-files # >&3
+  assert_output --partial "from ${V_TEST} -> ${V_NEW}"
+
+  run jsonfile_get_ver $VER_FILE
+  assert_output "${V_NEW}"
+}
+
+@test "bump-json-files: can fail bumping a json file when a version already exists in file" {
+  source ${profile_script}
+  
+  V_TEST="99.88.77"
+  V_NEW="99.88.77"
+
+  create_ver_file
+  JSON_FILES=( "${VER_FILE}" )
+  
+  run bump-json-files # >&3
+  assert_output --partial "already contains version ${V_TEST}"
+
+  run jsonfile_get_ver $VER_FILE
+  assert_output "${V_TEST}"  
+}
+
+@test "bump-json-files: can fail bumping a json file when no version found inside it" {
+  source ${profile_script}
+  
+  V_TEST="99.88.77"
+  V_NEW="99.88.77"
+
+  create_ver_file
+  > $VER_FILE <<< "" # clear file
+  JSON_FILES=( "${VER_FILE}" )
+  
+  run bump-json-files # >&3
+  assert_output --partial "a version name/value pair was not found to replace!"
+}
+
+@test "do-tag: create a tag" {
+  source ${profile_script}
+  V_NEW="35.12.5"
+  REL_NOTE=
+  CLEANUP_CMDS+=("git tag -d v${V_NEW}")
+
+  run do-tag
+  assert_success --partial "Added GIT tag"
+}
+
+@test "check-tag-exists: can create a tag + check it exists" {
+  source ${profile_script}
+  V_NEW="35.12.5"
+  REL_NOTE=
+  CLEANUP_CMDS+=("git tag -d v${V_NEW}")
+
+  git tag -a v${V_NEW} -m "Test tag"
+
+  run check-tag-exists
+  assert_success --partial "Error: A release with that tag"
+}
+
+@test "do-changelog: can create a CHANGELOG.md" {
+  source ${profile_script}
+  
+  V_PREV="1.2.3"
+  V_NEW="1.2.4"
+  local F_CL="CHANGELOG.md"
+
+  # backup present 
+  [ -f "$F_CL" ] && mv "$F_CL" "${F_CL}.backup" && touch "$F_CL"
+  CLEANUP_CMDS+=("rm ${F_CL} && mv ${F_CL}.backup ${F_CL}")
+
+  run do-changelog <<< ""
+  assert_success
+  assert_output -p "Updated [CHANGELOG.md] file"
+
+  grep -F "Updated ${F_CL}, Bumped ${V_PREV} –> ${V_NEW}" $F_CL
+  assert_success
+}
+

@@ -306,6 +306,41 @@ jsonfile_get_ver() {
   assert_output --partial "a version name/value pair was not found to replace!"
 }
 
+@test "check-branch-notexist: can detect branch DOES exist" {
+  # skip
+  source ${profile_script}
+  
+  local V_NEW="123.456.7"
+  # create test branch
+  git branch "${REL_PREFIX}${V_NEW}"
+  CLEANUP_CMDS+=("git branch -D ${REL_PREFIX}${V_NEW} --force")
+
+  run check-branch-notexist
+  assert_failure
+}
+
+@test "check-branch-notexist: can confirm branch DOES'NT exist" {
+  # skip
+  source ${profile_script}
+  
+  local V_NEW="123.456.78338834"
+
+  run check-branch-notexist
+  assert_success
+}
+
+@test "do-branch: can create a release branch" {
+  # skip
+  source ${profile_script}
+  
+  local V_NEW="123.456.7"
+  local CURR_BRANCH=$( git rev-parse --abbrev-ref HEAD )
+  CLEANUP_CMDS+=("git checkout ${CURR_BRANCH} && git branch -D ${REL_PREFIX}${V_NEW} --force")
+
+  run do-branch
+  assert_success
+}
+
 @test "do-tag: create a tag" {
   source ${profile_script}
   V_NEW="35.12.5"

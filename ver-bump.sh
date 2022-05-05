@@ -13,8 +13,8 @@
 
 MODULE_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 
-source $MODULE_DIR/lib/helpers.sh
-source $MODULE_DIR/lib/icons.sh
+source "$MODULE_DIR/lib/helpers.sh"
+source "$MODULE_DIR/lib/icons.sh"
 
 NOW="$(date +'%B %d, %Y')"
 
@@ -37,7 +37,7 @@ main() {
 
   check-branch-notexist
   check-tag-exists
-  echo -e "\n${S_LIGHT}––––––"
+  echo -e "\n${S_LIGHT}------"
 
   # Update files
   do-packagefile-bump
@@ -49,7 +49,7 @@ main() {
   do-tag
   do-push
 
-  echo -e "\n${S_LIGHT}––––––"
+  echo -e "\n${S_LIGHT}------"
   echo -ne "\n${I_OK} ${S_NOTICE}"
   get-commit-msg
   echo -e "\n${I_END} ${GREEN}Done!\n"
@@ -57,6 +57,6 @@ main() {
 
 # Execute script when it is executed as a script, and when it is brought into the environment with source (so it can be tested)
 if [[ "$0" = "$BASH_SOURCE" ]]; then
-  source $MODULE_DIR/lib/styles.sh # only load when not sourced, for tests to work
+  source "$MODULE_DIR/lib/styles.sh" # only load when not sourced, for tests to work
   main "$@"
 fi

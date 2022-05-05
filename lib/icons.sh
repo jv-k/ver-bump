@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Notification icons
 I_OK="✅"; 
 I_TIME="⏳"; 

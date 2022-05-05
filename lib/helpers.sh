@@ -1,7 +1,7 @@
 #!/bin/bash
 
 is_number() {
-  case $1 in
+  case "$1" in
     ''|*[!0-9]*) return 0 ;;
     *) return 1 ;;
   esac
@@ -9,12 +9,12 @@ is_number() {
 
 # Show credits & help
 usage() { 
-  local SCRIPT_VER SCRIPT_AUTH_EMAIL SCRIPT_AUTH_NAME SCRIPT_HOME
+  local SCRIPT_VER SCRIPT_HOME
   # NPM environment variables are fetched with cross-platform tool cross-env (overkill to use a dependency, but seems the only way AFAIK to get npm vars)
-  SCRIPT_VER=`cd $MODULE_DIR && cat package.json | grep version | head -1` 
-  SCRIPT_AUTH=`cd $MODULE_DIR && cat package.json | grep author | head -1`
-  SCRIPT_HOME=`cd $MODULE_DIR && cat package.json | grep homepage | head -1 | sed -ne 's/.*\(http[^"]*\).*/\1/p'`
-  SCRIPT_NAME=`cd $MODULE_DIR && cat package.json | grep name | head -1`
+  SCRIPT_VER=$( cd "$MODULE_DIR" && grep version package.json | head -1 )
+  SCRIPT_AUTH=$( cd "$MODULE_DIR" && grep author package.json | head -1 )
+  SCRIPT_HOME=$( cd "$MODULE_DIR" && grep homepage package.json | head -1 | sed -ne 's/.*\(http[^"]*\).*/\1/p' )
+  SCRIPT_NAME=$( cd "$MODULE_DIR" && grep name package.json | head -1 )
 
   local env_vars=( SCRIPT_VER SCRIPT_AUTH SCRIPT_NAME )
 
@@ -25,10 +25,10 @@ usage() {
   done
 
   # rip off the oh-my-zsh logo, clearly ;)
-  printf  "%s _ _  %s___  %s___ %s     %s ___  %s_ _ %s __ __ %s ___  %s\n" "${RAINBOW[@]}" $RAINBOW_RST
-  printf  "%s| | |%s| __>%s| . \%s ___ %s| . >%s| | |%s|  \  \%s| . \ %s\n" "${RAINBOW[@]}" $RAINBOW_RST
-  printf  "%s| ' |%s| _> %s|   /%s|___|%s| . \%s| ' |%s|     |%s|  _/ %s\n" "${RAINBOW[@]}" $RAINBOW_RST
-  printf  "%s|__/ %s|___>%s|_\_\%s     %s|___/%s\___/%s|_|_|_|%s|_|   %s\n" "${RAINBOW[@]}" $RAINBOW_RST
+  printf  "%s _ _  %s___  %s___ %s     %s ___  %s_ _ %s __ __ %s ___  %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
+  printf  "%s| | |%s| __>%s| . \%s ___ %s| . >%s| | |%s|  \  \%s| . \ %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
+  printf  "%s| ' |%s| _> %s|   /%s|___|%s| . \%s| ' |%s|     |%s|  _/ %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
+  printf  "%s|__/ %s|___>%s|_\_\%s     %s|___/%s\___/%s|_|_|_|%s|_|   %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
 
   echo -e "\t\t\t${LIGHTGRAY}    Version: $S_WARN${SCRIPT_VER}"
 
@@ -55,8 +55,9 @@ usage() {
 
 # If there are no commits in repo, quit, because you can't tag with zero commits.
 check-commits-exist() {
-  git rev-parse HEAD &> /dev/null
-  if [ ! "$?" -eq 0 ]; then
+  local CMD
+  CMD=git rev-parse HEAD &> /dev/null
+  if [ ! "$CMD" -eq 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Your current branch doesn't have any commits yet. Can't tag without at least one commit." >&2
     echo    
     exit 1
@@ -64,7 +65,9 @@ check-commits-exist() {
 }
 
 get-commit-msg() {
-  echo Bumped $([ ! "${V_PREV}" = "${V_NEW}" ] && echo "${V_PREV} –>" || echo "to ") "$V_NEW"
+  local CMD
+  CMD=$([ ! "${V_PREV}" = "${V_NEW}" ] && echo "${V_PREV} ->" || echo "to ")
+  echo Bumped "$CMD" "$V_NEW"
 }
 
 # Process script options
@@ -86,12 +89,12 @@ process-arguments() {
       m )
         REL_NOTE=$OPTARG
         # Custom release note
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Release note:" ${S_NORM}"'"$REL_NOTE"'"
+        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Release note: ${S_NORM} '$REL_NOTE'"
       ;;
       f )
         echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}JSON file via [-f]: <${S_NORM}${OPTARG}${S_LIGHT}>"
         # Store JSON filenames(s)
-        JSON_FILES+=($OPTARG)
+        JSON_FILES+=("$OPTARG")
       ;;
       p )
         FLAG_PUSH=true
@@ -142,22 +145,22 @@ process-arguments() {
 process-version() {
   # As a minimum pre-requisite ver-bump needs a version number from a JSON file 
   # to read + bump. If it doesn't exist, throw an error + exit:
-  if [ -f $VER_FILE ] && [ -s $VER_FILE ]; then
+  if [ -f "$VER_FILE" ] && [ -s "$VER_FILE" ]; then
     # Get the existing version number
-    V_PREV=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $VER_FILE )
+    V_PREV=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' "$VER_FILE" )
 
     if [ -n "$V_PREV" ]; then
       echo -e "\n${S_NOTICE}Current version read from <${S_QUESTION}${VER_FILE}${S_NOTICE}> file: ${S_QUESTION}$V_PREV"
-      set-v-suggest $V_PREV # check + increment patch number
+      set-v-suggest "$V_PREV" # check + increment patch number
     else
       echo -e "\n${I_WARN} ${S_ERROR}Error: <${S_QUESTION}${VER_FILE}${S_WARN}> doesn't contain a 'version' field!\n"
       exit 1
     fi
   else
-    echo -ne "\n${S_Error}Error: <${S_QUESTION}${VER_FILE}${S_WARN}> "
-    if [ ! -f $VER_FILE ]; then
+    echo -ne "\n${S_ERROR}Error: <${S_QUESTION}${VER_FILE}${S_WARN}> "
+    if [ ! -f "$VER_FILE" ]; then
       echo "was not found!";
-    elif [ ! -s $VER_FILE ]; then
+    elif [ ! -s "$VER_FILE" ]; then
       echo "is empty!";
     fi
     exit 1
@@ -171,7 +174,7 @@ process-version() {
     # Display a suggested version
     echo -ne "\n${S_QUESTION}Enter a new version number or press <enter> to use [${S_NORM}$V_SUGGEST${S_QUESTION}]: "
     echo -ne "$S_WARN"
-    read V_USR_INPUT
+    read -r V_USR_INPUT
     
     if [ "$V_USR_INPUT" = "" ]; then 
       # User accepted the suggested version
@@ -183,19 +186,21 @@ process-version() {
 }
 
 set-v-suggest() {
-  local IS_NO=0
-  local V_PREV_LIST=(`echo $1 | tr '.' ' '`)
-  local V_MAJOR=${V_PREV_LIST[0]}; 
-  local V_MINOR=${V_PREV_LIST[1]}; 
-  local V_PATCH=${V_PREV_LIST[2]};
+  local IS_NO V_PREV_LIST V_MAJOR V_MINOR V_PATCH
+  
+  IS_NO=0
+  V_PREV_LIST=( $( echo "$1" | tr '.' ' ' ) )
+  V_MAJOR=${V_PREV_LIST[0]}; 
+  V_MINOR=${V_PREV_LIST[1]}; 
+  V_PATCH=${V_PREV_LIST[2]};
 
-  is_number $V_MAJOR; (( IS_NO = $? ))
-  is_number $V_MINOR; (( IS_NO = $? && $IS_NO ))
+  is_number "$V_MAJOR"; (( IS_NO = "$?" ))
+  is_number "$V_MINOR"; (( IS_NO = "$?" && "$IS_NO "))
   
   # If major & minor are numbers, then proceed to increment patch
-  if [ $IS_NO = 1 ]; then
-    is_number $V_PATCH;
-    if [ $? == 1 ]; then 
+  if [ "$IS_NO" = 1 ]; then
+    is_number "$V_PATCH";
+    if [ "$?" == 1 ]; then 
       V_PATCH=$((V_PATCH + 1)) # Increment
       V_SUGGEST="$V_MAJOR.$V_MINOR.$V_PATCH"
       return;
@@ -204,12 +209,12 @@ set-v-suggest() {
   
   echo -e "\n${I_WARN} ${S_WARN}Warning: ${S_QUESTION}${1}${S_WARN} doesn't look like a SemVer compatible version number! Couldn't automatically bump the patch value. \n"
   # If patch not a number, do nothing, keep the input
-  V_SUGGEST=$1
+  V_SUGGEST="$1"
 }
 
 # Only tag if tag doesn't already exist
 check-tag-exists() {
-  TAG_CHECK_EXISTS=`git tag -l v"$V_NEW"`
+  TAG_CHECK_EXISTS=$( git tag -l v"$V_NEW" )
   if [ -n "$TAG_CHECK_EXISTS" ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error: A release with that tag version number already exists!\n"
     exit 0
@@ -232,8 +237,8 @@ do-packagefile-bump() {
   if [ "$V_NEW" = "$V_PREV" ]; then
     echo -e "\n${I_WARN}${NOTICE_MSG}${S_WARN} already contains version ${V_NEW}."
   else
-    NPM_MSG=`npm version ${V_NEW} --git-tag-version=false 2>&1`
-    if [ ! "$?" -eq 0 ]; then
+    NPM_MSG=$( npm version "${V_NEW}" --git-tag-version=false 2>&1 )
+    if [ ! "$NPM_MSG" -eq 0 ]; then
       echo -e "\n${I_STOP} ${S_ERROR}Error updating <package.json> and/or <package-lock.json>.\n\n$NPM_MSG\n"
       exit 1
     else
@@ -256,40 +261,40 @@ bump-json-files() {
   JSON_PROCESSED=( ) # holds filenames after they've been changed
 
   for FILE in "${JSON_FILES[@]}"; do
-    if [ -f $FILE ]; then
+    if [ -f "$FILE" ]; then
       # Get the existing version number
-      V_PREV=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $FILE )
+      V_PREV=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' "$FILE" )
 
-      if [ ! -n "$V_PREV" ]; then
+      if [ -z "$V_PREV" ]; then
         echo -e "\n${I_STOP} ${S_ERROR}Error updating version in file <${S_NORM}$FILE${S_NOTICE}> — a version name/value pair was not found to replace!"
       elif [ "$V_PREV" = "$V_NEW" ]; then
         echo -e "\n${I_ERROR} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$V_PREV"
       else
         # Write to output file
-        FILE_MSG=`sed -i .temp "s/\"version\":\(.*\)\"$V_PREV\"/\"version\":\1\"$V_NEW\"/g; q" $FILE 2>&1`
+        FILE_MSG=$( sed -i .temp "s/\"version\":\(.*\)\"$V_PREV\"/\"version\":\1\"$V_NEW\"/g; q" "$FILE" 2>&1 )
 
-        if [ "$?" -eq 0 ]; then
+        if [ -z "$FILE_MSG" ]; then
           echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$V_PREV ${S_NOTICE}-> ${S_QUESTION}$V_NEW"
-          rm -f ${FILE}.temp          
+          rm -f "${FILE}.temp"          
           # Add file change to commit message:
           GIT_MSG+="Updated $FILE, "
         fi
       fi
 
-      JSON_PROCESSED+=($FILE)
+      JSON_PROCESSED+=("$FILE")
     else
       echo -e "\n${S_WARN}File <${S_NORM}$FILE${S_WARN}> not found."
     fi
   done
   # Stage files that were changed:
-  [ -n "${JSON_PROCESSED}" ] && git add "${JSON_PROCESSED[@]}"
+  ((${#JSON_PROCESSED[@]})) && git add "${JSON_PROCESSED[@]}"
 }
 
 # Handle VERSION file - for backward compatibility
 do-versionfile() {
   if [ -f VERSION ]; then
     GIT_MSG+="Updated VERSION, "
-    echo $V_NEW > VERSION # Overwrite file
+    echo "$V_NEW" > VERSION # Overwrite file
     # Stage file for commit
     git add VERSION
 
@@ -301,13 +306,15 @@ do-versionfile() {
 # Dump git log history to CHANGELOG.md
 do-changelog() {  
   [ "$FLAG_NOCHANGELOG" = true ] && return
+  local V_LOG
 
   # Log latest commits to CHANGELOG.md:
   # Get latest commits since last version
   
-  LOG_MSG=`git log --pretty=format:"- %s" $([ $(git tag -l "v${V_PREV}") ] && echo "v${V_PREV}...HEAD") 2>&1`
-
-  if [ ! "$?" -eq 0 ]; then
+  # LOG_MSG=`git log --pretty=format:"- %s" $([ $(git tag -l "v${V_PREV}") ] && echo "v${V_PREV}...HEAD") 2>&1`
+  V_LOG=$(git tag -l v"${V_PREV}" && echo "v${V_PREV}"...HEAD)
+  LOG_MSG=$( git log --pretty=format:"- %s" "${V_LOG}" 2>&1 )
+  if [ ! "${LOG_MSG}" -eq 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error getting commit history since last version bump for logging to CHANGELOG.\n\n$LOG_MSG\n"
     exit 1
   fi
@@ -340,7 +347,7 @@ do-changelog() {
   echo -e "\n${I_OK} ${S_NOTICE}${ACTION_MSG} [${S_NORM}CHANGELOG.md${S_NOTICE}] file"
   # Pause & allow user to open and edit the file:
   echo -en "\n${S_QUESTION}Make adjustments to [${S_NORM}CHANGELOG.md${S_QUESTION}] if required now. Press <enter> to continue."
-  read
+  read -r
 
   # Stage log file, to commit later
   git add CHANGELOG.md
@@ -349,12 +356,12 @@ do-changelog() {
 #
 check-branch-notexist() {
   [ "$FLAG_NOBRANCH" = true ] && return
-
-  BRANCH_MSG=`git rev-parse --verify "${REL_PREFIX}${V_NEW}" 2>&1`
-  if [ "$?" -eq 0 ]; then
+  local BRANCH_MSG
+  BRANCH_MSG=$(git branch --list "${REL_PREFIX}${V_NEW}" 2>&1)
+  if [ -n "$BRANCH_MSG" ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error: Branch <${S_NORM}${REL_PREFIX}${V_NEW}${S_ERROR}> already exists!\n"
     exit 1
-  fi  
+  fi
 }
 
 # 
@@ -363,13 +370,13 @@ do-branch() {
 
   echo -e "\n${S_NOTICE}Creating new release branch..."
 
-  BRANCH_MSG=`git branch "${REL_PREFIX}${V_NEW}" 2>&1`
-  if [ ! "$?" -eq 0 ]; then
+  BRANCH_MSG=$(git branch "${REL_PREFIX}${V_NEW}" 2>&1)
+  if [ -z "$BRANCH_MSG" ]; then
+    BRANCH_MSG=$(git checkout "${REL_PREFIX}${V_NEW}" 2>&1)
+    echo -e "\n${I_OK} ${S_NOTICE}${BRANCH_MSG}"
+  else
     echo -e "\n${I_STOP} ${S_ERROR}Error\n$BRANCH_MSG\n"
     exit 1
-  else
-    BRANCH_MSG=`git checkout "${REL_PREFIX}${V_NEW}" 2>&1`
-    echo -e "\n${I_OK} ${S_NOTICE}${BRANCH_MSG}"
   fi  
   
   # REL_PREFIX
@@ -381,8 +388,8 @@ do-commit() {
 
   GIT_MSG+="$(get-commit-msg)" 
   echo -e "\n${S_NOTICE}Committing..."
-  COMMIT_MSG=`git commit -m "${GIT_MSG}" 2>&1`
-  if [ ! "$?" -eq 0 ]; then
+  COMMIT_MSG=$( git commit -m "${GIT_MSG}" 2>&1 )
+  if [ ! "$COMMIT_MSG" -eq 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error\n$COMMIT_MSG\n"
     exit 1
   else
@@ -398,14 +405,14 @@ do-push() {
     CONFIRM="Y"
   else
     echo -ne "\n${S_QUESTION}Push tags to <${S_NORM}${PUSH_DEST}${S_QUESTION}>? [${S_NORM}N/y${S_QUESTION}]: "
-    read CONFIRM  
+    read -r CONFIRM  
   fi
 
   case "$CONFIRM" in
     [yY][eE][sS]|[yY] )
       echo -e "\n${S_NOTICE}Pushing files + tags to <${S_NORM}${PUSH_DEST}${S_NOTICE}>..."
-      PUSH_MSG=`git push "${PUSH_DEST}" v"$V_NEW" 2>&1` # Push new tag
-      if [ ! "$?" -eq 0 ]; then
+      PUSH_MSG=$( git push "${PUSH_DEST}" v"$V_NEW" 2>&1 ) # Push new tag
+      if [ ! "$PUSH_MSG" -eq 0 ]; then
         echo -e "\n${I_STOP} ${S_WARN}Warning\n$PUSH_MSG"
         # exit 1
       else

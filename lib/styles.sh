@@ -30,7 +30,7 @@ RAINBOW=(
   "$(printf '\033[38;5;163m')"
 )
 
-RAINBOW_RST=$(printf $RESET)
+RAINBOW_RST=$(printf "$RESET")
 
 # Some preset styles
 S_NORM="${WHITE}"

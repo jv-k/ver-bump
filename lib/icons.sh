@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# shellcheck disable=SC2034
+
 # Notification icons
 I_OK="✅"; 
 I_TIME="⏳"; 

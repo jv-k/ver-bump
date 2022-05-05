@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# shellcheck disable=SC2034
+
 # ANSI/VT100 colours
 YELLOW='\033[1;33m'
 LIGHTYELLOW='\033[0;33m'
@@ -30,6 +32,7 @@ RAINBOW=(
   "$(printf '\033[38;5;163m')"
 )
 
+# shellcheck disable=SC2059
 RAINBOW_RST=$(printf "$RESET")
 
 # Some preset styles

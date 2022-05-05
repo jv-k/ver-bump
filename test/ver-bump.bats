@@ -270,7 +270,7 @@ jsonfile_get_ver() {
   JSON_FILES=( "${VER_FILE}" )
   
   run bump-json-files # >&3
-  assert_output --partial "from ${V_TEST} -> ${V_NEW}"
+  assert_output -p "from ${V_TEST} -> ${V_NEW}"
 
   run jsonfile_get_ver $VER_FILE
   assert_output "${V_NEW}"

@@ -189,6 +189,7 @@ set-v-suggest() {
   local IS_NO V_PREV_LIST V_MAJOR V_MINOR V_PATCH
   
   IS_NO=0
+  # shellcheck disable=SC2207
   V_PREV_LIST=( $( echo "$1" | tr '.' ' ' ) )
   V_MAJOR=${V_PREV_LIST[0]}; 
   V_MINOR=${V_PREV_LIST[1]}; 
@@ -266,7 +267,7 @@ bump-json-files() {
       V_PREV=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' "$FILE" )
 
       if [ -z "$V_PREV" ]; then
-        echo -e "\n${I_STOP} ${S_ERROR}Error updating version in file <${S_NORM}$FILE${S_NOTICE}> — a version name/value pair was not found to replace!"
+        echo -e "\n${I_STOP} ${S_ERROR}Error updating version in file <${S_NORM}$FILE${S_NOTICE}> - a version name/value pair was not found to replace!"
       elif [ "$V_PREV" = "$V_NEW" ]; then
         echo -e "\n${I_ERROR} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$V_PREV"
       else
@@ -299,7 +300,7 @@ do-versionfile() {
     git add VERSION
 
     echo -e "\n${I_OK} ${S_NOTICE}Updated [${S_NORM}VERSION${S_NOTICE}] file."\
-            "\n${I_WARN} ${S_ERROR}Deprecation warning: using a <${S_NORM}VERSION${S_ERROR}> file is deprecated since v0.2.0 — support will be removed in future versions."      
+            "\n${I_WARN} ${S_ERROR}Deprecation warning: using a <${S_NORM}VERSION${S_ERROR}> file is deprecated since v0.2.0 - support will be removed in future versions."      
   fi
 }
 

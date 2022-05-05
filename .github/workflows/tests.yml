@@ -1,0 +1,29 @@
+name: Tests
+
+# Controls when the action will run. 
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run shellcheck
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install shellcheck
+          shellcheck -x ./ver-bump.sh
+          shellcheck -x ./lib/helpers.sh
+          shellcheck -x ./lib/styles.sh
+          shellcheck -x ./lib/icons.sh
+
+  bats-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run BATS testing suite
+        run: |
+          sudo apt-get update -y
+          chmod +x ./install_bats.sh
+          npm run tests:install
+          npm run tests:run

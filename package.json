@@ -11,7 +11,8 @@
   "license": "MIT",
   "bin": "./ver-bump.sh",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "tests:install": "./install_tests.sh",
+    "tests": "./test/bats/bin/bats ./test/ver-bump.bats"
   },
   "keywords": [
     "bash versioning",

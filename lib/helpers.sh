@@ -229,7 +229,8 @@ do-packagefile-bump() {
     echo -e "\n${I_WARN}${NOTICE_MSG}${S_WARN} already contains version ${V_NEW}."
   else
     NPM_MSG=$( npm version "${V_NEW}" --git-tag-version=false 2>&1 )
-    if [ ! "$NPM_MSG" -eq 0 ]; then
+    # shellcheck disable=SC2181
+    if [ ! "$?" -eq 0 ]; then
       echo -e "\n${I_STOP} ${S_ERROR}Error updating <package.json> and/or <package-lock.json>.\n\n$NPM_MSG\n"
       exit 1
     else
@@ -301,21 +302,18 @@ get-commit-msg() {
 }
 
 # Dump git log history to CHANGELOG.md
-do-changelog() {  
+do-changelog() {
   [ "$FLAG_NOCHANGELOG" = true ] && return
-  local V_LOG
-
-  # Log latest commits to CHANGELOG.md:
-  # Get latest commits since last version
+  local LOG_MSG RANGE
   
-  # LOG_MSG=`git log --pretty=format:"- %s" $([ $(git tag -l "v${V_PREV}") ] && echo "v${V_PREV}...HEAD") 2>&1`
-  V_LOG=$(git tag -l v"${V_PREV}" && echo "v${V_PREV}"...HEAD)
-  LOG_MSG=$( git log --pretty=format:"- %s" "${V_LOG}" 2>&1 )
-  if [ ! "${LOG_MSG}" -eq 0 ]; then
+  RANGE=$([ "$(git tag -l v"${V_PREV}")" ] && echo "v${V_PREV}...HEAD")
+  LOG_MSG=$( git log --pretty=format:"- %s" "${RANGE}" 2>&1 )
+  # shellcheck disable=SC2181
+  if [ ! "$?" -eq 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error getting commit history since last version bump for logging to CHANGELOG.\n\n$LOG_MSG\n"
     exit 1
   fi
-  
+
   [ -f CHANGELOG.md ] && ACTION_MSG="Updated" || ACTION_MSG="Created"
   # Add info to commit message for later:
   GIT_MSG+="${ACTION_MSG} CHANGELOG.md, "
@@ -375,7 +373,8 @@ do-commit() {
   GIT_MSG+="$(get-commit-msg)" 
   echo -e "\n${S_NOTICE}Committing..."
   COMMIT_MSG=$( git commit -m "${GIT_MSG}" 2>&1 )
-  if [ ! "$COMMIT_MSG" -eq 0 ]; then
+  # shellcheck disable=SC2181
+  if [ ! "$?" -eq 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error\n$COMMIT_MSG\n"
     exit 1
   else

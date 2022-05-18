@@ -351,7 +351,15 @@ jsonfile_get_ver() {
   assert_success --partial "Added GIT tag"
 }
 
-@test "check-tag-exists: can create a tag + check it exists" {
+@test "check-tag-exists: check doesn't exist" {
+  source ${profile_script}
+  V_NEW="35.12.5"
+  REL_NOTE=
+
+  run check-tag-exists
+  assert_success
+}
+
   source ${profile_script}
   V_NEW="35.12.5"
   REL_NOTE=

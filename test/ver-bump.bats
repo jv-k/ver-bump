@@ -368,7 +368,7 @@ jsonfile_get_ver() {
   git tag -a v${V_NEW} -m "Test tag"
 
   run check-tag-exists
-  assert_success --partial "Error: A release with that tag"
+  assert_output --partial "Error: A release with that tag"
 }
 
 @test "do-changelog: can create a CHANGELOG.md" {

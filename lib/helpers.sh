@@ -53,23 +53,6 @@ usage() {
           "\n${SCRIPT_HOME}\n"
 }
 
-# If there are no commits in repo, quit, because you can't tag with zero commits.
-check-commits-exist() {
-  local CMD
-  CMD=git rev-parse HEAD &> /dev/null
-  if [ ! "$CMD" -eq 0 ]; then
-    echo -e "\n${I_STOP} ${S_ERROR}Your current branch doesn't have any commits yet. Can't tag without at least one commit." >&2
-    echo    
-    exit 1
-  fi
-}
-
-get-commit-msg() {
-  local CMD
-  CMD=$([ ! "${V_PREV}" = "${V_NEW}" ] && echo "${V_PREV} ->" || echo "to ")
-  echo Bumped "$CMD" "$V_NEW"
-}
-
 # Process script options
 process-arguments() {
   local OPTIONS OPTIND OPTARG
@@ -125,6 +108,15 @@ process-arguments() {
       ;;      
     esac
   done
+}
+
+# If there are no commits in repo, quit, because you can't tag with zero commits.
+check-commits-exist() {
+  if ! git rev-parse HEAD &> /dev/null; then
+    echo -e "\n${I_STOP} ${S_ERROR}Your current branch doesn't have any commits yet. Can't tag without at least one commit." >&2
+    echo    
+    exit 1
+  fi
 }
 
 # Suggests version from VERSION file, or grabs from user supplied -v <version>.
@@ -213,24 +205,22 @@ set-v-suggest() {
   V_SUGGEST="$1"
 }
 
-# Only tag if tag doesn't already exist
-check-tag-exists() {
-  TAG_CHECK_EXISTS=$( git tag -l v"$V_NEW" )
-  if [ -n "$TAG_CHECK_EXISTS" ]; then
-    echo -e "\n${I_STOP} ${S_ERROR}Error: A release with that tag version number already exists!\n"
-    exit 0
+#
+check-branch-notexist() {
+  [ "$FLAG_NOBRANCH" = true ] && return
+  if git rev-parse --verify "${REL_PREFIX}${V_NEW}" &> /dev/null; then
+    echo -e "\n${I_STOP} ${S_ERROR}Error: Branch <${S_NORM}${REL_PREFIX}${V_NEW}${S_ERROR}> already exists!\n"
+    exit 1
   fi
 }
 
-do-tag() {
-  if [ -z "${REL_NOTE}" ]; then
-    # Default release note
-    git tag -a "v${V_NEW}" -m "Tag version ${V_NEW}."
-  else
-    # Custom release note
-    git tag -a "v${V_NEW}" -m "${REL_NOTE}"
+# Only tag if tag doesn't already exist
+check-tag-exists() {
+  TAG_MSG=$( git tag -l "v${V_NEW}" )
+  if [ -n "$TAG_MSG" ]; then
+    echo -e "\n${I_STOP} ${S_ERROR}Error: A release with that tag version number already exists!\n\n$TAG_MSG\n"
+    exit 1
   fi
-  echo -e "\n${I_OK} ${S_NOTICE}Added GIT tag"
 }
 
 do-packagefile-bump() {  
@@ -304,6 +294,12 @@ do-versionfile() {
   fi
 }
 
+get-commit-msg() {
+  local CMD
+  CMD=$([ ! "${V_PREV}" = "${V_NEW}" ] && echo "${V_PREV} ->" || echo "to")
+  echo Bumped "$CMD" "$V_NEW"
+}
+
 # Dump git log history to CHANGELOG.md
 do-changelog() {  
   [ "$FLAG_NOCHANGELOG" = true ] && return
@@ -354,17 +350,6 @@ do-changelog() {
   git add CHANGELOG.md
 }
 
-#
-check-branch-notexist() {
-  [ "$FLAG_NOBRANCH" = true ] && return
-  local BRANCH_MSG
-  BRANCH_MSG=$(git branch --list "${REL_PREFIX}${V_NEW}" 2>&1)
-  if [ -n "$BRANCH_MSG" ]; then
-    echo -e "\n${I_STOP} ${S_ERROR}Error: Branch <${S_NORM}${REL_PREFIX}${V_NEW}${S_ERROR}> already exists!\n"
-    exit 1
-  fi
-}
-
 # 
 do-branch() {
   [ "$FLAG_NOBRANCH" = true ] && return
@@ -396,6 +381,18 @@ do-commit() {
   else
     echo -e "\n${I_OK} ${S_NOTICE}$COMMIT_MSG"
   fi  
+}
+
+# Create a Git tag using the SemVar
+do-tag() {
+  if [ -z "${REL_NOTE}" ]; then
+    # Default release note
+    git tag -a "v${V_NEW}" -m "Tag version ${V_NEW}."
+  else
+    # Custom release note
+    git tag -a "v${V_NEW}" -m "${REL_NOTE}"
+  fi
+  echo -e "\n${I_OK} ${S_NOTICE}Added GIT tag"
 }
 
 # Pushes files + tags to remote repo. Changes are staged by earlier functions

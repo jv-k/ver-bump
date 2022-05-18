@@ -62,26 +62,22 @@ jsonfile_get_ver() {
 # Tests #####################################################################
 
 @test "can run script" {
-  # skip
   source ${profile_script}
 }
 
 @test "process-arguments: -h: display help message" {
-  # skip
   run get_help_msg
   assert_success
   assert_output --partial "This script automates bumping the git software project's version automatically."
 }
 
 @test "process-arguments: -v: fail when not supplying version" {
-  # skip
   source ${profile_script}
   run process-arguments -v
   assert_failure 1 --partial "Option -v requires an argument."
 }
 
 @test "process-arguments: -v x.x.x: succeed when supplying version" {
-  # skip
   local TEST_VER="9.8.7"
   source ${profile_script}
   process-arguments -v "${TEST_VER}"
@@ -90,14 +86,12 @@ jsonfile_get_ver() {
 }
 
 @test "process-arguments: -m: fail when not supplying release note" {
-  # skip
   source ${profile_script}
   run process-arguments -m
   assert_failure 1 --partial "Option -m requires an argument."
 }
 
 @test "process-arguments: -m <note>: succeed when supplying release note" {
-  # skip
   local TEST_MSG="This is a custom release note"
   source ${profile_script}
   process-arguments -m "${TEST_MSG}"
@@ -105,14 +99,12 @@ jsonfile_get_ver() {
 }
 
 @test "process-arguments: -f: fail when not supplying filenames" {
-  # skip
   source ${profile_script}
   run process-arguments -f
   assert_failure 1 --partial "Option -f requires an argument."
 }
 
 @test "process-arguments: -f <filename.json>: succeed with multiple filenames" {
-  # skip
   local TEST_FILENAMES=("test1.json" "test2.json" "test3.json")
   source ${profile_script}
   process-arguments -f "${TEST_FILENAMES[0]}" -f "${TEST_FILENAMES[1]}" -f "${TEST_FILENAMES[2]}"
@@ -129,14 +121,12 @@ jsonfile_get_ver() {
 }
 
 @test "process-arguments: -p: fail when not supplying push destination" {
-  # skip
   source ${profile_script}
   run process-arguments -p
   assert_failure 1 --partial "Option -p requires an argument."
 }
 
 @test "process-arguments: -p <repo destination>: succeed when supplying a destination" {
-  # skip
   local TEST_DEST="other-origin"
   source ${profile_script}
   process-arguments -p "${TEST_DEST}"
@@ -148,7 +138,6 @@ jsonfile_get_ver() {
 }
 
 @test "process-arguments: -n: set flag to prevent committing at the end" {
-  # skip
   source ${profile_script}
   process-arguments -n
   assert_equal "${FLAG_NOCOMMIT}" "true"
@@ -158,7 +147,6 @@ jsonfile_get_ver() {
 }
 
 @test "process-arguments: -b: set flag to disable creating a release branch" {
-  # skip
   source ${profile_script}
   process-arguments -b
   assert_equal "${FLAG_NOBRANCH}" "true"
@@ -169,7 +157,6 @@ jsonfile_get_ver() {
 }
 
 @test "process-arguments: -c: set flag to disable creating/updating CHANGELOG.md" {
-  # skip
   source ${profile_script}
   process-arguments -c
   assert_equal "${FLAG_NOCHANGELOG}" "true"
@@ -179,7 +166,6 @@ jsonfile_get_ver() {
 }
 
 @test "process-arguments: fail on not-existing argument" {
-  # skip
   local TEST_OPT="-X"
   source ${profile_script}
   run process-arguments "${TEST_OPT}"
@@ -211,7 +197,6 @@ jsonfile_get_ver() {
 }
 
 @test "process-version: fail on entering non-SemVer input" {
-  # skip
   source ${profile_script}
   
   V_TEST="99.88.77"
@@ -225,7 +210,6 @@ jsonfile_get_ver() {
 }
 
 @test "process-version: patch of the version from json file should be bumped +1" {
-  # skip
   source ${profile_script}
   
   V_TEST="35.12.5"
@@ -307,7 +291,6 @@ jsonfile_get_ver() {
 }
 
 @test "check-branch-notexist: can detect branch DOES exist" {
-  # skip
   source ${profile_script}
   
   local V_NEW="123.456.7"
@@ -320,7 +303,6 @@ jsonfile_get_ver() {
 }
 
 @test "check-branch-notexist: can confirm branch DOES'NT exist" {
-  # skip
   source ${profile_script}
   
   local V_NEW="123.456.78338834"
@@ -329,8 +311,7 @@ jsonfile_get_ver() {
   assert_success
 }
 
-@test "do-branch: can create a release branch" {
-  # skip
+@test "do-branch: can create a release branch" {  
   source ${profile_script}
   
   local V_NEW="123.456.7"
@@ -360,11 +341,13 @@ jsonfile_get_ver() {
   assert_success
 }
 
+@test "check-tag-exists: check it exists" {
   source ${profile_script}
   V_NEW="35.12.5"
   REL_NOTE=
   CLEANUP_CMDS+=("git tag -d v${V_NEW}")
 
+  # run do-tag
   git tag -a v${V_NEW} -m "Test tag"
 
   run check-tag-exists

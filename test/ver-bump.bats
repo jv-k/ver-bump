@@ -51,7 +51,7 @@ get_help_msg() {
 create_ver_file() {
   F_TEMPS+=($(mktemp ${repo_dir}/XXXXXXXXXXXXXXXXXXXX)) # push
   F_TMP=${F_TEMPS[${#F_TEMPS[@]}-1]} # last pushed
-  echo "\"version\": \"${V_TEST}\"," > $F_TMP
+  printf "{ \n\"version\": \"${V_TEST}\"\n }" > $F_TMP
   VER_FILE=$F_TMP # set value used in test target
 }
 
@@ -179,7 +179,7 @@ jsonfile_get_ver() {
   assert_equal "${V_SUGGEST}" "35.12.6" 
 }
 
-@test "set-v-suggest: fails to increments non SemVerversion" {
+@test "set-v-suggest: fails to increments non SemVer version" {
   source ${profile_script}
   
   TEST_V_GOOD="35.12.5"

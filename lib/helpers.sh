@@ -263,11 +263,12 @@ bump-json-files() {
         echo -e "\n${I_ERROR} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$V_PREV"
       else
         # Write to output file
-        FILE_MSG=$( sed -i .temp "s/\"version\":\(.*\)\"$V_PREV\"/\"version\":\1\"$V_NEW\"/g; q" "$FILE" 2>&1 )
+        FILE_MSG=$( jq --arg V_NEW "$V_NEW" '.version = $V_NEW' "$FILE" > "${FILE}.temp" )
 
         if [ -z "$FILE_MSG" ]; then
           echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$V_PREV ${S_NOTICE}-> ${S_QUESTION}$V_NEW"
-          rm -f "${FILE}.temp"          
+          # rm -f "${FILE}.temp"
+          mv -f "${FILE}.temp" "${FILE}"
           # Add file change to commit message:
           GIT_MSG+="Updated $FILE, "
         fi

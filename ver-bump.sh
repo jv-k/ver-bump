@@ -26,6 +26,7 @@ VER_FILE="package.json"
 GIT_MSG=""
 REL_NOTE=""
 REL_PREFIX="release-"
+COMMIT_MSG_PREFIX="chore: " # Commit msg prefix for the file changes this script makes
 PUSH_DEST="origin"
 
 JSON_FILES=()

@@ -24,7 +24,8 @@ jobs:
       - name: setup git config
         run: |
           git config user.name "GitHub Actions Bot"
-          git config user.email "<>"      
+          git config user.email "<>"    
+          git fetch --tags  
       - name: Run BATS testing suite
         run: |
           sudo apt-get update -y

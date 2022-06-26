@@ -235,10 +235,10 @@ do-packagefile-bump() {
       exit 1
     else
       git add package.json
-      GIT_MSG+="Updated package.json, "
+      GIT_MSG+="updated package.json, "
       if [ -f package-lock.json ]; then
         git add package-lock.json
-        GIT_MSG+="Updated package-lock.json, "
+        GIT_MSG+="updated package-lock.json, "
         NOTICE_MSG+=" and <${S_NORM}package-lock.json${S_NOTICE}>"
       fi
       echo -e "\n${I_OK} ${S_NOTICE}Bumped version in ${NOTICE_MSG}."
@@ -270,7 +270,7 @@ bump-json-files() {
           # rm -f "${FILE}.temp"
           mv -f "${FILE}.temp" "${FILE}"
           # Add file change to commit message:
-          GIT_MSG+="Updated $FILE, "
+          GIT_MSG+="updated $FILE, "
         fi
       fi
 
@@ -286,7 +286,7 @@ bump-json-files() {
 # Handle VERSION file - for backward compatibility
 do-versionfile() {
   if [ -f VERSION ]; then
-    GIT_MSG+="Updated VERSION, "
+    GIT_MSG+="updated VERSION, "
     echo "$V_NEW" > VERSION # Overwrite file
     # Stage file for commit
     git add VERSION
@@ -299,7 +299,11 @@ do-versionfile() {
 get-commit-msg() {
   local CMD
   CMD=$([ ! "${V_PREV}" = "${V_NEW}" ] && echo "${V_PREV} ->" || echo "to")
-  echo Bumped "$CMD" "$V_NEW"
+  echo bumped "$CMD" "$V_NEW"
+}
+
+capitalise() {
+  echo "$(tr '[:lower:]' '[:upper:]' <<< "${1:0:1}")${1:1}"
 }
 
 # Dump git log history to CHANGELOG.md
@@ -315,7 +319,7 @@ do-changelog() {
     exit 1
   fi
 
-  [ -f CHANGELOG.md ] && ACTION_MSG="Updated" || ACTION_MSG="Created"
+  [ -f CHANGELOG.md ] && ACTION_MSG="updated" || ACTION_MSG="created"
   # Add info to commit message for later:
   GIT_MSG+="${ACTION_MSG} CHANGELOG.md, "
  
@@ -339,12 +343,12 @@ do-changelog() {
 
   mv tmpfile CHANGELOG.md
   
-  # User prompts
-  echo -e "\n${I_OK} ${S_NOTICE}${ACTION_MSG} [${S_NORM}CHANGELOG.md${S_NOTICE}] file"
   # Pause & allow user to open and edit the file:
   echo -en "\n${S_QUESTION}Make adjustments to [${S_NORM}CHANGELOG.md${S_QUESTION}] if required now. Press <enter> to continue."
   read -r
 
+  echo -e "\n${I_OK} ${S_NOTICE}$( capitalise "${ACTION_MSG}" ) [${S_NORM}CHANGELOG.md${S_NOTICE}] file."
+  
   # Stage log file, to commit later
   git add CHANGELOG.md
 }

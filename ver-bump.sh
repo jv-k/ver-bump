@@ -54,7 +54,7 @@ main() {
 
   echo -e "\n${S_LIGHT}------"
   echo -ne "\n${I_OK} ${S_NOTICE}"
-  get-commit-msg
+  capitalise "$( get-commit-msg )"
   echo -e "\n${I_END} ${GREEN}Done!\n"
 }
 

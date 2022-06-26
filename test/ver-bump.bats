@@ -143,7 +143,7 @@ jsonfile_get_ver() {
   assert_equal "${FLAG_NOCOMMIT}" "true"
 
   run process-arguments -n
-  assert_output --partial "Option set: Disable commit after tagging."
+  assert_output --partial "Option set: Disable commit after tagging"
 }
 
 @test "process-arguments: -b: set flag to disable creating a release branch" {
@@ -162,7 +162,7 @@ jsonfile_get_ver() {
   assert_equal "${FLAG_NOCHANGELOG}" "true"
 
   run process-arguments -c
-  assert_output --partial "Option set: Disable updating CHANGELOG.md file."
+  assert_output --partial "Option set: Disable updating CHANGELOG.md"
 }
 
 @test "process-arguments: fail on not-existing argument" {
@@ -370,7 +370,7 @@ jsonfile_get_ver() {
   assert_output -p "Updated [CHANGELOG.md] file"
 
   # Test CL.md actually contains the line
-  grep -F "Updated ${F_CL}, Bumped ${V_PREV} -> ${V_NEW}" $F_CL
+  grep -F "Updated ${F_CL}, bumped ${V_PREV} -> ${V_NEW}" $F_CL
   assert_success
 }
 

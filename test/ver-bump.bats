@@ -165,6 +165,15 @@ jsonfile_get_ver() {
   assert_output --partial "Option set: Disable updating CHANGELOG.md"
 }
 
+@test "process-arguments: -l: set flag to enable pausing after CHANGELOG.md is created" {
+  source ${profile_script}
+  process-arguments -l
+  assert_equal "${FLAG_CHANGELOG_PAUSE}" "true"
+
+  run process-arguments -l
+  assert_output --partial "Option set: Pause enabled for amending CHANGELOG.md"
+}
+
 @test "process-arguments: fail on not-existing argument" {
   local TEST_OPT="-X"
   source ${profile_script}

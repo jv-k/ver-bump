@@ -45,9 +45,9 @@ usage() {
   echo -e "$S_WARN-f$S_NORM <filename.json>\tUpdate version number inside JSON files."\
           "\n\t\t\tFor multiple files, add a separate -f option for each one, for example:"\
           "\n\t\t\t${S_NORM}ver-bump -f src/plugin/package.json -f composer.json"
-  echo -e "$S_WARN-p$S_NORM \t\t\tPush release branch to ORIGIN. "
-  echo -e "$S_WARN-h$S_NORM \t\t\tShow this help message. \n"
+  echo -e "$S_WARN-p$S_NORM \t\t\tPush release branch to ORIGIN."
   echo -e "$S_WARN-l$S_NORM \t\t\tPause enabled for amending CHANGELOG.md"
+  echo -e "$S_WARN-h$S_NORM \t\t\tShow this help message.\n"
 
   echo -e "${S_NORM}${BOLD}Credits:${S_LIGHT}"\
           "\n${SCRIPT_AUTH} ${RESET}"\
@@ -87,7 +87,7 @@ process-arguments() {
       ;;
       n )
         FLAG_NOCOMMIT=true
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable commit after tagging."
+        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable commit after tagging release."
       ;;
       b )
         FLAG_NOBRANCH=true
@@ -95,7 +95,7 @@ process-arguments() {
       ;;
       c )
         FLAG_NOCHANGELOG=true
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable updating CHANGELOG.md file."
+        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable updating CHANGELOG.md automatically with new commits since last release tag."
       ;;
       l )
         FLAG_CHANGELOG_PAUSE=true

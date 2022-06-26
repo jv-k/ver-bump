@@ -131,7 +131,10 @@ $ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>]..
 -p <repository alias>   Push commits to remote repository, eg `-p Origin`
 -n                      Turns off automatic commit
                             * You may want to do that yourself, for example.
--b                      Don't create automatic `release-<version>` branch
+-b                      Don't create automatic `release-<version>` branch.
+-c                      Disable updating CHANGELOG.md automatically with new commits 
+                        since last release tag.
+-l                      Pause enabled for amending CHANGELOG.md
 -h 	                    Show help message.
 ```
 
@@ -190,7 +193,6 @@ $ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>]..
 
 ## Todo — General ⏳
   - [ ] Docs: Create GIF screenshot  
-  - [ ] Docs: Document all remaining switches
   - [ ] Docs: Instructions for creating a Gh package
   - [ ] Docs: General tidy-up of the concepts
 
@@ -206,6 +208,7 @@ $ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>]..
   - [✔️] Docs: Inform user how the script works in the current branch
   - [✔️] Docs: Local `npm` install
   - [✔️] Docs: Semver + Gh branching model 
+  - [✔️] Docs: Document all remaining switches
 
 ## Contributing
 I'd love you to contribute to `@jv-k/ver-bump`, [pull requests](https://github.com/jv-k/ver-bump/issues/new/choose) are welcome for submitting issues and bugs!

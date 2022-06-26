@@ -46,6 +46,9 @@ usage() {
           "\n\t\t\tFor multiple files, add a separate -f option for each one, for example:"\
           "\n\t\t\t${S_NORM}ver-bump -f src/plugin/package.json -f composer.json"
   echo -e "$S_WARN-p$S_NORM \t\t\tPush release branch to ORIGIN."
+  echo -e "$S_WARN-n$S_NORM \t\t\tDisable commit after tagging release."
+  echo -e "$S_WARN-b$S_NORM \t\t\tDisable commit to a new release-x.x.x branch."
+  echo -e "$S_WARN-c$S_NORM \t\t\tDisable updating CHANGELOG.md automatically with new commits since last release tag."
   echo -e "$S_WARN-l$S_NORM \t\t\tPause enabled for amending CHANGELOG.md"
   echo -e "$S_WARN-h$S_NORM \t\t\tShow this help message.\n"
 

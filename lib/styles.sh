@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# shellcheck disable=SC2034
+
 # ANSI/VT100 colours
 YELLOW='\033[1;33m'
 LIGHTYELLOW='\033[0;33m'
@@ -30,7 +32,8 @@ RAINBOW=(
   "$(printf '\033[38;5;163m')"
 )
 
-RAINBOW_RST=$(printf $RESET)
+# shellcheck disable=SC2059
+RAINBOW_RST=$(printf "$RESET")
 
 # Some preset styles
 S_NORM="${WHITE}"
@@ -39,11 +42,3 @@ S_NOTICE="${GREEN}"
 S_QUESTION="${YELLOW}"
 S_WARN="${LIGHTRED}"
 S_ERROR="${RED}"
-
-# Notification icons
-I_OK="✅"; 
-I_TIME="⏳"; 
-I_STOP="🚫"; 
-I_ERROR="❌";
-I_WARN="❗️";
-I_END="🏁";

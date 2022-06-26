@@ -1,3 +1,61 @@
+## 1.1.0 (June 26, 2022)
+- chore: Updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.0.5 -> 1.1.0
+- tests: fixed "would clobber existing tag" error when running action
+- docs: document remaining CLI switches
+- docs: updated badges for new gh actions
+- tests: added test for new -l CLI argument
+- tests: update tests after refactors / chores that changed prompts
+- feat: added previously implemented options to the CLI help prompt
+- chore: changed help + prompt messages for clarity
+- chore:  small refactor + capitalise first letter of changlog entry for files that ver-bump changes - following from d4770e5
+- feat: fixes #15 added -l argument to the CLI for optional pausing right after changelog is created, - the default previously was to pause and wait for the user to check the changelog and press enter to continue - the default now is to bypass the prompt and make it optional by supplying the -l argument
+- feat: added option to add a commit message prefix - By default "chore:  " is used
+- refactor: change changelog & commit msg for changes the script makes -> lowercase
+- tests: add fetch remote tags - fixes bats test failing when git history needs to be retrieved
+- tests: changed versionfile bump tool from sed -> jq
+- tests: Fixed changelog.md test
+- chore: cleaned up unnecessary comments
+- tests: fixed check-tag-exists assert
+- tests: added test: check tag doesn't exist
+- tests: changed functions to pass shellcheck - the `` Command Substitution that was changed to $() notation is difficult to make work, because of needed multiple double quotes, hence made them pass using exceptions
+- chore: moved functions around for correct order
+- merge: branch 'chore-unit-tests' into main - merge to add all the new testing functions to github actions
+- tests: created test runner action
+- chore: renamed test runner npm task for clarity
+- chore: rename bats installer script
+- merge: branch 'main' into chore-unit-tests - grab latest changes from main development branch
+- merge: branch 'tests-shellcheck' into main
+- chore: added shellcheck + changed bash scripts as per recommended
+- chore: Rename release action for clarity
+- tests: add tests for branch functions
+- tests: dev commit for push/branch/commit functions
+- Merge branch 'main' into chore-unit-tests
+- refactor: in bump json files fn, changed to V_PREV -> V_NEW like rest of code + added detection for when version number will remain the same
+- refactor: corrected do-changelog message about existing file
+- refactor: corrected function name
+- docs: moved TODO.md inside README.md + deleted file
+- tests: clean up test set-up + added tests - added test for do-packagefile-bump - added test for bump-json-files success + failure + if no version is found (3 tests) - added test for check-tag-exists - added test for do-changelog
+- tests: add bats-mock submodule
+- tests: Update npm test run cmds + update Bats module
+- Merge branch 'main' into chore-unit-tests
+- Merge branch 'refactor-tests' into main
+- tests: Added install script for BATS test runner
+- tests: First commit of batch of unit tests
+- refactor: abstractified version suggestion algorithm + changed the new desired version number var name + cleanup
+- refactor(for tests): changed exit codes for proper error handling in tests
+- refactor(for tests): disable msg styles when sourced + move main functions into main loop - separated styles and icons in prep for test regime, as the styles within the echo statements made them untestable - grabbing output with formatting failed when compared to plain text, or text with the same escape characters. - now the styles don't load when ver-bumped is sourced for testing with BATS
+- bugfix: fixed -c disable changelog switch not taking arguments
+- Merge branch 'bug-default-version' into main
+- fix: failing on when version number unchanged and previously not bumped (#14)
+- refactor: change tagging fn for cleaner code in stable module
+- merge: branch 'release-1.0.5' into stable
+- merge: branch 'release-1.0.5' into main
+- Merge branch 'release-1.0.4' into stable
+- Merge pull request #13 from jv-k/main
+- Merge branch 'release-1.0.3' into stable
+- Merge branch 'stable' of github.com:jv-k/ver-bump into stable
+- Update docs - fixed broken contrib & license urls
+
 ## 1.0.5 (February 04, 2022)
 - Updated package.json, Updated package-lock.json, Updated CHANGELOG.md, Bumped 1.0.4 –> 1.0.5
 - fix: Removed cross-env dependency. Unreliable detection of package.json parameters. No dependencies now!

@@ -314,10 +314,10 @@ capitalise() {
 # Dump git log history to CHANGELOG.md
 do-changelog() {
   [ "$FLAG_NOCHANGELOG" = true ] && return
-  local LOG_MSG RANGE
+  local COMMITS_MSG LOG_MSG RANGE
   
   RANGE=$([ "$(git tag -l v"${V_PREV}")" ] && echo "v${V_PREV}...HEAD")
-  LOG_MSG=$( git log --pretty=format:"- %s" "${RANGE}" 2>&1 )
+  COMMITS_MSG=$( git log --pretty=format:"- %s" "${RANGE}" 2>&1 )
   # shellcheck disable=SC2181
   if [ ! "$?" -eq 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error getting commit history since last version bump for logging to CHANGELOG.\n\n$LOG_MSG\n"
@@ -333,9 +333,11 @@ do-changelog() {
 
   # Log the bumping commit:
   # - The final commit is done after do-changelog(), so we need to create the log entry for it manually:
-  echo "- ${GIT_MSG}$(get-commit-msg)" >> tmpfile
+  LOG_MSG="${GIT_MSG}$(get-commit-msg)"
+  LOG_MSG="$( capitalise "${LOG_MSG}" )" # Capitalise first letter
+  echo "- ${COMMIT_MSG_PREFIX}${LOG_MSG}" >> tmpfile
   # Add previous commits
-  [ -n "$LOG_MSG" ] && echo "$LOG_MSG" >> tmpfile
+  [ -n "$COMMITS_MSG" ] && echo "$COMMITS_MSG" >> tmpfile
   
   echo -en "\n" >> tmpfile
 

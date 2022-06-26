@@ -377,7 +377,7 @@ do-commit() {
 
   GIT_MSG+="$(get-commit-msg)" 
   echo -e "\n${S_NOTICE}Committing..."
-  COMMIT_MSG=$( git commit -m "${GIT_MSG}" 2>&1 )
+  COMMIT_MSG=$( git commit -m "${COMMIT_MSG_PREFIX}${GIT_MSG}" 2>&1 )
   # shellcheck disable=SC2181
   if [ ! "$?" -eq 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error\n$COMMIT_MSG\n"

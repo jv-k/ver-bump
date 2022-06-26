@@ -47,6 +47,7 @@ usage() {
           "\n\t\t\t${S_NORM}ver-bump -f src/plugin/package.json -f composer.json"
   echo -e "$S_WARN-p$S_NORM \t\t\tPush release branch to ORIGIN. "
   echo -e "$S_WARN-h$S_NORM \t\t\tShow this help message. \n"
+  echo -e "$S_WARN-l$S_NORM \t\t\tPause enabled for amending CHANGELOG.md"
 
   echo -e "${S_NORM}${BOLD}Credits:${S_LIGHT}"\
           "\n${SCRIPT_AUTH} ${RESET}"\
@@ -58,7 +59,7 @@ process-arguments() {
   local OPTIONS OPTIND OPTARG
 
   # Get positional parameters
-  while getopts ":v:p:m:f:hbnc" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
+  while getopts ":v:p:m:f:hbncl" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
     case "$OPTIONS" in
       h )
         # Show help
@@ -96,6 +97,10 @@ process-arguments() {
         FLAG_NOCHANGELOG=true
         echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable updating CHANGELOG.md file."
       ;;
+      l )
+        FLAG_CHANGELOG_PAUSE=true
+        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Pause enabled for amending CHANGELOG.md"
+      ;;      
       \? )
         echo -e "\n${I_ERROR}${S_ERROR} Invalid option: ${S_WARN}-$OPTARG" >&2
         echo
@@ -343,11 +348,13 @@ do-changelog() {
 
   mv tmpfile CHANGELOG.md
   
-  # Pause & allow user to open and edit the file:
-  echo -en "\n${S_QUESTION}Make adjustments to [${S_NORM}CHANGELOG.md${S_QUESTION}] if required now. Press <enter> to continue."
-  read -r
-
   echo -e "\n${I_OK} ${S_NOTICE}$( capitalise "${ACTION_MSG}" ) [${S_NORM}CHANGELOG.md${S_NOTICE}] file."
+  
+  # Optionally pause & allow user to open and edit the file:
+  if [ "$FLAG_CHANGELOG_PAUSE" = true ]; then
+    echo -en "\n${S_QUESTION}Make adjustments to [${S_NORM}CHANGELOG.md${S_QUESTION}] if required now. Press <enter> to continue."
+    read -r
+  fi
   
   # Stage log file, to commit later
   git add CHANGELOG.md

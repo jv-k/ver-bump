@@ -337,7 +337,7 @@ do-changelog() {
   # Log the bumping commit:
   # - The final commit is done after do-changelog(), so we need to create the log entry for it manually:
   LOG_MSG="${GIT_MSG}$(get-commit-msg)"
-  LOG_MSG="$( capitalise "${LOG_MSG}" )" # Capitalise first letter
+  # LOG_MSG="$( capitalise "${LOG_MSG}" )" # Capitalise first letter
   echo "- ${COMMIT_MSG_PREFIX}${LOG_MSG}" >> tmpfile
   # Add previous commits
   [ -n "$COMMITS_MSG" ] && echo "$COMMITS_MSG" >> tmpfile

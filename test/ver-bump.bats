@@ -379,7 +379,7 @@ jsonfile_get_ver() {
   assert_output -p "Updated [CHANGELOG.md] file"
 
   # Test CL.md actually contains the line
-  grep -F "Updated ${F_CL}, bumped ${V_PREV} -> ${V_NEW}" $F_CL
+  grep -F "updated ${F_CL}, bumped ${V_PREV} -> ${V_NEW}" $F_CL
   assert_success
 }
 

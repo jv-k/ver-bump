@@ -1,3 +1,11 @@
+## 1.1.1 (June 28, 2022)
+- chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.0 -> 1.1.1
+- bugfix: un-capitalised first letter of changelog entry for ver-bump's own commit msg - because the rest of commit messages are lowercase (personal preference... see next bullet) - probably best left to the user to capitalise or not, perhaps don't enforce it (added future option to TODO.md) - updated BATS test case for changelog output assert test
+- docs: moved todos into TODO.md
+- docs: add demo GIF
+- merge: branch 'stable' into main
+- merge: branch 'release-1.1.0' into stable
+
 ## 1.1.0 (June 26, 2022)
 - chore: Updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.0.5 -> 1.1.0
 - tests: fixed "would clobber existing tag" error when running action

@@ -1,6 +1,6 @@
 {
   "name": "ver-bump",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "This script automates bumping the git software project's version using automation. It does several things that are typically required for releasing a Git repository, like git tagging, automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files.",
   "author": "John Valai <git@jvk.to>",
   "homepage": "https://github.com/jv-k/ver-bump",

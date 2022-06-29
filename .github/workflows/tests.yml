@@ -1,7 +1,7 @@
 name: Tests
 
-# Controls when the action will run. 
-on: 
+# Controls when the action will run.
+on:
   push:
     branches: [ main ]
 
@@ -51,7 +51,7 @@ jobs:
       - name: Update packages & install shellcheck
         if: ${{ matrix.os == 'windows-latest' }}
         run: choco install shellcheck
-          
+
       - name: Test ./ver-bump.sh
         run: shellcheck -x -e SC1017 ./ver-bump.sh
 

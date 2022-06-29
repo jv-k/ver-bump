@@ -8,7 +8,7 @@
 # Description:
 #   - A handy utility that takes care of releasing Git software projects.
 # Credits:
-#   – https://github.com/jv-k/ver-bump
+#   - https://github.com/jv-k/ver-bump
 #
 
 # shellcheck disable=SC1090,SC2034

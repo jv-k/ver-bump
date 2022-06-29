@@ -17,8 +17,27 @@ It does several things that are typically required for releasing a Git repositor
 
 ## Table of Contents
 
-<!-- START doctoc -->
-<!-- END doctoc -->
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<details>
+<summary>Details</summary>
+
+- [Release Steps 👣](#release-steps-)
+  - [Verify + Prepare Release](#verify--prepare-release)
+  - [Create Release](#create-release)
+- [Release Steps: In detail 🔎](#release-steps-in-detail-)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Pre-requisites](#pre-requisites)
+  - [CLI](#cli)
+- [Options](#options)
+- [Example - create a release](#example---create-a-release)
+- [Contributing](#contributing)
+- [License](#license)
+
+</details>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Release Steps 👣
 The command `ver-bump` will execute the following steps:

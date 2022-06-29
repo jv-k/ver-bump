@@ -52,16 +52,16 @@ jobs:
         run: choco install shellcheck
           
       - name: Test ./ver-bump.sh
-        run: shellcheck -x ./ver-bump.sh
+        run: shellcheck -x -e SC1017 ./ver-bump.sh
 
       - name: Test ./lib/helpers.sh
-        run: shellcheck -x ./lib/helpers.sh
+        run: shellcheck -x -e SC1017 ./lib/helpers.sh
 
       - name: Test ./lib/styles.sh
-        run: shellcheck -x ./lib/styles.sh
+        run: shellcheck -x -e SC1017 ./lib/styles.sh
 
       - name: Test ./lib/icons.sh
-        run: shellcheck -x ./lib/icons.sh
+        run: shellcheck -x -e SC1017 ./lib/icons.sh
 
   bats-tests:
     runs-on: ubuntu-20.04

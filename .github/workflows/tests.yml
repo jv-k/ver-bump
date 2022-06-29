@@ -1,27 +1,73 @@
-name: Tests
+name: Test ver-bump
 
 # Controls when the action will run. 
-on: [push, pull_request, workflow_dispatch]
+on: 
+  push:
+    branches: [ main ]
+
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   shellcheck:
-    runs-on: ubuntu-20.04
+    name: Do `shellcheck` tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            target: Linux
+
+          - os: macos-latest
+            target: Macos
+
+          - os: windows-latest
+            target: Windows
+
     steps:
-      - uses: actions/checkout@v2
-      - name: Run shellcheck
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Update packages & install shellcheck
+        if: ${{ matrix.os == 'macos-latest' }}        
+        run: |
+          brew update
+          brew install shellcheck
+
+      - name: Update packages & install shellcheck
+        if: ${{ matrix.os == 'ubuntu-latest' }}        
         run: |
           sudo apt-get update -y
           sudo apt-get install shellcheck
-          shellcheck ./ver-bump.sh
-          shellcheck ./lib/helpers.sh
-          shellcheck ./lib/styles.sh
-          shellcheck ./lib/icons.sh
+
+      - name: Update packages & install shellcheck
+        if: ${{ matrix.os == 'windows-latest' }}        
+        run: choco install shellcheck
+          
+      - name: Test ./ver-bump.sh
+        run: shellcheck -x ./ver-bump.sh
+
+      - name: Test ./lib/helpers.sh
+        run: shellcheck -x ./lib/helpers.sh
+
+      - name: Test ./lib/styles.sh
+        run: shellcheck -x ./lib/styles.sh
+
+      - name: Test ./lib/icons.sh
+        run: shellcheck -x ./lib/icons.sh
 
   bats-tests:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - name: setup git config
+      - name: Setup git config
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"    

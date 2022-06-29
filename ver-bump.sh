@@ -11,7 +11,7 @@
 #   - https://github.com/jv-k/ver-bump
 #
 
-# shellcheck disable=SC1090,SC2034
+# shellcheck disable=SC1090,SC2034,SC1017
 true
 
 MODULE_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"

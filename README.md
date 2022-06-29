@@ -5,7 +5,7 @@
 A fully automated handy CLI utility that takes care of releasing GitHub software projects, written in 100% pure bash.
 
 ## Highlights 📦🚀
-It does several things that are typically required for releasing a Git repository:
+This tool does several things that are typically required for releasing a Git repository:
   - Create a release branch from your current branch (should be a feature or develop branch, following the [Git branch-based workflow](https://nvie.com/posts/a-successful-git-branching-model/), and [tags](https://git-scm.com/book/en/v2/Git-Basics-Tagging) the release
   - Enforces [Semantic Versioning](https://semver.org/) specification
   - Avoid potential mistakes associated with manual releases, such as forgetting a step
@@ -102,8 +102,6 @@ In order to use `ver-bump` you need:
   - To host your project code in a Git repository
   - Have Git installed in your environment
   - Have `npm` and `node` installed
-
-Note: ⚠️ `ver-bump` has only been tested on **MacOS Darwin**.
 
 ## Installation
 Install the script globally via npm, and use it in any local Git repository to release your project:

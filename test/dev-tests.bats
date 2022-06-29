@@ -1,4 +1,4 @@
-#!/usr/bin/env ./test/bats/bin/bats
+#!/usr/bin/env bats
 
 # UNIT TESTS for VER-BUMP 
 

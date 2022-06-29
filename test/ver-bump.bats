@@ -1,4 +1,4 @@
-#!/usr/bin/env ./test/bats/bin/bats
+#!/usr/bin/env bats
 
 # UNIT TESTS for VER-BUMP 
 
@@ -56,7 +56,7 @@ create_ver_file() {
 }
 
 jsonfile_get_ver() {
-  echo $( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $1 )
+  sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $1
 }
 
 # Tests #####################################################################

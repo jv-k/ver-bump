@@ -62,7 +62,6 @@ main() {
 # Execute script when it is executed as a script, and when it is brought into the environment with source (so it can be tested)
 # shellcheck disable=SC2128
 if [[ "$0" = "$BASH_SOURCE" ]]; then
-  # shellcheck source-path=lib
   source "$MODULE_DIR/lib/styles.sh" # only load when not sourced, for tests to work
   main "$@"
 fi

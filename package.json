@@ -12,7 +12,9 @@
   "bin": "./ver-bump.sh",
   "scripts": {
     "tests:install": "./install_bats.sh",
-    "tests:run": "./test/bats/bin/bats ./test/ver-bump.bats"
+    "tests:run": "./test/bats/bin/bats ./test/ver-bump.bats",
+    "tests:install:windows": "sh ./install_bats.sh",
+    "tests:run:windows": "sh ./test/bats/bin/bats ./test/ver-bump.bats"
   },
   "keywords": [
     "bash versioning",

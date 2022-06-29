@@ -1,3 +1,13 @@
+## 1.1.2 (June 29, 2022)
+- chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.1 -> 1.1.2
+- tests: renamed test for compatibility with previous badge
+- tests: ignored SC2288 - made SC fail on windows test
+- tests: disabled SC1017 checking - on windows-latest invokes error
+- tests: added more platforms for shellcheck testing
+- tests: removed shellcheck follow file directive - it's covered by using the -x switch
+- merge: pull request #18 from jv-k/stable
+- merge: pull request #17 from jv-k/release-1.1.1
+
 ## 1.1.1 (June 28, 2022)
 - chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.0 -> 1.1.1
 - bugfix: un-capitalised first letter of changelog entry for ver-bump's own commit msg - because the rest of commit messages are lowercase (personal preference... see next bullet) - probably best left to the user to capitalise or not, perhaps don't enforce it (added future option to TODO.md) - updated BATS test case for changelog output assert test

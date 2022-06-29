@@ -8,10 +8,10 @@
 # Description:
 #   - A handy utility that takes care of releasing Git software projects.
 # Credits:
-#   – https://github.com/jv-k/ver-bump
+#   - https://github.com/jv-k/ver-bump
 #
 
-# shellcheck disable=SC1090,SC2034
+# shellcheck disable=SC1090,SC2034,SC1017
 true
 
 MODULE_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
@@ -62,7 +62,6 @@ main() {
 # Execute script when it is executed as a script, and when it is brought into the environment with source (so it can be tested)
 # shellcheck disable=SC2128
 if [[ "$0" = "$BASH_SOURCE" ]]; then
-  # shellcheck source-path=lib
   source "$MODULE_DIR/lib/styles.sh" # only load when not sourced, for tests to work
   main "$@"
 fi

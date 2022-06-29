@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# shellcheck disable=SC2288
+true
+
 is_number() {
   case "$1" in
     ''|*[!0-9]*) return 0 ;;

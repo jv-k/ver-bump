@@ -11,6 +11,7 @@ on:
   workflow_dispatch:
 
   release:
+    types: [published]
 
 defaults:
   run:
@@ -24,15 +25,6 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            target: Linux
-
-          - os: macos-latest
-            target: Macos
-
-          - os: windows-latest
-            target: Windows
 
     steps:
       - name: Checkout repo
@@ -67,22 +59,13 @@ jobs:
         run: shellcheck -x -e SC1017 ./lib/icons.sh
 
   tests:
-    name: Run unit/int tests on ${{ matrix.os }}
+    name: Run test suite on ${{ matrix.os }}
     needs: shellcheck
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            target: Linux
-
-          - os: macos-latest
-            target: Macos
-
-          - os: windows-latest
-            target: Windows
 
     steps:
       - name: Checkout repo
@@ -126,9 +109,9 @@ jobs:
           npm run tests:run:windows
 
   build:
-    name: Install dependencies
+    name: Install NPM dependencies
     needs: tests
-    if: ${{ github.event.action == 'released' }}
+    if: github.event.action == 'published'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -140,7 +123,7 @@ jobs:
   publish-npm:
     name: Publish to NPM registry
     needs: build
-    if: ${{ github.event.action == 'released' }}
+    if: github.event.action == 'published'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -149,11 +132,14 @@ jobs:
         with:
           node-version: 14
           registry-url: https://registry.npmjs.org/
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-github:
     name: Publish to GitHub registry
     needs: build
-    if: ${{ github.event.action == 'released' }}
+    if: github.event.action == 'published'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -161,3 +147,8 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           registry-url: "https://npm.pkg.github.com"
+      - name: Scope package name as required by GHPR
+        run: npm init -y --scope ${{ github.repository_owner }}
+      - run: npm publish --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

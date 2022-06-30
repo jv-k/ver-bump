@@ -1,3 +1,18 @@
+## 1.1.3 (June 30, 2022)
+- chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.2 -> 1.1.3
+- tests: fixed issue with package publishing workflow
+- docs: added CI badge - removed old workflow badges
+- tests: removed old actions + fully activate CI
+- chore: created new combined ci action
+- chore: closes #21, closes #20, closes #19
+- fixed: codefactor issues with trailing spaces
+- tests: fixed codefactor code quality niggles
+- chore(docs): update TOC
+- docs: created ToC gh action
+- tests: added multi-platform bats test suite
+- docs: fixed image issue - was not showing on gh docs
+- merge: branch 'release-1.1.2' into main
+
 ## 1.1.2 (June 29, 2022)
 - chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.1 -> 1.1.2
 - tests: renamed test for compatibility with previous badge

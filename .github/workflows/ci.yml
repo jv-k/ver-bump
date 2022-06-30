@@ -4,6 +4,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 
 on:
+  push:
+
+  pull_request:
+
   workflow_dispatch:
 
 defaults:
@@ -11,7 +15,6 @@ defaults:
     shell: bash
 
 jobs:
-
   shellcheck:
     name: Run Shellcheck on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -146,7 +149,7 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-github:
     name: Publish to GitHub registry

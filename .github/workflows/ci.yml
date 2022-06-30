@@ -1,0 +1,166 @@
+name: CI
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+
+  shellcheck:
+    name: Run Shellcheck on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            target: Linux
+
+          - os: macos-latest
+            target: Macos
+
+          - os: windows-latest
+            target: Windows
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Update packages & install shellcheck
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew update
+          brew install shellcheck
+
+      - name: Update packages & install shellcheck
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install shellcheck
+
+      - name: Update packages & install shellcheck
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: choco install shellcheck
+
+      - name: Test ./ver-bump.sh
+        run: shellcheck -x -e SC1017 ./ver-bump.sh
+
+      - name: Test ./lib/helpers.sh
+        run: shellcheck -x -e SC1017 ./lib/helpers.sh
+
+      - name: Test ./lib/styles.sh
+        run: shellcheck -x -e SC1017 ./lib/styles.sh
+
+      - name: Test ./lib/icons.sh
+        run: shellcheck -x -e SC1017 ./lib/icons.sh
+
+  tests:
+    name: Run unit/int tests on ${{ matrix.os }}
+    needs: shellcheck
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            target: Linux
+
+          - os: macos-latest
+            target: Macos
+
+          - os: windows-latest
+            target: Windows
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Setup git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          git fetch --tags -f
+
+      - name: Update packages
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew update
+
+      - name: Update packages
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update -y
+
+      - name: Install Bats and Helpers
+        if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+        run: |
+          chmod +x ./install_bats.sh
+          npm run tests:install
+
+      - name: Install Bats and Helpers
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          npm run tests:install:windows
+
+      - name: Run Bats test suite
+        if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+        run: |
+          npm run tests:run
+
+      - name: Run Bats test suite
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          npm run tests:run:windows
+
+  build:
+    name: Install dependencies
+    needs: tests
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - run: npm install
+
+  publish-npm:
+    name: Publish to NPM registry
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14
+          registry-url: https://registry.npmjs.org/
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+  publish-github:
+    name: Publish to GitHub registry
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          registry-url: "https://npm.pkg.github.com"
+      - name: Scope package name as required by GHPR
+        run: npm init -y --scope ${{ github.repository_owner }}
+      - run: npm publish --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

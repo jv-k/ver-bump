@@ -1,3 +1,8 @@
+## 1.1.4 (July 01, 2022)
+- chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.3 -> 1.1.4
+- docs: fixed style issue
+- merge: branch 'release-1.1.3' into main
+
 ## 1.1.3 (June 30, 2022)
 - chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.2 -> 1.1.3
 - tests: fixed issue with package publishing workflow

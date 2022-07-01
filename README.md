@@ -152,7 +152,8 @@ $ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>]..
 -m <release message>    Custom release message
 -f <filename.json>      Update version number inside JSON files.
                             * For multiple files, add a separate -f option for each one,
-                            * For example: ./ver-bump.sh -f src/plugin/package.json -f composer.json
+                            * For example: 
+                              ./ver-bump.sh -f src/plugin/package.json -f composer.json
 -p <repository alias>   Push commits to remote repository, eg `-p Origin`
 -n                      Turns off automatic commit
                             * You may want to do that yourself, for example.
@@ -160,7 +161,7 @@ $ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>]..
 -c                      Disable updating CHANGELOG.md automatically with new commits 
                         since last release tag.
 -l                      Pause enabled for amending CHANGELOG.md
--h 	                    Show help message.
+-h                      Show help message.
 ```
 
 ## Example - create a release

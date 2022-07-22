@@ -2,6 +2,8 @@
 📦 A handy utility that takes care of releasing Git software projects
 
 ### Todo — General ⏳
+
+- [ ] chore: write better comments for functions and modules
 - [ ] docs: Instructions for creating a Gh package
 - [ ] docs: General tidy-up of the concepts
 - [ ] feature: Add switches for increasing MAJOR|MINOR|PATCH

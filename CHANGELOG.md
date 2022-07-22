@@ -1,3 +1,9 @@
+## 1.1.5 (July 22, 2022)
+- chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.4 -> 1.1.5
+- Merge pull request #23 from jv-k/fix-npmissue
+- bugfix: allow bumping when uncommitted changes exist
+- merge: branch 'release-1.1.4' into main
+
 ## 1.1.4 (July 01, 2022)
 - chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.3 -> 1.1.4
 - docs: fixed style issue

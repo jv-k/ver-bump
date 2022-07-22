@@ -239,7 +239,7 @@ do-packagefile-bump() {
   if [ "$V_NEW" = "$V_PREV" ]; then
     echo -e "\n${I_WARN}${NOTICE_MSG}${S_WARN} already contains version ${V_NEW}."
   else
-    NPM_MSG=$( npm version "${V_NEW}" --git-tag-version=false 2>&1 )
+    NPM_MSG=$( npm version "${V_NEW}" --git-tag-version=false --force 2>&1 )
     # shellcheck disable=SC2181
     if [ ! "$?" -eq 0 ]; then
       echo -e "\n${I_STOP} ${S_ERROR}Error updating <package.json> and/or <package-lock.json>.\n\n$NPM_MSG\n"

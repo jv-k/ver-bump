@@ -14,7 +14,8 @@
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/ver-bump.bats",
     "tests:install:windows": "sh ./install_bats.sh",
-    "tests:run:windows": "sh ./test/bats/bin/bats ./test/ver-bump.bats"
+    "tests:run:windows": "sh ./test/bats/bin/bats ./test/ver-bump.bats",
+    "docs:build": "bashdoc --color --watch --location ./docs --template ./docs/tpl/index.hbs ./ver-bump.sh"
   },
   "keywords": [
     "bash versioning",
@@ -24,5 +25,8 @@
     "ver-bump",
     "bumping",
     "versioning-workflow"
-  ]
+  ],
+  "devDependencies": {
+    "cz-conventional-changelog": "^3.3.0"
+  }
 }

@@ -271,7 +271,7 @@ bump-json-files() {
       if [ -z "$V_PREV" ]; then
         echo -e "\n${I_STOP} ${S_ERROR}Error updating version in file <${S_NORM}$FILE${S_NOTICE}> - a version name/value pair was not found to replace!"
       elif [ "$V_PREV" = "$V_NEW" ]; then
-        echo -e "\n${I_ERROR} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$V_PREV"
+        echo -e "\n${I_WARN} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$V_PREV"
       else
         # Write to output file
         FILE_MSG=$( jq --arg V_NEW "$V_NEW" '.version = $V_NEW' "$FILE" > "${FILE}.temp" )
@@ -323,7 +323,7 @@ do-changelog() {
   local COMMITS_MSG LOG_MSG RANGE
   
   RANGE=$([ "$(git tag -l v"${V_PREV}")" ] && echo "v${V_PREV}...HEAD")
-  COMMITS_MSG=$( git log --pretty=format:"- %s" "${RANGE}" 2>&1 )
+  COMMITS_MSG=$( git log --pretty=format:"- %s" ${RANGE} 2>&1 )
   # shellcheck disable=SC2181
   if [ ! "$?" -eq 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error getting commit history since last version bump for logging to CHANGELOG.\n\n$LOG_MSG\n"

@@ -323,6 +323,7 @@ do-changelog() {
   local COMMITS_MSG LOG_MSG RANGE
   
   RANGE=$([ "$(git tag -l v"${V_PREV}")" ] && echo "v${V_PREV}...HEAD")
+  # shellcheck disable=SC2086
   COMMITS_MSG=$( git log --pretty=format:"- %s" ${RANGE} 2>&1 )
   # shellcheck disable=SC2181
   if [ ! "$?" -eq 0 ]; then

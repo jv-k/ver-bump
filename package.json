@@ -1,6 +1,6 @@
 {
   "name": "ver-bump",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "This script automates bumping the git software project's version using automation. It does several things that are typically required for releasing a Git repository, like git tagging, automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files.",
   "author": "John Valai <git@jvk.to>",
   "homepage": "https://github.com/jv-k/ver-bump",
@@ -14,7 +14,8 @@
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/ver-bump.bats",
     "tests:install:windows": "sh ./install_bats.sh",
-    "tests:run:windows": "sh ./test/bats/bin/bats ./test/ver-bump.bats"
+    "tests:run:windows": "sh ./test/bats/bin/bats ./test/ver-bump.bats",
+    "docs:build": "bashdoc --color --watch --location ./docs --template ./docs/tpl/index.hbs ./ver-bump.sh"
   },
   "keywords": [
     "bash versioning",
@@ -24,5 +25,8 @@
     "ver-bump",
     "bumping",
     "versioning-workflow"
-  ]
+  ],
+  "devDependencies": {
+    "cz-conventional-changelog": "^3.3.0"
+  }
 }

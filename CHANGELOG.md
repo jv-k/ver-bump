@@ -1,3 +1,11 @@
+## 1.1.6 (November 06, 2022)
+- chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.5 -> 1.1.6
+- fix: disabled SC2086 double quote warning - The version tag isn't a concern if it were split
+- fix: fixed bug when there's not previous tag - issue arises when there are commits, but no previous tag is present - bump failed at grabbing previous commit history for building the changlelog
+- chore: added commitizen
+- docs: added better comments task in TODO.md
+- merge: branch 'release-1.1.5' into main
+
 ## 1.1.5 (July 22, 2022)
 - chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.4 -> 1.1.5
 - Merge pull request #23 from jv-k/fix-npmissue

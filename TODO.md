@@ -3,6 +3,7 @@
 
 ### Todo — General ⏳
 
+- [ ] refactor: use https://github.com/basherpm/basher instead of NPM, or in addition to it
 - [ ] chore: write better comments for functions and modules
 - [ ] docs: Instructions for creating a Gh package
 - [ ] docs: General tidy-up of the concepts

@@ -11,7 +11,7 @@ is_number() {
 }
 
 # Show credits & help
-usage() { 
+usage() {
   local SCRIPT_VER SCRIPT_HOME
   # NPM environment variables are fetched with cross-platform tool cross-env (overkill to use a dependency, but seems the only way AFAIK to get npm vars)
   SCRIPT_VER=$( cd "$MODULE_DIR" && grep version package.json | head -1 )
@@ -41,7 +41,7 @@ usage() {
 
   echo -e "\n${S_NORM}${BOLD}Usage:${RESET}"\
           "\n${SCRIPT_NAME} [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-c] [-p] [-h]" 1>&2; 
-  
+
   echo -e "\n${S_NORM}${BOLD}Options:${RESET}"
   echo -e "$S_WARN-v$S_NORM <version number>\tSpecify a manual version number"
   echo -e "$S_WARN-m$S_NORM <release message>\tCustom release message."
@@ -106,17 +106,17 @@ process-arguments() {
       l )
         FLAG_CHANGELOG_PAUSE=true
         echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Pause enabled for amending CHANGELOG.md"
-      ;;      
+      ;;
       \? )
         echo -e "\n${I_ERROR}${S_ERROR} Invalid option: ${S_WARN}-$OPTARG" >&2
         echo
         exit 1
-      ;;        
+      ;;
       : )
         echo -e "\n${I_ERROR}${S_ERROR} Option ${S_WARN}-$OPTARG ${S_ERROR}requires an argument." >&2
         echo
         exit 1
-      ;;      
+      ;;
     esac
   done
 }
@@ -125,7 +125,7 @@ process-arguments() {
 check-commits-exist() {
   if ! git rev-parse HEAD &> /dev/null; then
     echo -e "\n${I_STOP} ${S_ERROR}Your current branch doesn't have any commits yet. Can't tag without at least one commit." >&2
-    echo    
+    echo
     exit 1
   fi
 }
@@ -135,7 +135,7 @@ check-commits-exist() {
 
 # - If <package.json> doesn't exist, warn + exit
 # - If -v specified, set version from that
-# - Else, 
+# - Else,
 #   - Grab from package.json
 #   - Suggest incremented number
 #   - Give prompt to user to modify
@@ -146,7 +146,7 @@ check-commits-exist() {
 # — MINOR version when you add functionality in a backwards compatible manner, and
 # — PATCH version when you make backwards compatible bug fixes.
 process-version() {
-  # As a minimum pre-requisite ver-bump needs a version number from a JSON file 
+  # As a minimum pre-requisite ver-bump needs a version number from a JSON file
   # to read + bump. If it doesn't exist, throw an error + exit:
   if [ -f "$VER_FILE" ] && [ -s "$VER_FILE" ]; then
     # Get the existing version number
@@ -171,15 +171,15 @@ process-version() {
 
   # If a version number is supplied by the user with [-v <version number>] — use it!
   if [ -n "$V_USR_SUPPLIED" ]; then
-    echo -e "\n${S_NOTICE}You selected version using [-v]:" "${S_WARN}${V_USR_SUPPLIED}" 
+    echo -e "\n${S_NOTICE}You selected version using [-v]:" "${S_WARN}${V_USR_SUPPLIED}"
     V_NEW="${V_USR_SUPPLIED}"
   else
     # Display a suggested version
     echo -ne "\n${S_QUESTION}Enter a new version number or press <enter> to use [${S_NORM}$V_SUGGEST${S_QUESTION}]: "
     echo -ne "$S_WARN"
     read -r V_USR_INPUT
-    
-    if [ "$V_USR_INPUT" = "" ]; then 
+
+    if [ "$V_USR_INPUT" = "" ]; then
       # User accepted the suggested version
       V_NEW=$V_SUGGEST
     else
@@ -190,17 +190,17 @@ process-version() {
 
 set-v-suggest() {
   local IS_NO V_PREV_LIST V_MAJOR V_MINOR V_PATCH
-  
+
   IS_NO=0
   # shellcheck disable=SC2207
   V_PREV_LIST=( $( echo "$1" | tr '.' ' ' ) )
-  V_MAJOR=${V_PREV_LIST[0]}; 
-  V_MINOR=${V_PREV_LIST[1]}; 
+  V_MAJOR=${V_PREV_LIST[0]};
+  V_MINOR=${V_PREV_LIST[1]};
   V_PATCH=${V_PREV_LIST[2]};
 
   is_number "$V_MAJOR"; (( IS_NO = "$?" ))
   is_number "$V_MINOR"; (( IS_NO = "$?" && "$IS_NO "))
-  
+
   # If major & minor are numbers, then proceed to increment patch
   if [ "$IS_NO" = 1 ]; then
     is_number "$V_PATCH";
@@ -210,7 +210,7 @@ set-v-suggest() {
       return;
     fi
   fi
-  
+
   echo -e "\n${I_WARN} ${S_WARN}Warning: ${S_QUESTION}${1}${S_WARN} doesn't look like a SemVer compatible version number! Couldn't automatically bump the patch value. \n"
   # If patch not a number, do nothing, keep the input
   V_SUGGEST="$1"
@@ -234,7 +234,7 @@ check-tag-exists() {
   fi
 }
 
-do-packagefile-bump() {  
+do-packagefile-bump() {
   NOTICE_MSG="<${S_NORM}package.json${S_NOTICE}>"
   if [ "$V_NEW" = "$V_PREV" ]; then
     echo -e "\n${I_WARN}${NOTICE_MSG}${S_WARN} already contains version ${V_NEW}."
@@ -260,7 +260,7 @@ do-packagefile-bump() {
 # Change `version:` value in JSON files, like packager.json, composer.json, etc
 bump-json-files() {
   # if [ "$FLAG_JSON" != true ]; then return; fi
-  
+
   JSON_PROCESSED=( ) # holds filenames after they've been changed
 
   for FILE in "${JSON_FILES[@]}"; do
@@ -321,7 +321,7 @@ capitalise() {
 do-changelog() {
   [ "$FLAG_NOCHANGELOG" = true ] && return
   local COMMITS_MSG LOG_MSG RANGE
-  
+
   RANGE=$([ "$(git tag -l v"${V_PREV}")" ] && echo "v${V_PREV}...HEAD")
   # shellcheck disable=SC2086
   COMMITS_MSG=$( git log --pretty=format:"- %s" ${RANGE} 2>&1 )
@@ -334,7 +334,7 @@ do-changelog() {
   [ -f CHANGELOG.md ] && ACTION_MSG="updated" || ACTION_MSG="created"
   # Add info to commit message for later:
   GIT_MSG+="${ACTION_MSG} CHANGELOG.md, "
- 
+
   # Add heading
   echo "## $V_NEW ($NOW)" > tmpfile
 
@@ -345,7 +345,7 @@ do-changelog() {
   echo "- ${COMMIT_MSG_PREFIX}${LOG_MSG}" >> tmpfile
   # Add previous commits
   [ -n "$COMMITS_MSG" ] && echo "$COMMITS_MSG" >> tmpfile
-  
+
   echo -en "\n" >> tmpfile
 
   if [ -f CHANGELOG.md ]; then
@@ -356,20 +356,20 @@ do-changelog() {
   fi
 
   mv tmpfile CHANGELOG.md
-  
+
   echo -e "\n${I_OK} ${S_NOTICE}$( capitalise "${ACTION_MSG}" ) [${S_NORM}CHANGELOG.md${S_NOTICE}] file."
-  
+
   # Optionally pause & allow user to open and edit the file:
   if [ "$FLAG_CHANGELOG_PAUSE" = true ]; then
     echo -en "\n${S_QUESTION}Make adjustments to [${S_NORM}CHANGELOG.md${S_QUESTION}] if required now. Press <enter> to continue."
     read -r
   fi
-  
+
   # Stage log file, to commit later
   git add CHANGELOG.md
 }
 
-# 
+#
 do-branch() {
   [ "$FLAG_NOBRANCH" = true ] && return
 
@@ -382,8 +382,8 @@ do-branch() {
   else
     echo -e "\n${I_STOP} ${S_ERROR}Error\n$BRANCH_MSG\n"
     exit 1
-  fi  
-  
+  fi
+
   # REL_PREFIX
 }
 
@@ -391,7 +391,7 @@ do-branch() {
 do-commit() {
   [ "$FLAG_NOCOMMIT" = true ] && return
 
-  GIT_MSG+="$(get-commit-msg)" 
+  GIT_MSG+="$(get-commit-msg)"
   echo -e "\n${S_NOTICE}Committing..."
   COMMIT_MSG=$( git commit -m "${COMMIT_MSG_PREFIX}${GIT_MSG}" 2>&1 )
   # shellcheck disable=SC2181
@@ -400,7 +400,7 @@ do-commit() {
     exit 1
   else
     echo -e "\n${I_OK} ${S_NOTICE}$COMMIT_MSG"
-  fi  
+  fi
 }
 
 # Create a Git tag using the SemVar
@@ -418,12 +418,12 @@ do-tag() {
 # Pushes files + tags to remote repo. Changes are staged by earlier functions
 do-push() {
   [ "$FLAG_NOCOMMIT" = true ] && return
-  
+
   if [ "$FLAG_PUSH" = true ]; then
     CONFIRM="Y"
   else
     echo -ne "\n${S_QUESTION}Push tags to <${S_NORM}${PUSH_DEST}${S_QUESTION}>? [${S_NORM}N/y${S_QUESTION}]: "
-    read -r CONFIRM  
+    read -r CONFIRM
   fi
 
   case "$CONFIRM" in
@@ -435,7 +435,7 @@ do-push() {
         # exit 1
       else
         echo -e "\n${I_OK} ${S_NOTICE}$PUSH_MSG"
-      fi  
+      fi
     ;;
-  esac  
+  esac
 }

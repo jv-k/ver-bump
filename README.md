@@ -36,7 +36,8 @@ It does several things that are typically required for releasing a Git repositor
   - [Pre-requisites](#pre-requisites)
   - [CLI](#cli)
 - [Options](#options)
-- [Example - create a release](#example---create-a-release)
+- [Example](#example)
+- [Tests](#tests)
 - [Contributing](#contributing)
 - [License](#license)
 

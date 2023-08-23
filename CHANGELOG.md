@@ -1,3 +1,11 @@
+## 1.1.7 (August 23, 2023)
+- chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.6 -> 1.1.7
+- docs: added testing section
+- docs: fix linting issues
+- docs: add switcher feat to todos
+- docs: add basher deploy to todos
+- merge branch: 'release-1.1.6' into main
+
 ## 1.1.6 (November 06, 2022)
 - chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.5 -> 1.1.6
 - fix: disabled SC2086 double quote warning - The version tag isn't a concern if it were split

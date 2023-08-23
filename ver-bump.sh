@@ -63,5 +63,5 @@ main() {
 # shellcheck disable=SC2128
 if [[ "$0" = "$BASH_SOURCE" ]]; then
   source "$MODULE_DIR/lib/styles.sh" # only load when not sourced, for tests to work
-  # main "$@"
+  main "$@"
 fi

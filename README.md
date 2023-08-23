@@ -238,7 +238,69 @@ $ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>]..
 
     $ git merge --no-ff release-1.0.1 # Merge the new release branch to your development branch
     ```
-    
+
+## Tests
+
+This project uses [bats](https://github.com/bats-core/bats-core) to test the functionality of ver-bump. 
+
+To run the tests, first install the pre-requisites:
+
+Linux/MacOS: 
+
+```sh
+$ npm run tests:install
+```
+
+Windows:
+
+```sh
+$ npm run tests:install:windows
+```
+
+And finally, run the test suite:
+
+```sh
+$ npm run tests:run
+```
+
+Output:
+
+```sh
+ver-bump.bats
+ ✓ can run script
+ ✓ process-arguments: -h: display help message
+ ✓ process-arguments: -v: fail when not supplying version
+ ✓ process-arguments: -v x.x.x: succeed when supplying version
+ ✓ process-arguments: -m: fail when not supplying release note
+ ✓ process-arguments: -m <note>: succeed when supplying release note
+ ✓ process-arguments: -f: fail when not supplying filenames
+ ✓ process-arguments: -f <filename.json>: succeed with multiple filenames
+ ✓ process-arguments: -p: fail when not supplying push destination
+ ✓ process-arguments: -p <repo destination>: succeed when supplying a destination
+ ✓ process-arguments: -n: set flag to prevent committing at the end
+ ✓ process-arguments: -b: set flag to disable creating a release branch
+ ✓ process-arguments: -c: set flag to disable creating/updating CHANGELOG.md
+ ✓ process-arguments: -l: set flag to enable pausing after CHANGELOG.md is created
+ ✓ process-arguments: fail on not-existing argument
+ ✓ set-v-suggest: increments version
+ ✓ set-v-suggest: fails to increments non SemVer version
+ ✓ process-version: fail on entering non-SemVer input
+ ✓ process-version: patch of the version from json file should be bumped +1
+ ✓ do-packagefile-bump: can bump version in package.json + lock file
+ ✓ bump-json-files: can bump version in a json file
+ ✓ bump-json-files: can fail bumping a json file when a version already exists in file
+ ✓ bump-json-files: can fail bumping a json file when no version found inside it
+ ✓ check-branch-notexist: can detect branch DOES exist
+ ✓ check-branch-notexist: can confirm branch DOES'NT exist
+ ✓ do-branch: can create a release branch
+ ✓ do-tag: create a tag
+ ✓ check-tag-exists: check doesn't exist
+ ✓ check-tag-exists: check it exists
+ ✓ do-changelog: can create a CHANGELOG.md
+
+30 tests, 0 failures
+```
+
 ## Contributing
 
 I'd love you to contribute to `@jv-k/ver-bump`, [pull requests](https://github.com/jv-k/ver-bump/issues/new/choose) are welcome for submitting issues and bugs!

@@ -1,12 +1,12 @@
 #!/usr/bin/env bats
 
-# UNIT TESTS for VER-BUMP 
+# UNIT TESTS for VER-BUMP
 
 # Testing everything that could possibly break 🤡
 
-# Note: The RUN helper executes its argument(s) in a subshell, 
-# so if writing tests against environmental side-effects like a 
-# variable’s value being changed, these changes will not persist 
+# Note: The RUN helper executes its argument(s) in a subshell,
+# so if writing tests against environmental side-effects like a
+# variable’s value being changed, these changes will not persist
 # after run completes.
 
 setup() {
@@ -36,10 +36,10 @@ teardown() {
 run_cleanup_cmds() {
   for F in "${F_TEMPS[@]}"; do
     [ -f $F ] && rm -f $F && git reset -- $F >&2
-  done  
+  done
 
   for (( i = 0; i < ${#CLEANUP_CMDS[@]} ; i++ )); do
-    # Run each command in array 
+    # Run each command in array
     eval "${CLEANUP_CMDS[$i]}"
   done
 }
@@ -111,7 +111,7 @@ jsonfile_get_ver() {
   assert_equal "${JSON_FILES[0]}" "${TEST_FILENAMES[0]}"
   assert_equal "${JSON_FILES[1]}" "${TEST_FILENAMES[1]}"
   assert_equal "${JSON_FILES[2]}" "${TEST_FILENAMES[2]}"
-  
+
   # Test info messages
   JSON_FILES=()
   run process-arguments -f "${TEST_FILENAMES[0]}" -f "${TEST_FILENAMES[1]}" -f "${TEST_FILENAMES[2]}"
@@ -185,12 +185,12 @@ jsonfile_get_ver() {
   source ${profile_script}
 
   set-v-suggest "35.12.5" || return 1
-  assert_equal "${V_SUGGEST}" "35.12.6" 
+  assert_equal "${V_SUGGEST}" "35.12.6"
 }
 
 @test "set-v-suggest: fails to increments non SemVer version" {
   source ${profile_script}
-  
+
   TEST_V_GOOD="35.12.5"
   TEST_V_GOOD_INC="35.12.6"
   TEST_V_BAD="35.12.thiswontincrement"
@@ -199,7 +199,7 @@ jsonfile_get_ver() {
   assert_equal "${V_SUGGEST}" "${TEST_V_GOOD_INC}"
 
   set-v-suggest "${TEST_V_BAD}" || return 1
-  assert_equal "${V_SUGGEST}" "${TEST_V_BAD}" 
+  assert_equal "${V_SUGGEST}" "${TEST_V_BAD}"
 
   run set-v-suggest "${TEST_V_BAD}" || return 1
   assert_output --partial "Warning: ${TEST_V_BAD} doesn't look like a SemVer compatible version"
@@ -207,7 +207,7 @@ jsonfile_get_ver() {
 
 @test "process-version: fail on entering non-SemVer input" {
   source ${profile_script}
-  
+
   V_TEST="99.88.77"
   V_TEST_INPUT="12.wrong.1"
   create_ver_file
@@ -220,18 +220,18 @@ jsonfile_get_ver() {
 
 @test "process-version: patch of the version from json file should be bumped +1" {
   source ${profile_script}
-  
+
   V_TEST="35.12.5"
   create_ver_file
-  
-  process-version <<< "" || return 1 
+
+  process-version <<< "" || return 1
   assert_equal "${V_PREV}" "${V_TEST}"
-  assert_equal "${V_NEW}" "35.12.6" 
+  assert_equal "${V_NEW}" "35.12.6"
 }
 
 @test "do-packagefile-bump: can bump version in package.json + lock file" {
   source ${profile_script}
-    
+
   local pkg="${repo_dir}/package.json"
   local pkg_lock="${repo_dir}/package-lock.json"
 
@@ -248,20 +248,20 @@ jsonfile_get_ver() {
   V_NEW="35.12.23"
   run do-packagefile-bump
   assert_output -p "Bumped version in <package.json> and <package-lock.json>"
-  
+
   run jsonfile_get_ver $pkg
   assert_output "${V_NEW}"
 }
 
 @test "bump-json-files: can bump version in a json file" {
   source ${profile_script}
-  
+
   V_TEST="99.88.77"
   V_NEW="99.88.78"
 
   create_ver_file
   JSON_FILES=( "${VER_FILE}" )
-  
+
   run bump-json-files # >&3
   assert_output -p "from ${V_TEST} -> ${V_NEW}"
 
@@ -271,37 +271,37 @@ jsonfile_get_ver() {
 
 @test "bump-json-files: can fail bumping a json file when a version already exists in file" {
   source ${profile_script}
-  
+
   V_TEST="99.88.77"
   V_NEW="99.88.77"
 
   create_ver_file
   JSON_FILES=( "${VER_FILE}" )
-  
+
   run bump-json-files # >&3
   assert_output --partial "already contains version ${V_TEST}"
 
   run jsonfile_get_ver $VER_FILE
-  assert_output "${V_TEST}"  
+  assert_output "${V_TEST}"
 }
 
 @test "bump-json-files: can fail bumping a json file when no version found inside it" {
   source ${profile_script}
-  
+
   V_TEST="99.88.77"
   V_NEW="99.88.77"
 
   create_ver_file
   > $VER_FILE <<< "" # clear file
   JSON_FILES=( "${VER_FILE}" )
-  
+
   run bump-json-files # >&3
   assert_output --partial "a version name/value pair was not found to replace!"
 }
 
 @test "check-branch-notexist: can detect branch DOES exist" {
   source ${profile_script}
-  
+
   local V_NEW="123.456.7"
   # create test branch
   git branch "${REL_PREFIX}${V_NEW}"
@@ -313,16 +313,16 @@ jsonfile_get_ver() {
 
 @test "check-branch-notexist: can confirm branch DOES'NT exist" {
   source ${profile_script}
-  
+
   local V_NEW="123.456.78338834"
 
   run check-branch-notexist
   assert_success
 }
 
-@test "do-branch: can create a release branch" {  
+@test "do-branch: can create a release branch" {
   source ${profile_script}
-  
+
   local V_NEW="123.456.7"
   local CURR_BRANCH=$( git rev-parse --abbrev-ref HEAD )
   CLEANUP_CMDS+=("git checkout ${CURR_BRANCH} && git branch -D ${REL_PREFIX}${V_NEW} --force")
@@ -365,12 +365,12 @@ jsonfile_get_ver() {
 
 @test "do-changelog: can create a CHANGELOG.md" {
   source ${profile_script}
-  
+
   V_PREV="0.1.0" # guaranteed: commits available
   V_NEW="1.0.0"
   local F_CL="CHANGELOG.md"
 
-  # backup present 
+  # backup present
   [ -f "$F_CL" ] && mv "$F_CL" "${F_CL}.backup" && touch "$F_CL"
   CLEANUP_CMDS+=("rm ${F_CL} && mv ${F_CL}.backup ${F_CL}")
 

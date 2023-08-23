@@ -9,4 +9,4 @@
 	url = https://github.com/bats-core/bats-assert.git
 [submodule "test/test_helper/bats-mocks"]
 	path = test/test_helper/bats-mocks
-	url = https://github.com/jasonkarns/bats-mock
+	url = https://github.com/jasonkarns/bats-mock.git

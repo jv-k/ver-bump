@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#  _ _  ___  ___       ___  _ _  __ __  ___  
+#  _ _  ___  ___       ___  _ _  __ __  ___
 # | | || __>| . \ ___ | . >| | ||  \  \| . \
 # | ' || _> |   /|___|| . \| ' ||     ||  _/
-# |__/ |___>|_\_\     |___/\___/|_|_|_||_|  
+# |__/ |___>|_\_\     |___/\___/|_|_|_||_|
 #
 # Description:
 #   - A handy utility that takes care of releasing Git software projects.
@@ -63,5 +63,5 @@ main() {
 # shellcheck disable=SC2128
 if [[ "$0" = "$BASH_SOURCE" ]]; then
   source "$MODULE_DIR/lib/styles.sh" # only load when not sourced, for tests to work
-  main "$@"
+  # main "$@"
 fi

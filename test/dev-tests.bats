@@ -1,12 +1,12 @@
 #!/usr/bin/env bats
 
-# UNIT TESTS for VER-BUMP 
+# UNIT TESTS for VER-BUMP
 
 # Testing everything that could possibly break 🤡
 
-# Note: The RUN helper executes its argument(s) in a subshell, 
-# so if writing tests against environmental side-effects like a 
-# variable’s value being changed, these changes will not persist 
+# Note: The RUN helper executes its argument(s) in a subshell,
+# so if writing tests against environmental side-effects like a
+# variable’s value being changed, these changes will not persist
 # after run completes.
 
 setup() {
@@ -39,12 +39,12 @@ teardown() {
 run_cleanup_cmds() {
   for F in "${F_TEMPS[@]}"; do
     [ -f $F ] && rm -f $F && git reset -- $F >&2
-  done  
+  done
 
   for (( i = 0; i < ${#CLEANUP_CMDS[@]} ; i++ )); do
-    # Run each command in array 
+    # Run each command in array
     eval "${CLEANUP_CMDS[$i]}"
-  done  
+  done
 }
 
 set_mocks() {
@@ -59,7 +59,7 @@ unset_mocks() {
 @test "check-branch-exist: can detect branch exists" {
   # skip
   source ${profile_script}
-  
+
   local V_NEW="123.456.7"
   # create test branch
   git branch "${REL_PREFIX}${V_NEW}"
@@ -71,17 +71,17 @@ unset_mocks() {
 
 @test "check-branch-exist: can confirm release branch doesn't already exist" {
   source ${profile_script}
-  
+
   local V_NEW="123.456.78338834"
 
-  # git branch is stubbed, so expect 
+  # git branch is stubbed, so expect
   run check-branch-notexist
   assert_success
 }
 
 @test "do-branch: can create a release branch" {
   source ${profile_script}
-  
+
   local V_NEW="123.456.7"
   local CURR_BRANCH=$( git rev-parse --abbrev-ref HEAD )
   CLEANUP_CMDS+=("git checkout ${CURR_BRANCH} && git branch -D ${REL_PREFIX}${V_NEW} --force")
@@ -119,7 +119,7 @@ do-pushy() {
   CLEANUP_CMDS+=("rm ${DUMMY_FILE}")
   touch $DUMMY_FILE
   git add $DUMMY_FILE
-  
+
   run do-push
   assert_output
   # echo -e "\n${S_NOTICE}Pushing files + tags to <${S_NORM}${PUSH_DEST}${S_NOTICE}>..."

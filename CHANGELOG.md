@@ -1,3 +1,13 @@
+## 1.1.8 (August 23, 2023)
+- chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.7 -> 1.1.8
+- bug: fixed change that caused CI #94
+- chore(tests): update bats
+- chore(build): created release task
+- style: removed extra ws
+- Merge pull request #27 from jv-k/release-1.1.7
+- chore(docs): update TOC
+- chore(docs): update TOC
+
 ## 1.1.7 (August 23, 2023)
 - chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.6 -> 1.1.7
 - docs: added testing section

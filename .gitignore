@@ -1,3 +1,9 @@
-.git-clean
 node_modules/
+
+# terminalizer
 demo/
+
+# bats
+test/bats
+test/helpers
+test/test_helper/

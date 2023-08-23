@@ -11,6 +11,7 @@
   "license": "MIT",
   "bin": "./ver-bump.sh",
   "scripts": {
+    "release": "gh release create --notes \"$(npx jv-k/releasetool)\"",
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/ver-bump.bats",
     "tests:install:windows": "sh ./install_bats.sh",

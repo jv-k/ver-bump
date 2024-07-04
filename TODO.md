@@ -13,6 +13,7 @@
 - [ ] feature: Add switches for increasing MAJOR|MINOR|PATCH
 - [ ] feature: Releasing packages: Create automation for proper gh release
 - [ ] feature: Add option for capitalising ver-bump's commit msg for files it changes (for style purposes)
+- [ ] feature: bump patch/minor/major switches
 
 ## Doing 🚀
 

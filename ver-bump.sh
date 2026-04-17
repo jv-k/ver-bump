@@ -19,7 +19,7 @@ MODULE_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 source "$MODULE_DIR/lib/helpers.sh"
 source "$MODULE_DIR/lib/icons.sh"
 
-NOW="$(date +'%B %d, %Y')"
+NOW="$(date +%F)"
 
 V_SUGGEST="0.1.0" # This is suggested in case VERSION file or user supplied version via -v is missing
 VER_FILE="package.json"
@@ -36,6 +36,7 @@ JSON_FILES=()
 main() {
   # Process and prepare
   process-arguments "$@"
+  check-dependencies
   check-commits-exist
   process-version
 

@@ -11,6 +11,8 @@
   "license": "MIT",
   "bin": "./ver-bump.sh",
   "scripts": {
+    "dev": "./dev/sandbox.sh",
+    "dev:dry": "./dev/sandbox.sh --dry-run",
     "release": "gh release create --notes \"$(npx jv-k/releasetool)\"",
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/ver-bump.bats",

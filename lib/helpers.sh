@@ -3,29 +3,48 @@
 # shellcheck disable=SC2288
 true
 
+# Returns 0 (success) if $1 is a non-empty decimal integer, non-zero otherwise.
 is_number() {
   case "$1" in
-    ''|*[!0-9]*) return 0 ;;
-    *) return 1 ;;
+    ''|*[!0-9]*) return 1 ;;
+    *) return 0 ;;
   esac
+}
+
+# Ensure required external tools are present before mutating the repo.
+check-dependencies() {
+  local tool missing=()
+  for tool in git jq npm; do
+    command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
+  done
+  if (( ${#missing[@]} )); then
+    echo -e "\n${I_STOP} ${S_ERROR}Missing required tool(s): ${S_WARN}${missing[*]}${S_ERROR}. Please install and retry.\n" >&2
+    exit 1
+  fi
 }
 
 # Show credits & help
 usage() {
-  local SCRIPT_VER SCRIPT_HOME
-  # NPM environment variables are fetched with cross-platform tool cross-env (overkill to use a dependency, but seems the only way AFAIK to get npm vars)
-  SCRIPT_VER=$( cd "$MODULE_DIR" && grep version package.json | head -1 )
-  SCRIPT_AUTH=$( cd "$MODULE_DIR" && grep author package.json | head -1 )
-  SCRIPT_HOME=$( cd "$MODULE_DIR" && grep homepage package.json | head -1 | sed -ne 's/.*\(http[^"]*\).*/\1/p' )
-  SCRIPT_NAME=$( cd "$MODULE_DIR" && grep name package.json | head -1 )
-
+  local SCRIPT_VER SCRIPT_AUTH SCRIPT_HOME SCRIPT_NAME env_var env_var_val
   local env_vars=( SCRIPT_VER SCRIPT_AUTH SCRIPT_NAME )
 
-  for env_var in "${env_vars[@]}"; do
-    env_var_val=$( eval "echo \$${env_var}" | awk -F: '{ print $2 }' | sed 's/[",]//g' | sed "s/^[ \t]*//" )
+  if command -v jq >/dev/null 2>&1; then
+    SCRIPT_VER=$(  jq -r '.version  // ""' "$MODULE_DIR/package.json" )
+    SCRIPT_AUTH=$( jq -r '.author   // ""' "$MODULE_DIR/package.json" )
+    SCRIPT_HOME=$( jq -r '.homepage // ""' "$MODULE_DIR/package.json" )
+    SCRIPT_NAME=$( jq -r '.name     // ""' "$MODULE_DIR/package.json" )
+  else
+    # Fallback: grep + trim (works without jq for --help alone)
+    SCRIPT_VER=$(  cd "$MODULE_DIR" && grep version  package.json | head -1 )
+    SCRIPT_AUTH=$( cd "$MODULE_DIR" && grep author   package.json | head -1 )
+    SCRIPT_HOME=$( cd "$MODULE_DIR" && grep homepage package.json | head -1 | sed -ne 's/.*\(http[^"]*\).*/\1/p' )
+    SCRIPT_NAME=$( cd "$MODULE_DIR" && grep name     package.json | head -1 )
 
-    eval "${env_var}=\"${env_var_val}\""
-  done
+    for env_var in "${env_vars[@]}"; do
+      env_var_val=$( printf '%s' "${!env_var}" | awk -F: '{ print $2 }' | sed 's/[",]//g' | sed "s/^[ \t]*//" )
+      printf -v "$env_var" '%s' "$env_var_val"
+    done
+  fi
 
   # rip off the oh-my-zsh logo, clearly ;)
   printf  "%s _ _  %s___  %s___ %s     %s ___  %s_ _ %s __ __ %s ___  %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
@@ -149,8 +168,8 @@ process-version() {
   # As a minimum pre-requisite ver-bump needs a version number from a JSON file
   # to read + bump. If it doesn't exist, throw an error + exit:
   if [ -f "$VER_FILE" ] && [ -s "$VER_FILE" ]; then
-    # Get the existing version number
-    V_PREV=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' "$VER_FILE" )
+    # Get the existing version number (top-level .version only)
+    V_PREV=$( jq -r '.version // empty' "$VER_FILE" 2>/dev/null )
 
     if [ -n "$V_PREV" ]; then
       echo -e "\n${S_NOTICE}Current version read from <${S_QUESTION}${VER_FILE}${S_NOTICE}> file: ${S_QUESTION}$V_PREV"
@@ -189,30 +208,23 @@ process-version() {
 }
 
 set-v-suggest() {
-  local IS_NO V_PREV_LIST V_MAJOR V_MINOR V_PATCH
+  local V_PREV_LIST V_MAJOR V_MINOR V_PATCH
 
-  IS_NO=0
   # shellcheck disable=SC2207
   V_PREV_LIST=( $( echo "$1" | tr '.' ' ' ) )
-  V_MAJOR=${V_PREV_LIST[0]};
-  V_MINOR=${V_PREV_LIST[1]};
-  V_PATCH=${V_PREV_LIST[2]};
+  V_MAJOR=${V_PREV_LIST[0]}
+  V_MINOR=${V_PREV_LIST[1]}
+  V_PATCH=${V_PREV_LIST[2]}
 
-  is_number "$V_MAJOR"; (( IS_NO = "$?" ))
-  is_number "$V_MINOR"; (( IS_NO = "$?" && "$IS_NO "))
-
-  # If major & minor are numbers, then proceed to increment patch
-  if [ "$IS_NO" = 1 ]; then
-    is_number "$V_PATCH";
-    if [ "$?" == 1 ]; then 
-      V_PATCH=$((V_PATCH + 1)) # Increment
-      V_SUGGEST="$V_MAJOR.$V_MINOR.$V_PATCH"
-      return;
-    fi
+  # If all three components are decimal integers, increment the patch.
+  if is_number "$V_MAJOR" && is_number "$V_MINOR" && is_number "$V_PATCH"; then
+    V_PATCH=$((V_PATCH + 1))
+    V_SUGGEST="$V_MAJOR.$V_MINOR.$V_PATCH"
+    return
   fi
 
   echo -e "\n${I_WARN} ${S_WARN}Warning: ${S_QUESTION}${1}${S_WARN} doesn't look like a SemVer compatible version number! Couldn't automatically bump the patch value. \n"
-  # If patch not a number, do nothing, keep the input
+  # Keep the input as-is
   V_SUGGEST="$1"
 }
 
@@ -227,6 +239,7 @@ check-branch-notexist() {
 
 # Only tag if tag doesn't already exist
 check-tag-exists() {
+  local TAG_MSG
   TAG_MSG=$( git tag -l "v${V_NEW}" )
   if [ -n "$TAG_MSG" ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error: A release with that tag version number already exists!\n\n$TAG_MSG\n"
@@ -235,13 +248,13 @@ check-tag-exists() {
 }
 
 do-packagefile-bump() {
+  local NOTICE_MSG NPM_MSG NPM_RC
   NOTICE_MSG="<${S_NORM}package.json${S_NOTICE}>"
   if [ "$V_NEW" = "$V_PREV" ]; then
     echo -e "\n${I_WARN}${NOTICE_MSG}${S_WARN} already contains version ${V_NEW}."
   else
-    NPM_MSG=$( npm version "${V_NEW}" --git-tag-version=false --force 2>&1 )
-    # shellcheck disable=SC2181
-    if [ ! "$?" -eq 0 ]; then
+    NPM_MSG=$( npm version "${V_NEW}" --git-tag-version=false --force 2>&1 ); NPM_RC=$?
+    if [ "$NPM_RC" -ne 0 ]; then
       echo -e "\n${I_STOP} ${S_ERROR}Error updating <package.json> and/or <package-lock.json>.\n\n$NPM_MSG\n"
       exit 1
     else
@@ -259,29 +272,31 @@ do-packagefile-bump() {
 
 # Change `version:` value in JSON files, like packager.json, composer.json, etc
 bump-json-files() {
-  # if [ "$FLAG_JSON" != true ]; then return; fi
-
-  JSON_PROCESSED=( ) # holds filenames after they've been changed
+  local FILE FILE_V_PREV JQ_ERR
+  local JSON_PROCESSED=( ) # holds filenames after they've been changed
 
   for FILE in "${JSON_FILES[@]}"; do
     if [ -f "$FILE" ]; then
-      # Get the existing version number
-      V_PREV=$( sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' "$FILE" )
+      # Get the existing version number (top-level .version only)
+      FILE_V_PREV=$( jq -r '.version // empty' "$FILE" 2>/dev/null )
 
-      if [ -z "$V_PREV" ]; then
+      if [ -z "$FILE_V_PREV" ]; then
         echo -e "\n${I_STOP} ${S_ERROR}Error updating version in file <${S_NORM}$FILE${S_NOTICE}> - a version name/value pair was not found to replace!"
-      elif [ "$V_PREV" = "$V_NEW" ]; then
-        echo -e "\n${I_WARN} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$V_PREV"
+      elif [ "$FILE_V_PREV" = "$V_NEW" ]; then
+        echo -e "\n${I_WARN} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$FILE_V_PREV"
       else
-        # Write to output file
-        FILE_MSG=$( jq --arg V_NEW "$V_NEW" '.version = $V_NEW' "$FILE" > "${FILE}.temp" )
-
-        if [ -z "$FILE_MSG" ]; then
-          echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$V_PREV ${S_NOTICE}-> ${S_QUESTION}$V_NEW"
-          # rm -f "${FILE}.temp"
+        # Write to output file; redirection order captures stderr into JQ_ERR
+        # while stdout (the json) goes to the temp file.
+        # shellcheck disable=SC2261
+        if JQ_ERR=$( jq --arg V_NEW "$V_NEW" '.version = $V_NEW' "$FILE" 2>&1 >"${FILE}.temp" ) \
+           && [ -s "${FILE}.temp" ]; then
           mv -f "${FILE}.temp" "${FILE}"
+          echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$FILE_V_PREV ${S_NOTICE}-> ${S_QUESTION}$V_NEW"
           # Add file change to commit message:
           GIT_MSG+="updated $FILE, "
+        else
+          rm -f "${FILE}.temp"
+          echo -e "\n${I_STOP} ${S_ERROR}Error updating <${S_NORM}$FILE${S_ERROR}> with jq.\n${JQ_ERR}"
         fi
       fi
 
@@ -320,18 +335,21 @@ capitalise() {
 # Dump git log history to CHANGELOG.md
 do-changelog() {
   [ "$FLAG_NOCHANGELOG" = true ] && return
-  local COMMITS_MSG LOG_MSG RANGE
+  local ACTION_MSG COMMITS_MSG LOG_MSG LOG_RC RANGE
 
-  RANGE=$([ "$(git tag -l v"${V_PREV}")" ] && echo "v${V_PREV}...HEAD")
+  RANGE=$([ "$(git tag -l v"${V_PREV}")" ] && echo "v${V_PREV}..HEAD")
   # shellcheck disable=SC2086
-  COMMITS_MSG=$( git log --pretty=format:"- %s" ${RANGE} 2>&1 )
-  # shellcheck disable=SC2181
-  if [ ! "$?" -eq 0 ]; then
-    echo -e "\n${I_STOP} ${S_ERROR}Error getting commit history since last version bump for logging to CHANGELOG.\n\n$LOG_MSG\n"
+  COMMITS_MSG=$( git log --pretty=format:"- %s" ${RANGE} 2>&1 ); LOG_RC=$?
+  if [ "$LOG_RC" -ne 0 ]; then
+    echo -e "\n${I_STOP} ${S_ERROR}Error getting commit history since last version bump for logging to CHANGELOG.\n\n$COMMITS_MSG\n"
     exit 1
   fi
 
-  [ -f CHANGELOG.md ] && ACTION_MSG="updated" || ACTION_MSG="created"
+  if [ -f CHANGELOG.md ]; then
+    ACTION_MSG="updated"
+  else
+    ACTION_MSG="created"
+  fi
   # Add info to commit message for later:
   GIT_MSG+="${ACTION_MSG} CHANGELOG.md, "
 
@@ -369,9 +387,10 @@ do-changelog() {
   git add CHANGELOG.md
 }
 
-#
 do-branch() {
   [ "$FLAG_NOBRANCH" = true ] && return
+
+  local BRANCH_MSG
 
   echo -e "\n${S_NOTICE}Creating new release branch..."
 
@@ -383,19 +402,18 @@ do-branch() {
     echo -e "\n${I_STOP} ${S_ERROR}Error\n$BRANCH_MSG\n"
     exit 1
   fi
-
-  # REL_PREFIX
 }
 
 # Stage & commit all files modified by this script
 do-commit() {
   [ "$FLAG_NOCOMMIT" = true ] && return
 
+  local COMMIT_MSG COMMIT_RC
+
   GIT_MSG+="$(get-commit-msg)"
   echo -e "\n${S_NOTICE}Committing..."
-  COMMIT_MSG=$( git commit -m "${COMMIT_MSG_PREFIX}${GIT_MSG}" 2>&1 )
-  # shellcheck disable=SC2181
-  if [ ! "$?" -eq 0 ]; then
+  COMMIT_MSG=$( git commit -m "${COMMIT_MSG_PREFIX}${GIT_MSG}" 2>&1 ); COMMIT_RC=$?
+  if [ "$COMMIT_RC" -ne 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error\n$COMMIT_MSG\n"
     exit 1
   else
@@ -405,6 +423,10 @@ do-commit() {
 
 # Create a Git tag using the SemVar
 do-tag() {
+  # If we skipped committing, the version bumps are not persisted, so tagging
+  # would point at the wrong (pre-bump) commit. Skip the tag too.
+  [ "$FLAG_NOCOMMIT" = true ] && return
+
   if [ -z "${REL_NOTE}" ]; then
     # Default release note
     git tag -a "v${V_NEW}" -m "Tag version ${V_NEW}."
@@ -415,24 +437,30 @@ do-tag() {
   echo -e "\n${I_OK} ${S_NOTICE}Added GIT tag"
 }
 
-# Pushes files + tags to remote repo. Changes are staged by earlier functions
+# Pushes branch + tag to remote repo. Changes are staged by earlier functions
 do-push() {
   [ "$FLAG_NOCOMMIT" = true ] && return
+
+  local CONFIRM PUSH_MSG PUSH_RC REMOTE_REF
 
   if [ "$FLAG_PUSH" = true ]; then
     CONFIRM="Y"
   else
-    echo -ne "\n${S_QUESTION}Push tags to <${S_NORM}${PUSH_DEST}${S_QUESTION}>? [${S_NORM}N/y${S_QUESTION}]: "
+    echo -ne "\n${S_QUESTION}Push branch + tags to <${S_NORM}${PUSH_DEST}${S_QUESTION}>? [${S_NORM}N/y${S_QUESTION}]: "
     read -r CONFIRM
   fi
 
   case "$CONFIRM" in
     [yY][eE][sS]|[yY] )
-      echo -e "\n${S_NOTICE}Pushing files + tags to <${S_NORM}${PUSH_DEST}${S_NOTICE}>..."
-      PUSH_MSG=$( git push "${PUSH_DEST}" v"$V_NEW" 2>&1 ) # Push new tag
-      if [ ! "$PUSH_MSG" -eq 0 ]; then
+      echo -e "\n${S_NOTICE}Pushing branch + tag to <${S_NORM}${PUSH_DEST}${S_NOTICE}>..."
+      if [ "$FLAG_NOBRANCH" = true ]; then
+        REMOTE_REF=$(git rev-parse --abbrev-ref HEAD)
+      else
+        REMOTE_REF="${REL_PREFIX}${V_NEW}"
+      fi
+      PUSH_MSG=$( git push -u "${PUSH_DEST}" "${REMOTE_REF}" "v${V_NEW}" 2>&1 ); PUSH_RC=$?
+      if [ "$PUSH_RC" -ne 0 ]; then
         echo -e "\n${I_STOP} ${S_WARN}Warning\n$PUSH_MSG"
-        # exit 1
       else
         echo -e "\n${I_OK} ${S_NOTICE}$PUSH_MSG"
       fi

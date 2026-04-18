@@ -3,6 +3,29 @@
 # shellcheck disable=SC2288
 true
 
+# fail <exit_code> <message> [hint]
+#   Writes a red labeled error line to stderr, optionally followed by a
+#   dim hint line, then exits with <exit_code>.
+#
+# Exit code convention (see README / v2.0 plan §1.3):
+#   0  success
+#   1  generic error
+#   2  usage / arg-parse error
+#   3  precondition (dirty tree, missing tag, SemVer parse failure,
+#                    missing package.json, missing dependency like git/jq)
+#   4  hook failure (reserved)
+#   5  user abort (declined prompt)
+fail() {
+  local code=$1
+  local msg=$2
+  local hint=${3-}
+  echo -e "\n${S_ERROR}${I_ERROR} Error:${S_NORM} ${msg}${RESET}" >&2
+  if [ -n "${hint}" ]; then
+    echo -e "${S_LIGHT}  Hint: ${hint}${RESET}" >&2
+  fi
+  exit "${code}"
+}
+
 # Returns 0 (success) if $1 is a non-empty decimal integer, non-zero otherwise.
 is_number() {
   case "$1" in
@@ -86,8 +109,9 @@ check-dependencies() {
     command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
   done
   if (( ${#missing[@]} )); then
-    echo -e "\n${I_STOP} ${S_ERROR}Missing required tool(s): ${S_WARN}${missing[*]}${S_ERROR}. Please install and retry.\n" >&2
-    exit 1
+    fail 3 \
+      "Missing required tool(s): ${missing[*]}." \
+      "Install the missing tool(s) (e.g. 'brew install ${missing[*]}' on macOS, or use your system package manager) and retry."
   fi
 }
 
@@ -355,9 +379,9 @@ normalize-long-opts() {
       pause-changelog) short="-l"; needs_arg=0 ;;
       help)            short="-h"; needs_arg=0 ;;
       *)
-        echo -e "\n${I_ERROR}${S_ERROR} Invalid option: ${S_WARN}--${name}" >&2
-        echo
-        exit 1
+        fail 2 \
+          "Invalid option: --${name}" \
+          "Run 'ver-bump --help' to see the list of supported options."
       ;;
     esac
 
@@ -368,14 +392,14 @@ normalize-long-opts() {
       elif (( $# )) && [ "${1:0:1}" != "-" ]; then
         NORMALIZED_ARGV+=("$1"); shift
       else
-        echo -e "\n${I_ERROR}${S_ERROR} Option ${S_WARN}--${name} ${S_ERROR}requires an argument." >&2
-        echo
-        exit 1
+        fail 2 \
+          "Option --${name} requires an argument." \
+          "Pass a value: --${name} <value> or --${name}=<value>."
       fi
     elif (( has_val )); then
-      echo -e "\n${I_ERROR}${S_ERROR} Option ${S_WARN}--${name} ${S_ERROR}doesn't take a value." >&2
-      echo
-      exit 1
+      fail 2 \
+        "Option --${name} doesn't take a value." \
+        "Drop the '=<value>' — --${name} is a boolean flag."
     fi
   done
 }
@@ -398,9 +422,9 @@ process-arguments() {
       v )
         # User has supplied a version number — validate SemVer
         if ! is_semver "$OPTARG"; then
-          echo -e "\n${I_ERROR}${S_ERROR} Version ${S_WARN}'$OPTARG'${S_ERROR} is not a valid SemVer 2.0 version (expected MAJOR.MINOR.PATCH[-prerelease][+build])." >&2
-          echo
-          exit 1
+          fail 2 \
+            "Version '$OPTARG' is not a valid SemVer 2.0 version (expected MAJOR.MINOR.PATCH[-prerelease][+build])." \
+            "Pass a SemVer 2.0 version, e.g. -v 1.2.3 or -v 1.2.3-rc.1+build.42."
         fi
         V_USR_SUPPLIED=$OPTARG
       ;;
@@ -448,14 +472,14 @@ process-arguments() {
         echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Pause enabled for amending CHANGELOG.md"
       ;;
       \? )
-        echo -e "\n${I_ERROR}${S_ERROR} Invalid option: ${S_WARN}-$OPTARG" >&2
-        echo
-        exit 1
+        fail 2 \
+          "Invalid option: -$OPTARG" \
+          "Run 'ver-bump --help' to see the list of supported options."
       ;;
       : )
-        echo -e "\n${I_ERROR}${S_ERROR} Option ${S_WARN}-$OPTARG ${S_ERROR}requires an argument." >&2
-        echo
-        exit 1
+        fail 2 \
+          "Option -$OPTARG requires an argument." \
+          "Pass a value after the flag, e.g. -$OPTARG <value>."
       ;;
     esac
   done
@@ -473,9 +497,9 @@ dryrun() {
 # If there are no commits in repo, quit, because you can't tag with zero commits.
 check-commits-exist() {
   if ! git rev-parse HEAD &> /dev/null; then
-    echo -e "\n${I_STOP} ${S_ERROR}Your current branch doesn't have any commits yet. Can't tag without at least one commit." >&2
-    echo
-    exit 1
+    fail 3 \
+      "Your current branch doesn't have any commits yet. Can't tag without at least one commit." \
+      "Make an initial commit first: git commit --allow-empty -m 'initial commit'."
   fi
 }
 
@@ -505,17 +529,22 @@ process-version() {
       echo -e "\n${S_NOTICE}Current version read from <${S_QUESTION}${VER_FILE}${S_NOTICE}> file: ${S_QUESTION}$V_PREV"
       set-v-suggest "$V_PREV" # check + compute next version from conventional commits (or patch +1)
     else
-      echo -e "\n${I_WARN} ${S_ERROR}Error: <${S_QUESTION}${VER_FILE}${S_WARN}> doesn't contain a 'version' field!\n"
-      exit 1
+      fail 3 \
+        "<${VER_FILE}> doesn't contain a 'version' field." \
+        "Add a top-level \"version\" key to ${VER_FILE}, or pass an explicit version with -v <version>."
     fi
   else
-    echo -ne "\n${S_ERROR}Error: <${S_QUESTION}${VER_FILE}${S_WARN}> "
+    local reason
     if [ ! -f "$VER_FILE" ]; then
-      echo "was not found!";
+      reason="was not found"
     elif [ ! -s "$VER_FILE" ]; then
-      echo "is empty!";
+      reason="is empty"
+    else
+      reason="could not be read"
     fi
-    exit 1
+    fail 3 \
+      "<${VER_FILE}> ${reason}." \
+      "Run ver-bump inside a directory with a valid package.json, or override via VER_FILE=<path>."
   fi
 
   # If a version number is supplied by the user with [-v <version number>] — use it!
@@ -538,8 +567,9 @@ process-version() {
     # Validate whatever we end up with (suggested or entered) as SemVer.
     # This only runs in interactive path; -v already validates at parse time.
     if ! is_semver "$V_NEW"; then
-      echo -e "\n${I_ERROR} ${S_ERROR}Version ${S_WARN}'$V_NEW'${S_ERROR} is not a valid SemVer 2.0 version. Aborting." >&2
-      exit 1
+      fail 3 \
+        "Version '$V_NEW' is not a valid SemVer 2.0 version." \
+        "Enter a SemVer 2.0 version (MAJOR.MINOR.PATCH[-prerelease][+build]), e.g. 1.2.3 or 1.2.3-rc.1."
     fi
   fi
 }
@@ -629,8 +659,9 @@ set-v-suggest() {
 check-branch-notexist() {
   [ "$FLAG_NOBRANCH" = true ] && return
   if git rev-parse --verify "${REL_PREFIX}${V_NEW}" &> /dev/null; then
-    echo -e "\n${I_STOP} ${S_ERROR}Error: Branch <${S_NORM}${REL_PREFIX}${V_NEW}${S_ERROR}> already exists!\n"
-    exit 1
+    fail 3 \
+      "Branch <${REL_PREFIX}${V_NEW}> already exists." \
+      "Delete the existing branch (git branch -D ${REL_PREFIX}${V_NEW}), pick a different version, or pass -b/--no-branch to skip branch creation."
   fi
 }
 
@@ -639,8 +670,9 @@ check-tag-exists() {
   local TAG_MSG
   TAG_MSG=$( git tag -l "${TAG_PREFIX}${V_NEW}" )
   if [ -n "$TAG_MSG" ]; then
-    echo -e "\n${I_STOP} ${S_ERROR}Error: A release with that tag version number already exists!\n\n$TAG_MSG\n"
-    exit 1
+    fail 3 \
+      "A release with that tag version number already exists: ${TAG_MSG}" \
+      "Delete the existing tag with: git tag -d ${TAG_MSG}, or pick a different version."
   fi
 }
 
@@ -661,8 +693,9 @@ do-packagefile-bump() {
     # quotes on the jq program are correct.
     # shellcheck disable=SC2016
     if ! jq_inplace package.json '.version = $V' --arg V "$V_NEW"; then
-      echo -e "\n${I_STOP} ${S_ERROR}Error updating <package.json>.\n"
-      exit 1
+      fail 1 \
+        "Error updating <package.json>." \
+        "Check that package.json is valid JSON (run: jq . package.json) and that the file is writable."
     fi
     # package-lock.json: update both top-level .version and (if present) the
     # root package entry .packages[""].version — matches npm's own behaviour.
@@ -674,8 +707,9 @@ do-packagefile-bump() {
             .packages[""].version = $V
           else . end
       ' --arg V "$V_NEW"; then
-        echo -e "\n${I_STOP} ${S_ERROR}Error updating <package-lock.json>.\n"
-        exit 1
+        fail 1 \
+          "Error updating <package-lock.json>." \
+          "Check that package-lock.json is valid JSON (run: jq . package-lock.json) and that the file is writable."
       fi
     fi
   fi
@@ -764,8 +798,9 @@ do-changelog() {
   # shellcheck disable=SC2086
   COMMITS_MSG=$( git log --pretty=format:"- %s" ${RANGE} 2>&1 ); LOG_RC=$?
   if [ "$LOG_RC" -ne 0 ]; then
-    echo -e "\n${I_STOP} ${S_ERROR}Error getting commit history since last version bump for logging to CHANGELOG.\n\n$COMMITS_MSG\n"
-    exit 1
+    fail 1 \
+      "Error getting commit history since last version bump for logging to CHANGELOG: ${COMMITS_MSG}" \
+      "Verify the previous tag exists (git tag -l) and that 'git log ${RANGE}' runs successfully, or pass -c/--no-changelog to skip."
   fi
 
   if [ -f CHANGELOG.md ]; then
@@ -836,8 +871,9 @@ do-branch() {
     BRANCH_MSG=$(git checkout "${REL_PREFIX}${V_NEW}" 2>&1)
     echo -e "\n${I_OK} ${S_NOTICE}${BRANCH_MSG}"
   else
-    echo -e "\n${I_STOP} ${S_ERROR}Error\n$BRANCH_MSG\n"
-    exit 1
+    fail 1 \
+      "Failed to create release branch: ${BRANCH_MSG}" \
+      "Resolve the git branch error above, or pass -b/--no-branch to skip branch creation."
   fi
 }
 
@@ -858,8 +894,9 @@ do-commit() {
 
   COMMIT_MSG=$( git commit -m "${COMMIT_MSG_PREFIX}${GIT_MSG}" 2>&1 ); COMMIT_RC=$?
   if [ "$COMMIT_RC" -ne 0 ]; then
-    echo -e "\n${I_STOP} ${S_ERROR}Error\n$COMMIT_MSG\n"
-    exit 1
+    fail 1 \
+      "git commit failed: ${COMMIT_MSG}" \
+      "Resolve the git commit error above, or pass -n/--no-commit to skip committing."
   else
     echo -e "\n${I_OK} ${S_NOTICE}$COMMIT_MSG"
   fi

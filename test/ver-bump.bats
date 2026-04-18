@@ -580,3 +580,225 @@ scratch_repo() {
   assert_success
 }
 
+# suggest-bump-level ##########################################################
+
+@test "suggest-bump-level: falls back to patch when no previous tag" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git commit --allow-empty -qm "feat: whatever"
+  # No tag for "0.1.0" exists, so must fall back to patch
+  assert_equal "$(suggest-bump-level 0.1.0)" "patch"
+}
+
+@test "suggest-bump-level: patch when only fix/chore commits" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git tag -a v0.1.0 -m "tag"
+  git commit --allow-empty -qm "fix: small fix"
+  git commit --allow-empty -qm "chore: tidy"
+  assert_equal "$(suggest-bump-level 0.1.0)" "patch"
+}
+
+@test "suggest-bump-level: minor when any feat: commit present" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git tag -a v0.1.0 -m "tag"
+  git commit --allow-empty -qm "fix: small fix"
+  git commit --allow-empty -qm "feat: new thing"
+  git commit --allow-empty -qm "chore: tidy"
+  assert_equal "$(suggest-bump-level 0.1.0)" "minor"
+}
+
+@test "suggest-bump-level: minor respects feat(scope): form" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git tag -a v0.1.0 -m "tag"
+  git commit --allow-empty -qm "feat(api): new endpoint"
+  assert_equal "$(suggest-bump-level 0.1.0)" "minor"
+}
+
+@test "suggest-bump-level: major on <type>! in subject" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git tag -a v0.1.0 -m "tag"
+  git commit --allow-empty -qm "feat: safe addition"
+  git commit --allow-empty -qm "fix!: removes deprecated API"
+  assert_equal "$(suggest-bump-level 0.1.0)" "major"
+}
+
+@test "suggest-bump-level: major on feat(scope)! subject" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git tag -a v0.1.0 -m "tag"
+  git commit --allow-empty -qm "feat(core)!: incompatible rewrite"
+  assert_equal "$(suggest-bump-level 0.1.0)" "major"
+}
+
+@test "suggest-bump-level: major on BREAKING CHANGE footer" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git tag -a v0.1.0 -m "tag"
+  git commit --allow-empty -qm "refactor: move things
+
+Body explaining.
+
+BREAKING CHANGE: old consumers must migrate."
+  assert_equal "$(suggest-bump-level 0.1.0)" "major"
+}
+
+@test "suggest-bump-level: uses TAG_PREFIX override to locate previous tag" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  TAG_PREFIX="r-"
+  git tag -a r-0.1.0 -m "tag"
+  git commit --allow-empty -qm "feat: thing"
+  assert_equal "$(suggest-bump-level 0.1.0)" "minor"
+}
+
+# Dry-run behavior ############################################################
+
+@test "dry-run: do-packagefile-bump does not modify package.json" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  echo '{"version":"1.0.0"}' > package.json
+  git add package.json && git commit -qm "add pkg"
+
+  FLAG_DRYRUN=true
+  V_PREV="1.0.0"
+  V_NEW="2.0.0"
+
+  run do-packagefile-bump
+  assert_success
+  assert_output --partial "[dry-run]"
+
+  # File content must still be the original 1.0.0
+  run jq -r '.version' package.json
+  assert_output "1.0.0"
+}
+
+@test "dry-run: do-commit does not create a commit" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  FLAG_DRYRUN=true
+  V_PREV="1.0.0"
+  V_NEW="1.0.1"
+  GIT_MSG="test, "
+
+  local commits_before
+  commits_before=$(git rev-list --count HEAD)
+
+  run do-commit
+  assert_success
+  assert_output --partial "[dry-run]"
+
+  assert_equal "$(git rev-list --count HEAD)" "$commits_before"
+}
+
+@test "dry-run: do-tag does not create a tag" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  FLAG_DRYRUN=true
+  V_NEW="1.0.0"
+  REL_NOTE=
+
+  run do-tag
+  assert_success
+  assert_output --partial "[dry-run]"
+
+  # No tags should exist
+  run git tag -l
+  assert_output ""
+}
+
+@test "dry-run: do-changelog does not write CHANGELOG.md" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  FLAG_DRYRUN=true
+  V_PREV="0.0.0"
+  V_NEW="1.0.0"
+
+  [ ! -f CHANGELOG.md ] || return 1
+  run do-changelog
+  assert_success
+  assert_output --partial "[dry-run]"
+  [ ! -f CHANGELOG.md ]
+}
+
+# Prefix overrides end-to-end #################################################
+
+@test "prefix override: do-tag uses TAG_PREFIX" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  TAG_PREFIX="rel/"
+  V_NEW="1.2.3"
+  REL_NOTE=
+
+  run do-tag
+  assert_success
+
+  run git tag -l
+  assert_output "rel/1.2.3"
+}
+
+@test "prefix override: check-tag-exists uses TAG_PREFIX" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  TAG_PREFIX="rel/"
+  V_NEW="1.2.3"
+  git tag -a "rel/1.2.3" -m "tag"
+
+  run check-tag-exists
+  assert_output --partial "A release with that tag"
+}
+
+@test "prefix override: do-branch uses REL_PREFIX" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  REL_PREFIX="hotfix-"
+  V_NEW="9.9.9"
+
+  run do-branch
+  assert_success
+
+  run git rev-parse --abbrev-ref HEAD
+  assert_output "hotfix-9.9.9"
+}
+
+@test "prefix override: do-changelog uses TAG_PREFIX when finding previous tag" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  TAG_PREFIX="rel/"
+  git tag -a "rel/0.1.0" -m "tag"
+  git commit --allow-empty -qm "feat: after previous tag"
+
+  V_PREV="0.1.0"
+  V_NEW="0.2.0"
+
+  run do-changelog <<< ""
+  assert_success
+  assert_output --partial "Created [CHANGELOG.md] file"
+  grep -F "feat: after previous tag" CHANGELOG.md
+}
+
+# Global leakage regression ###################################################
+
+@test "bump-json-files: does not stomp global V_PREV (needed by do-changelog)" {
+  source ${profile_script}
+  V_TEST="99.88.77"
+  V_NEW="99.88.78"
+  V_PREV="outer-sentinel"  # simulate the global set earlier in main()
+
+  create_ver_file
+  JSON_FILES=( "${VER_FILE}" )
+  bump-json-files >/dev/null
+
+  assert_equal "${V_PREV}" "outer-sentinel"
+}
+

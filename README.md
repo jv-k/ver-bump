@@ -13,11 +13,15 @@ A fully automated handy CLI utility that takes care of releasing GitHub software
 It does several things that are typically required for releasing a Git repository:
 
 - Create a release branch from your current branch (should be a feature or develop branch, following the [Git branch-based workflow](https://nvie.com/posts/a-successful-git-branching-model/), and [tags](https://git-scm.com/book/en/v2/Git-Basics-Tagging) the release
-- Enforces [Semantic Versioning](https://semver.org/) specification
+- Enforces [Semantic Versioning](https://semver.org/) specification — inputs are validated against SemVer 2.0 (including `-prerelease` and `+build` metadata)
+- Smart bump suggestion: reads [Conventional Commits](https://www.conventionalcommits.org/) between the previous tag and `HEAD` to propose **major**/**minor**/**patch**; bumps the trailing counter on prereleases like `4.0.0-dev.6 → 4.0.0-dev.7`
 - Avoid potential mistakes associated with manual releases, such as forgetting a step
 - Create and update a changelog file automatically
 - Pushes release to a remote
 - Leaves merging the release branch to the development branch to the user
+- **Dry-run mode** (`-d` / `--dry-run`) prints every side-effect — file write, git add, commit, tag, push — without executing any of them, so you can preview a release end-to-end
+- Shell completion scripts for **bash**, **zsh**, and **fish** built in (`ver-bump --completions <shell>`)
+- Pure-bash runtime with only `git` + `jq` as dependencies — no Node/npm required at run time
 
 ## Table of Contents
 
@@ -36,7 +40,11 @@ It does several things that are typically required for releasing a Git repositor
   - [Pre-requisites](#pre-requisites)
   - [CLI](#cli)
 - [Options](#options)
+  - [Version suggestion](#version-suggestion)
+  - [Dry-run](#dry-run)
+- [Shell completions](#shell-completions)
 - [Example](#example)
+- [Development](#development)
 - [Tests](#tests)
 - [Contributing](#contributing)
 - [License](#license)
@@ -52,7 +60,7 @@ The command `ver-bump` will execute the following steps:
 
 - Verify some commits exist
 - Selects a semantic version number for the release branch & tag
-- Increments / suggests a semantic version number for the release and its tag
+- Suggests the next version based on Conventional Commits since the previous tag (`feat!:` → major, `feat:` → minor, otherwise patch), or bumps the trailing counter on a prerelease version (`4.0.0-dev.6` → `4.0.0-dev.7`)
   - Checks to see a tagged release with the chosen version already exists
 
 ### Create Release
@@ -136,8 +144,8 @@ The command `ver-bump` will execute the following steps:
 In order to use `ver-bump` you need:
 
 - To host your project code in a Git repository
-- Have Git installed in your environment
-- Have `npm` and `node` installed
+- Have `git` and `jq` installed in your environment
+- `npm` / `node` are *optional* — only required if you want to install `ver-bump` from the npm registry, not at run time
 
 ## Installation
 
@@ -158,27 +166,104 @@ $ npm install -g ver-bump
 ### CLI
 
 ```sh
-$ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-b] [-h]
+$ ver-bump [-v|--version <v>] [-m|--message <msg>] [-f|--file <file.json>]... \
+           [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
+           [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
+           [-c|--no-changelog] [-l|--pause-changelog] [-h|--help]
 ```
 
 ## Options
 
+Every option has a short form and a GNU-style long form. Long forms accept
+`--name value` or `--name=value`.
+
 ```text
--v <version number>     Specify a manual version number
--m <release message>    Custom release message
--f <filename.json>      Update version number inside JSON files.
-                            * For multiple files, add a separate -f option for each one,
-                            * For example:
-                              ./ver-bump.sh -f src/plugin/package.json -f composer.json
--p <repository alias>   Push commits to remote repository, eg `-p Origin`
--n                      Turns off automatic commit
-                            * You may want to do that yourself, for example.
--b                      Don't create automatic `release-<version>` branch.
--c                      Disable updating CHANGELOG.md automatically with new commits
-                        since last release tag.
--l                      Pause enabled for amending CHANGELOG.md
--h                      Show help message.
+-v, --version <version>       Manual SemVer version (validated against SemVer 2.0).
+-m, --message <message>       Custom annotated-tag release message.
+-f, --file <filename.json>    Also bump "version" in this JSON file. Repeatable:
+                                ver-bump -f src/plugin/package.json -f composer.json
+-p, --push <remote>           Push branch + tag to <remote> (e.g. origin) as the last step.
+-t, --tag-prefix <prefix>     Override tag prefix (default: "v" → v1.2.3).
+-B, --branch-prefix <prefix>  Override branch prefix (default: "release-").
+-d, --dry-run                 Print every side-effect (file write, git add, commit,
+                              tag, push) without executing any of them.
+-n, --no-commit               Disable commit (also skips tag + push).
+-b, --no-branch               Don't create an automatic release-<version> branch.
+-c, --no-changelog            Disable updating CHANGELOG.md automatically.
+-l, --pause-changelog         Pause before commit so CHANGELOG.md can be hand-edited.
+-h, --help                    Show help message.
 ```
+
+### Version suggestion
+
+When `-v` / `--version` is omitted, `ver-bump` picks a suggestion for you:
+
+**1. Prereleases** — if the current version has a `-<id>` segment, the
+trailing numeric counter is bumped (or `.1` is appended if there isn't one).
+Build metadata after `+` is preserved:
+
+| Current                | Suggested              |
+| ---------------------- | ---------------------- |
+| `4.0.0-dev.6`          | `4.0.0-dev.7`          |
+| `4.0.0-rc.9`           | `4.0.0-rc.10`          |
+| `1.0.0-alpha`          | `1.0.0-alpha.1`        |
+| `2.1.0-beta.3+sha.abc` | `2.1.0-beta.4+sha.abc` |
+
+**2. Stable versions** — inspects Conventional Commits since the previous tag:
+
+- `feat!:` / `<type>!:` / `BREAKING CHANGE:` in body → **major**
+- `feat:` → **minor**
+- anything else (or no previous tag) → **patch**
+
+You can always override the suggestion at the interactive prompt, or pass
+`-v <version>` to skip the prompt entirely. Values passed to `-v` are
+validated against SemVer 2.0, so typos like `ver-bump -v banana` fail fast.
+
+### Dry-run
+
+Pass `-d` / `--dry-run` to preview a release end-to-end without touching
+anything — no files written, no `git add`, no commit, no tag, no push:
+
+```sh
+$ ver-bump --dry-run
+...
+[dry-run] would set .version = '1.0.1' in package.json
+[dry-run] would set .version = '1.0.1' in package-lock.json
+[dry-run] git add package.json
+[dry-run] git add package-lock.json
+[dry-run] would replace CHANGELOG.md with: ...
+[dry-run] would run: git branch release-1.0.1 && git checkout release-1.0.1
+[dry-run] would run: git commit -m 'chore: updated package.json, ...'
+[dry-run] would run: git tag -a v1.0.1 -m 'Tag version 1.0.1.'
+```
+
+Combine with `--no-branch` / `--no-commit` / `--no-changelog` to narrow the
+preview down to just the steps you want to see.
+
+## Shell completions
+
+`ver-bump --completions <shell>` emits a completion script for **bash**,
+**zsh**, or **fish** to stdout. Drop it wherever your shell looks for
+completions:
+
+```sh
+# bash (with bash-completion installed, e.g. via Homebrew)
+ver-bump --completions bash > "$(brew --prefix)/etc/bash_completion.d/ver-bump"
+
+# zsh — any directory on $fpath works
+ver-bump --completions zsh  > "${fpath[1]}/_ver-bump"
+
+# fish
+ver-bump --completions fish > ~/.config/fish/completions/ver-bump.fish
+```
+
+Then restart the shell (or `compinit` / `source` the file). You get:
+
+- Tab-completion for every short and long flag
+- `.json` file suggestions after `-f` / `--file`
+- `bash | zsh | fish` suggestions after `--completions`
+- Suppressed completion after options taking free-form arguments (so the
+  shell doesn't guess wrong values for `-v`, `-m`, `-p`, `-t`, `-B`)
 
 ## Example
 
@@ -240,9 +325,31 @@ $ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>]..
     $ git merge --no-ff release-1.0.1 # Merge the new release branch to your development branch
     ```
 
+## Development
+
+Want to hack on `ver-bump` itself? Use the sandbox harness to exercise the
+script against a throwaway git repo, so your real repo is never touched:
+
+```sh
+pnpm dev                              # interactive, suggests bump from seed commits
+pnpm dev -- -v 2.0.0                  # non-interactive, explicit version
+pnpm dev:dry                          # alias for pnpm dev -- --dry-run
+pnpm dev -- --keep                    # leaves the temp dir around for inspection
+SANDBOX_VERSION=4.0.0-dev.6 pnpm dev  # exercise the prerelease bumper
+```
+
+Under the hood, [`dev/sandbox.sh`](dev/sandbox.sh) `mktemp -d`s a fresh dir,
+writes a minimal `package.json`, seeds a git repo with conventional-commit
+messages and a starting tag, then invokes `ver-bump` inside it. The temp
+dir is wiped on exit (or `^C`) unless you pass `--keep`. All flags after
+`--` are forwarded to `ver-bump`.
+
+You can invoke the script directly if you prefer — `./dev/sandbox.sh -v 2.0.0`
+needs no `--` separator.
+
 ## Tests
 
-This project uses [bats](https://github.com/bats-core/bats-core) to test the functionality of ver-bump. 
+This project uses [bats](https://github.com/bats-core/bats-core) to test the functionality of ver-bump.
 
 To run the tests, first install the pre-requisites:
 
@@ -264,43 +371,10 @@ And finally, run the test suite:
 $ npm run tests:run
 ```
 
-Output:
-
-```sh
-ver-bump.bats
- ✓ can run script
- ✓ process-arguments: -h: display help message
- ✓ process-arguments: -v: fail when not supplying version
- ✓ process-arguments: -v x.x.x: succeed when supplying version
- ✓ process-arguments: -m: fail when not supplying release note
- ✓ process-arguments: -m <note>: succeed when supplying release note
- ✓ process-arguments: -f: fail when not supplying filenames
- ✓ process-arguments: -f <filename.json>: succeed with multiple filenames
- ✓ process-arguments: -p: fail when not supplying push destination
- ✓ process-arguments: -p <repo destination>: succeed when supplying a destination
- ✓ process-arguments: -n: set flag to prevent committing at the end
- ✓ process-arguments: -b: set flag to disable creating a release branch
- ✓ process-arguments: -c: set flag to disable creating/updating CHANGELOG.md
- ✓ process-arguments: -l: set flag to enable pausing after CHANGELOG.md is created
- ✓ process-arguments: fail on not-existing argument
- ✓ set-v-suggest: increments version
- ✓ set-v-suggest: fails to increments non SemVer version
- ✓ process-version: fail on entering non-SemVer input
- ✓ process-version: patch of the version from json file should be bumped +1
- ✓ do-packagefile-bump: can bump version in package.json + lock file
- ✓ bump-json-files: can bump version in a json file
- ✓ bump-json-files: can fail bumping a json file when a version already exists in file
- ✓ bump-json-files: can fail bumping a json file when no version found inside it
- ✓ check-branch-notexist: can detect branch DOES exist
- ✓ check-branch-notexist: can confirm branch DOES'NT exist
- ✓ do-branch: can create a release branch
- ✓ do-tag: create a tag
- ✓ check-tag-exists: check doesn't exist
- ✓ check-tag-exists: check it exists
- ✓ do-changelog: can create a CHANGELOG.md
-
-30 tests, 0 failures
-```
+The suite covers short/long option parsing, SemVer validation (including
+prerelease and build metadata), prerelease counter bumping, conventional-commit
+version suggestion, JSON file bumping (via `jq`, no `npm`), CHANGELOG
+generation, branch/tag creation, and the shell-completion emitters.
 
 ## Contributing
 

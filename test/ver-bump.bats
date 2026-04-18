@@ -59,6 +59,22 @@ jsonfile_get_ver() {
   sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $1
 }
 
+# Make a throwaway git repo under /tmp and echo its path. Adds cleanup.
+# Initial state: one empty commit on the default branch. No tags.
+scratch_repo() {
+  local dir
+  dir=$(mktemp -d)
+  CLEANUP_CMDS+=("rm -rf ${dir}")
+  (
+    cd "$dir" || exit 1
+    git init -q -b main 2>/dev/null || git init -q
+    git config user.email "test@example.com"
+    git config user.name  "Test User"
+    git commit --allow-empty -qm "initial"
+  )
+  echo "$dir"
+}
+
 # Tests #####################################################################
 
 @test "can run script" {
@@ -83,6 +99,161 @@ jsonfile_get_ver() {
   process-arguments -v "${TEST_VER}"
   # assert_success
   assert_equal "${V_USR_SUPPLIED}" "${TEST_VER}"
+}
+
+@test "process-arguments: -v: rejects non-SemVer version" {
+  source ${profile_script}
+  run process-arguments -v "banana"
+  assert_failure
+  assert_output --partial "'banana' is not a valid SemVer 2.0 version"
+}
+
+@test "process-arguments: -v: accepts SemVer prerelease and build metadata" {
+  source ${profile_script}
+  process-arguments -v "1.2.3-rc.1+build.42"
+  assert_equal "${V_USR_SUPPLIED}" "1.2.3-rc.1+build.42"
+}
+
+@test "process-arguments: -d: sets dry-run flag" {
+  source ${profile_script}
+  process-arguments -d
+  assert_equal "${FLAG_DRYRUN}" "true"
+}
+
+@test "process-arguments: -t <prefix>: overrides tag prefix" {
+  source ${profile_script}
+  process-arguments -t "release/"
+  assert_equal "${TAG_PREFIX}" "release/"
+}
+
+@test "process-arguments: -B <prefix>: overrides branch prefix" {
+  source ${profile_script}
+  process-arguments -B "hotfix-"
+  assert_equal "${REL_PREFIX}" "hotfix-"
+}
+
+@test "long options: --version, --message, --file accept space-separated value" {
+  source ${profile_script}
+  process-arguments --version 1.2.3 --message "hello world" --file a.json --file b.json
+  assert_equal "${V_USR_SUPPLIED}" "1.2.3"
+  assert_equal "${REL_NOTE}" "hello world"
+  assert_equal "${JSON_FILES[0]}" "a.json"
+  assert_equal "${JSON_FILES[1]}" "b.json"
+}
+
+@test "long options: --name=value form" {
+  source ${profile_script}
+  process-arguments --version=9.8.7 --tag-prefix=release/ --branch-prefix=hotfix-
+  assert_equal "${V_USR_SUPPLIED}" "9.8.7"
+  assert_equal "${TAG_PREFIX}" "release/"
+  assert_equal "${REL_PREFIX}" "hotfix-"
+}
+
+@test "long options: boolean flags set corresponding globals" {
+  source ${profile_script}
+  process-arguments --dry-run --no-commit --no-branch --no-changelog --pause-changelog
+  assert_equal "${FLAG_DRYRUN}" "true"
+  assert_equal "${FLAG_NOCOMMIT}" "true"
+  assert_equal "${FLAG_NOBRANCH}" "true"
+  assert_equal "${FLAG_NOCHANGELOG}" "true"
+  assert_equal "${FLAG_CHANGELOG_PAUSE}" "true"
+}
+
+@test "long options: --push <remote> sets push flag + dest" {
+  source ${profile_script}
+  process-arguments --push upstream
+  assert_equal "${FLAG_PUSH}" "true"
+  assert_equal "${PUSH_DEST}" "upstream"
+}
+
+@test "long options: rejects unknown long option" {
+  source ${profile_script}
+  run process-arguments --bogus
+  assert_failure
+  assert_output --partial "Invalid option: --bogus"
+}
+
+@test "long options: rejects missing value for long option" {
+  source ${profile_script}
+  run process-arguments --version
+  assert_failure
+  assert_output --partial "Option --version requires an argument"
+}
+
+@test "long options: rejects value given to boolean long option" {
+  source ${profile_script}
+  run process-arguments --dry-run=yes
+  assert_failure
+  assert_output --partial "Option --dry-run doesn't take a value"
+}
+
+@test "long options: short and long forms can be mixed" {
+  source ${profile_script}
+  process-arguments -v 1.2.3 --dry-run -f a.json --file=b.json
+  assert_equal "${V_USR_SUPPLIED}" "1.2.3"
+  assert_equal "${FLAG_DRYRUN}" "true"
+  assert_equal "${JSON_FILES[0]}" "a.json"
+  assert_equal "${JSON_FILES[1]}" "b.json"
+}
+
+@test "completions: --completions bash emits a parseable script" {
+  run ${profile_script} --completions bash
+  assert_success
+  assert_output --partial "complete -F _ver_bump ver-bump"
+  # Script must be syntactically valid bash
+  tmp=$(mktemp)
+  echo "$output" > "$tmp"
+  bash -n "$tmp"
+  rm -f "$tmp"
+}
+
+@test "completions: --completions zsh emits a #compdef script" {
+  run ${profile_script} --completions zsh
+  assert_success
+  assert_output --partial "#compdef ver-bump"
+  assert_output --partial "_arguments"
+}
+
+@test "completions: --completions fish emits complete commands" {
+  run ${profile_script} --completions fish
+  assert_success
+  assert_output --partial "complete -c"
+  assert_output --partial "-l tag-prefix"
+}
+
+@test "completions: --completions=<shell> form works" {
+  run ${profile_script} --completions=zsh
+  assert_success
+  assert_output --partial "#compdef ver-bump"
+}
+
+@test "completions: unknown shell exits non-zero" {
+  run ${profile_script} --completions powershell
+  assert_failure
+  assert_output --partial "Unknown shell: powershell"
+}
+
+@test "completions: no shell argument prints usage hint" {
+  run ${profile_script} --completions
+  assert_success
+  assert_output --partial "Usage: ver-bump --completions"
+}
+
+@test "is_semver: accepts and rejects per spec" {
+  source ${profile_script}
+  is_semver "1.2.3"            || return 1
+  is_semver "0.0.0"            || return 1
+  is_semver "1.2.3-alpha"      || return 1
+  is_semver "1.2.3-alpha.1"    || return 1
+  is_semver "1.2.3+build"      || return 1
+  is_semver "1.2.3-rc.1+sha.2" || return 1
+
+  ! is_semver ""        || return 1
+  ! is_semver "1.2"     || return 1
+  ! is_semver "1.2.3.4" || return 1
+  ! is_semver "v1.2.3"  || return 1
+  ! is_semver "1.2.a"   || return 1
+  ! is_semver "01.2.3"  || return 1
 }
 
 @test "process-arguments: -m: fail when not supplying release note" {
@@ -143,7 +314,7 @@ jsonfile_get_ver() {
   assert_equal "${FLAG_NOCOMMIT}" "true"
 
   run process-arguments -n
-  assert_output --partial "Option set: Disable commit after tagging"
+  assert_output --partial "Disable commit (and tag + push) after bumping files."
 }
 
 @test "process-arguments: -b: set flag to disable creating a release branch" {
@@ -152,8 +323,7 @@ jsonfile_get_ver() {
   assert_equal "${FLAG_NOBRANCH}" "true"
 
   run process-arguments -b
-  assert_output --partial "Option set: Disable committing to new branch."
-
+  assert_output --partial "Disable creating a new release-x.x.x branch."
 }
 
 @test "process-arguments: -c: set flag to disable creating/updating CHANGELOG.md" {
@@ -188,6 +358,34 @@ jsonfile_get_ver() {
   assert_equal "${V_SUGGEST}" "35.12.6"
 }
 
+@test "bump-prerelease: bumps trailing numeric counter" {
+  source ${profile_script}
+  assert_equal "$(bump-prerelease '4.0.0-dev.6')" "4.0.0-dev.7"
+  assert_equal "$(bump-prerelease '4.0.0-rc.9')" "4.0.0-rc.10"
+  assert_equal "$(bump-prerelease '1.2.3-beta.0')" "1.2.3-beta.1"
+}
+
+@test "bump-prerelease: appends .1 when no numeric counter" {
+  source ${profile_script}
+  assert_equal "$(bump-prerelease '1.0.0-alpha')" "1.0.0-alpha.1"
+  assert_equal "$(bump-prerelease '1.0.0-dev')"   "1.0.0-dev.1"
+}
+
+@test "bump-prerelease: preserves build metadata" {
+  source ${profile_script}
+  assert_equal "$(bump-prerelease '2.1.0-beta.3+build.sha')" "2.1.0-beta.4+build.sha"
+  assert_equal "$(bump-prerelease '1.0.0-rc.1+exp.sha.5114f85')" "1.0.0-rc.2+exp.sha.5114f85"
+}
+
+@test "set-v-suggest: bumps prerelease counter instead of patch" {
+  source ${profile_script}
+  set-v-suggest "4.0.0-dev.6"
+  assert_equal "${V_SUGGEST}" "4.0.0-dev.7"
+
+  set-v-suggest "1.0.0-alpha"
+  assert_equal "${V_SUGGEST}" "1.0.0-alpha.1"
+}
+
 @test "set-v-suggest: fails to increments non SemVer version" {
   source ${profile_script}
 
@@ -212,10 +410,9 @@ jsonfile_get_ver() {
   V_TEST_INPUT="12.wrong.1"
   create_ver_file
 
-  # forcing return value because otherwise is_number fires a 'return'
-  process-version <<< $V_TEST_INPUT || return 1
-  assert_equal "${V_PREV}" "${V_TEST}"
-  assert_equal "${V_USR_INPUT}" "${V_TEST_INPUT}"
+  run process-version <<< "$V_TEST_INPUT"
+  assert_failure
+  assert_output --partial "'${V_TEST_INPUT}' is not a valid SemVer 2.0 version"
 }
 
 @test "process-version: patch of the version from json file should be bumped +1" {

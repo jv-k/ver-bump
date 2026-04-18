@@ -11,10 +11,78 @@ is_number() {
   esac
 }
 
+# Returns 0 if $1 looks like a SemVer 2.0 version (MAJOR.MINOR.PATCH with
+# optional -prerelease and +build metadata). Uses the official regex from
+# https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
+is_semver() {
+  [[ "$1" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*))?(\+([0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?$ ]]
+}
+
+# Bump a SemVer prerelease version's trailing numeric counter.
+# Examples:
+#   1.2.3-dev.6         -> 1.2.3-dev.7
+#   4.0.0-rc.9          -> 4.0.0-rc.10
+#   1.0.0-alpha         -> 1.0.0-alpha.1   (no counter → append ".1")
+#   2.1.0-beta.3+b.sha  -> 2.1.0-beta.4+b.sha   (build metadata preserved)
+# If $1 isn't a prerelease (no "-"), echoes input unchanged and returns 1.
+bump-prerelease() {
+  local input="$1" base pre build=""
+  # Split off build metadata (everything after '+')
+  if [[ "$input" == *+* ]]; then
+    build="+${input#*+}"
+    input="${input%%+*}"
+  fi
+  if [[ "$input" != *-* ]]; then
+    printf '%s' "${input}${build}"
+    return 1
+  fi
+  base="${input%%-*}"
+  pre="${input#*-}"
+
+  local -a parts
+  IFS='.' read -r -a parts <<< "$pre"
+  local last_idx=$(( ${#parts[@]} - 1 ))
+  local last="${parts[$last_idx]}"
+
+  if is_number "$last"; then
+    parts[last_idx]=$((last + 1))
+  else
+    # No numeric counter yet — start one at 1
+    parts+=("1")
+  fi
+
+  local joined
+  joined=$( IFS='.'; echo "${parts[*]}" )
+  printf '%s' "${base}-${joined}${build}"
+}
+
+# Writes JSON to a temp file next to the target, then atomically replaces it.
+# Args: <file> <jq-expr> [<jq-args>...]
+# Keeps stderr separate so jq warnings can't corrupt the JSON output.
+# Returns 0 on success, prints jq error to stderr and returns non-zero on failure.
+jq_inplace() {
+  local file="$1"; shift
+  local expr="$1"; shift
+  local tmp err rc
+  tmp=$(mktemp "${file}.XXXXXX") || return 1
+  err=$(mktemp "${file}.err.XXXXXX") || { rm -f "$tmp"; return 1; }
+  jq "$@" "$expr" "$file" >"$tmp" 2>"$err"; rc=$?
+  if [ "$rc" -eq 0 ] && [ -s "$tmp" ]; then
+    # Surface any jq warnings to the caller's stderr but still commit the write.
+    [ -s "$err" ] && cat "$err" >&2
+    rm -f "$err"
+    mv -f "$tmp" "$file"
+    return 0
+  fi
+  cat "$err" >&2
+  rm -f "$tmp" "$err"
+  return 1
+}
+
 # Ensure required external tools are present before mutating the repo.
 check-dependencies() {
   local tool missing=()
-  for tool in git jq npm; do
+  for tool in git jq; do
     command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
   done
   if (( ${#missing[@]} )); then
@@ -59,32 +127,268 @@ usage() {
           "\nIt does several things that are typically required for releasing a Git repository, like git tagging, automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files."
 
   echo -e "\n${S_NORM}${BOLD}Usage:${RESET}"\
-          "\n${SCRIPT_NAME} [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-c] [-p] [-h]" 1>&2; 
+          "\n${SCRIPT_NAME} [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]" 1>&2;
 
-  echo -e "\n${S_NORM}${BOLD}Options:${RESET}"
-  echo -e "$S_WARN-v$S_NORM <version number>\tSpecify a manual version number"
-  echo -e "$S_WARN-m$S_NORM <release message>\tCustom release message."
-  echo -e "$S_WARN-f$S_NORM <filename.json>\tUpdate version number inside JSON files."\
-          "\n\t\t\tFor multiple files, add a separate -f option for each one, for example:"\
-          "\n\t\t\t${S_NORM}ver-bump -f src/plugin/package.json -f composer.json"
-  echo -e "$S_WARN-p$S_NORM \t\t\tPush release branch to ORIGIN."
-  echo -e "$S_WARN-n$S_NORM \t\t\tDisable commit after tagging release."
-  echo -e "$S_WARN-b$S_NORM \t\t\tDisable commit to a new release-x.x.x branch."
-  echo -e "$S_WARN-c$S_NORM \t\t\tDisable updating CHANGELOG.md automatically with new commits since last release tag."
-  echo -e "$S_WARN-l$S_NORM \t\t\tPause enabled for amending CHANGELOG.md"
-  echo -e "$S_WARN-h$S_NORM \t\t\tShow this help message.\n"
+  # Column width for the label (flag + arg) column. The longest label is
+  # "-B, --branch-prefix <prefix>" = 28 chars; 32 gives a 4-space gutter.
+  local OPT_COL=32
+
+  # print-opt-row <short> <long> <arg-or-empty> <description>
+  # Pads the visible label to $OPT_COL columns (ignoring ANSI), then
+  # emits the colored label + description.
+  print-opt-row() {
+    local short="$1" long="$2" arg="$3" desc="$4"
+    local plain label pad head_plain head_label
+    if [ -n "$short" ]; then
+      head_plain="${short}, ${long}"
+      head_label="${S_WARN}${short}${S_NORM}, ${S_WARN}${long}${S_NORM}"
+    else
+      # Align long-only rows under the long-flag column (after "    ")
+      head_plain="    ${long}"
+      head_label="    ${S_WARN}${long}${S_NORM}"
+    fi
+    if [ -n "$arg" ]; then
+      plain="${head_plain} ${arg}"
+      label="${head_label} ${arg}"
+    else
+      plain="${head_plain}"
+      label="${head_label}"
+    fi
+    if (( ${#plain} >= OPT_COL )); then
+      pad=" "
+    else
+      printf -v pad '%*s' $((OPT_COL - ${#plain})) ''
+    fi
+    echo -e "${label}${pad}${desc}"
+  }
+
+  # print-opt-cont <text> — continuation row, aligned under the description column
+  print-opt-cont() {
+    printf '%*s' "$OPT_COL" ''
+    echo -e "$1"
+  }
+
+  echo -e "\n${S_NORM}${BOLD}Options:${RESET} (long forms accept ${S_NORM}--name value${S_LIGHT} or ${S_NORM}--name=value${S_LIGHT})"
+  print-opt-row "-v" "--version"       "<version>"   "Specify a manual SemVer version number (validated)."
+  print-opt-row "-m" "--message"       "<message>"   "Custom annotated-tag release message."
+  print-opt-row "-f" "--file"          "<file.json>" "Also bump \"version\" in this JSON file. Repeatable:"
+  print-opt-cont "${S_NORM}ver-bump -f src/plugin/package.json -f composer.json"
+  print-opt-row "-p" "--push"          "<remote>"    "Push release branch + tag to <remote> at end of run."
+  print-opt-row "-t" "--tag-prefix"    "<prefix>"    "Override tag prefix (default: ${S_NORM}v${S_LIGHT})."
+  print-opt-row "-B" "--branch-prefix" "<prefix>"    "Override branch prefix (default: ${S_NORM}release-${S_LIGHT})."
+  print-opt-row "-d" "--dry-run"       ""            "Dry-run: print every side-effect without executing."
+  print-opt-row "-n" "--no-commit"     ""            "Disable commit (and tag + push) after bumping files."
+  print-opt-row "-b" "--no-branch"     ""            "Disable creating a new release-x.x.x branch."
+  print-opt-row "-c" "--no-changelog"  ""            "Disable updating CHANGELOG.md automatically."
+  print-opt-row "-l" "--pause-changelog" ""          "Pause before commit so CHANGELOG.md can be edited."
+  print-opt-row "-h" "--help"          ""            "Show this help message."
+  print-opt-row ""   "--completions"   "<shell>"     "Emit completion script for ${S_NORM}bash${S_LIGHT}, ${S_NORM}zsh${S_LIGHT}, or ${S_NORM}fish${S_LIGHT}."
+  echo
 
   echo -e "${S_NORM}${BOLD}Credits:${S_LIGHT}"\
           "\n${SCRIPT_AUTH} ${RESET}"\
           "\n${SCRIPT_HOME}\n"
 }
 
+# Emit a shell completion script to stdout. Supported: bash, zsh, fish.
+# Usage: ver-bump --completions <shell>
+emit-completions() {
+  case "$1" in
+    bash) _emit-bash-completion ;;
+    zsh)  _emit-zsh-completion  ;;
+    fish) _emit-fish-completion ;;
+    ''|-h|--help)
+      echo "Usage: ver-bump --completions <bash|zsh|fish>"
+      echo
+      echo "Install:"
+      echo "  bash: ver-bump --completions bash > /usr/local/etc/bash_completion.d/ver-bump"
+      echo "  zsh:  ver-bump --completions zsh  > \"\${fpath[1]}/_ver-bump\"  # then autoload"
+      echo "  fish: ver-bump --completions fish > ~/.config/fish/completions/ver-bump.fish"
+      return 0
+    ;;
+    *)
+      echo "Unknown shell: $1 (supported: bash, zsh, fish)" >&2
+      return 1
+    ;;
+  esac
+}
+
+_emit-bash-completion() {
+  cat <<'BASH_EOF'
+# ver-bump bash completion — source this or drop it in your bash_completion.d
+# shellcheck disable=SC2207
+_ver_bump() {
+    local cur prev opts
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Options that take a file argument → complete .json paths
+    case "$prev" in
+        -f|--file)
+            COMPREPLY=( $(compgen -f -X '!*.json' -- "$cur") )
+            return 0
+            ;;
+        --completions)
+            COMPREPLY=( $(compgen -W 'bash zsh fish' -- "$cur") )
+            return 0
+            ;;
+        # Options that take a free-form argument — no completion
+        -v|--version|-m|--message|-p|--push|-t|--tag-prefix|-B|--branch-prefix)
+            return 0
+            ;;
+    esac
+
+    opts="--version --message --file --push --tag-prefix --branch-prefix \
+          --dry-run --no-commit --no-branch --no-changelog --pause-changelog \
+          --help --completions \
+          -v -m -f -p -t -B -d -n -b -c -l -h"
+    COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+}
+complete -F _ver_bump ver-bump
+complete -F _ver_bump ver-bump.sh
+BASH_EOF
+}
+
+_emit-zsh-completion() {
+  cat <<'ZSH_EOF'
+#compdef ver-bump ver-bump.sh
+# ver-bump zsh completion — put this file as _ver-bump in a dir on $fpath,
+# then `autoload -U compinit && compinit`.
+
+_ver_bump() {
+  _arguments -s -S \
+    '(-v --version)'{-v,--version}'[manual SemVer version]:version:' \
+    '(-m --message)'{-m,--message}'[custom annotated-tag message]:message:' \
+    '(-f --file)'{-f,--file}'[bump version in extra JSON file]:file:_files -g "*.json"' \
+    '(-p --push)'{-p,--push}'[push branch + tag to <remote>]:remote:' \
+    '(-t --tag-prefix)'{-t,--tag-prefix}'[override tag prefix]:prefix:' \
+    '(-B --branch-prefix)'{-B,--branch-prefix}'[override branch prefix]:prefix:' \
+    '(-d --dry-run)'{-d,--dry-run}'[print side-effects without executing]' \
+    '(-n --no-commit)'{-n,--no-commit}'[disable commit (and tag + push)]' \
+    '(-b --no-branch)'{-b,--no-branch}'[disable creating release branch]' \
+    '(-c --no-changelog)'{-c,--no-changelog}'[disable CHANGELOG.md update]' \
+    '(-l --pause-changelog)'{-l,--pause-changelog}'[pause before commit]' \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '--completions[emit completion script]:shell:(bash zsh fish)'
+}
+
+_ver_bump "$@"
+ZSH_EOF
+}
+
+_emit-fish-completion() {
+  cat <<'FISH_EOF'
+# ver-bump fish completion — save to ~/.config/fish/completions/ver-bump.fish
+for _cmd in ver-bump ver-bump.sh
+    complete -c $_cmd -s v -l version        -r -d 'Manual SemVer version'
+    complete -c $_cmd -s m -l message        -r -d 'Custom annotated-tag message'
+    complete -c $_cmd -s f -l file           -r -a '(__fish_complete_suffix .json)' -d 'Bump version in extra JSON file'
+    complete -c $_cmd -s p -l push           -r -d 'Push branch + tag to <remote>'
+    complete -c $_cmd -s t -l tag-prefix     -r -d 'Override tag prefix'
+    complete -c $_cmd -s B -l branch-prefix  -r -d 'Override branch prefix'
+    complete -c $_cmd -s d -l dry-run        -d 'Print side-effects without executing'
+    complete -c $_cmd -s n -l no-commit      -d 'Disable commit (and tag + push)'
+    complete -c $_cmd -s b -l no-branch      -d 'Disable creating release branch'
+    complete -c $_cmd -s c -l no-changelog   -d 'Disable CHANGELOG.md update'
+    complete -c $_cmd -s l -l pause-changelog -d 'Pause before commit'
+    complete -c $_cmd -s h -l help           -d 'Show help'
+    complete -c $_cmd      -l completions    -x -a 'bash zsh fish' -d 'Emit completion script'
+end
+FISH_EOF
+}
+
+# Translate GNU-style long options (--dry-run, --version=1.2.3, --file foo.json)
+# into their short-form equivalents so getopts can process them uniformly.
+# Writes the translated argv to the global array NORMALIZED_ARGV. On an
+# unknown long option or a missing required value, prints an error and exits 1.
+normalize-long-opts() {
+  local arg name val has_val short needs_arg
+  NORMALIZED_ARGV=()
+
+  while (( $# )); do
+    arg="$1"; shift
+    # Bare "--" stops option processing; pass it and remaining args through
+    if [ "$arg" = "--" ]; then
+      NORMALIZED_ARGV+=("--" "$@")
+      return 0
+    fi
+
+    # Special case: --completions [shell] — emit and exit immediately, so
+    # users can run this without a package.json or a git repo present.
+    if [ "$arg" = "--completions" ] || [[ "$arg" == "--completions="* ]]; then
+      local shell
+      if [[ "$arg" == "--completions="* ]]; then
+        shell="${arg#--completions=}"
+      elif (( $# )) && [ "${1:0:1}" != "-" ]; then
+        shell="$1"; shift
+      else
+        shell=""
+      fi
+      emit-completions "$shell"
+      exit $?
+    fi
+
+    if [[ "$arg" == --*=* ]]; then
+      name="${arg%%=*}"; name="${name#--}"
+      val="${arg#*=}"
+      has_val=1
+    elif [[ "$arg" == --?* ]]; then
+      name="${arg#--}"
+      val=""
+      has_val=0
+    else
+      NORMALIZED_ARGV+=("$arg")
+      continue
+    fi
+
+    case "$name" in
+      version)         short="-v"; needs_arg=1 ;;
+      message)         short="-m"; needs_arg=1 ;;
+      file)            short="-f"; needs_arg=1 ;;
+      push)            short="-p"; needs_arg=1 ;;
+      tag-prefix)      short="-t"; needs_arg=1 ;;
+      branch-prefix)   short="-B"; needs_arg=1 ;;
+      dry-run)         short="-d"; needs_arg=0 ;;
+      no-commit)       short="-n"; needs_arg=0 ;;
+      no-branch)       short="-b"; needs_arg=0 ;;
+      no-changelog)    short="-c"; needs_arg=0 ;;
+      pause-changelog) short="-l"; needs_arg=0 ;;
+      help)            short="-h"; needs_arg=0 ;;
+      *)
+        echo -e "\n${I_ERROR}${S_ERROR} Invalid option: ${S_WARN}--${name}" >&2
+        echo
+        exit 1
+      ;;
+    esac
+
+    NORMALIZED_ARGV+=("$short")
+    if (( needs_arg )); then
+      if (( has_val )); then
+        NORMALIZED_ARGV+=("$val")
+      elif (( $# )) && [ "${1:0:1}" != "-" ]; then
+        NORMALIZED_ARGV+=("$1"); shift
+      else
+        echo -e "\n${I_ERROR}${S_ERROR} Option ${S_WARN}--${name} ${S_ERROR}requires an argument." >&2
+        echo
+        exit 1
+      fi
+    elif (( has_val )); then
+      echo -e "\n${I_ERROR}${S_ERROR} Option ${S_WARN}--${name} ${S_ERROR}doesn't take a value." >&2
+      echo
+      exit 1
+    fi
+  done
+}
+
 # Process script options
 process-arguments() {
   local OPTIONS OPTIND OPTARG
 
+  normalize-long-opts "$@"
+  set -- ${NORMALIZED_ARGV[@]+"${NORMALIZED_ARGV[@]}"}
+
   # Get positional parameters
-  while getopts ":v:p:m:f:hbncl" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
+  while getopts ":v:p:m:f:t:B:hbncdl" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
     case "$OPTIONS" in
       h )
         # Show help
@@ -92,7 +396,12 @@ process-arguments() {
         exit 0
       ;;
       v )
-        # User has supplied a version number
+        # User has supplied a version number — validate SemVer
+        if ! is_semver "$OPTARG"; then
+          echo -e "\n${I_ERROR}${S_ERROR} Version ${S_WARN}'$OPTARG'${S_ERROR} is not a valid SemVer 2.0 version (expected MAJOR.MINOR.PATCH[-prerelease][+build])." >&2
+          echo
+          exit 1
+        fi
         V_USR_SUPPLIED=$OPTARG
       ;;
       m )
@@ -110,13 +419,25 @@ process-arguments() {
         PUSH_DEST=${OPTARG} # Replace default with user input
         echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Pushing to <${S_NORM}${PUSH_DEST}${S_LIGHT}>, as the last action in this script."
       ;;
+      t )
+        TAG_PREFIX=$OPTARG
+        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Tag prefix: <${S_NORM}${TAG_PREFIX}${S_LIGHT}>"
+      ;;
+      B )
+        REL_PREFIX=$OPTARG
+        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Branch prefix: <${S_NORM}${REL_PREFIX}${S_LIGHT}>"
+      ;;
+      d )
+        FLAG_DRYRUN=true
+        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Dry-run enabled — no files, commits, tags, or pushes will be made."
+      ;;
       n )
         FLAG_NOCOMMIT=true
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable commit after tagging release."
+        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable commit (and tag + push) after bumping files."
       ;;
       b )
         FLAG_NOBRANCH=true
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable committing to new branch."
+        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable creating a new release-x.x.x branch."
       ;;
       c )
         FLAG_NOCHANGELOG=true
@@ -138,6 +459,15 @@ process-arguments() {
       ;;
     esac
   done
+}
+
+# Dry-run helper: runs $@ if not in dry-run mode, otherwise prints what would run.
+dryrun() {
+  if [ "$FLAG_DRYRUN" = true ]; then
+    echo -e "${S_LIGHT}[dry-run]${S_NORM} $*" >&2
+    return 0
+  fi
+  "$@"
 }
 
 # If there are no commits in repo, quit, because you can't tag with zero commits.
@@ -173,7 +503,7 @@ process-version() {
 
     if [ -n "$V_PREV" ]; then
       echo -e "\n${S_NOTICE}Current version read from <${S_QUESTION}${VER_FILE}${S_NOTICE}> file: ${S_QUESTION}$V_PREV"
-      set-v-suggest "$V_PREV" # check + increment patch number
+      set-v-suggest "$V_PREV" # check + compute next version from conventional commits (or patch +1)
     else
       echo -e "\n${I_WARN} ${S_ERROR}Error: <${S_QUESTION}${VER_FILE}${S_WARN}> doesn't contain a 'version' field!\n"
       exit 1
@@ -204,11 +534,64 @@ process-version() {
     else
       V_NEW=$V_USR_INPUT
     fi
+
+    # Validate whatever we end up with (suggested or entered) as SemVer.
+    # This only runs in interactive path; -v already validates at parse time.
+    if ! is_semver "$V_NEW"; then
+      echo -e "\n${I_ERROR} ${S_ERROR}Version ${S_WARN}'$V_NEW'${S_ERROR} is not a valid SemVer 2.0 version. Aborting." >&2
+      exit 1
+    fi
   fi
 }
 
+# Inspect commit messages since the previous version's tag and suggest the
+# appropriate bump per Conventional Commits:
+#   - BREAKING CHANGE / <type>! → major
+#   - feat:                     → minor
+#   - anything else             → patch
+# Falls back to patch if no tag for previous version exists, or if parsing fails.
+suggest-bump-level() {
+  local prev_tag log level="patch" line
+  prev_tag="${TAG_PREFIX}${1}"
+
+  if ! git rev-parse --verify "refs/tags/${prev_tag}" >/dev/null 2>&1; then
+    echo "patch"; return
+  fi
+
+  # %B includes body for BREAKING CHANGE detection
+  log=$(git log --format='%B%n---COMMIT-END---' "${prev_tag}..HEAD" 2>/dev/null) || {
+    echo "patch"; return
+  }
+
+  local re_breaking='^[a-zA-Z]+(\([^)]*\))?!:'
+  local re_feat='^feat(\([^)]*\))?:'
+  while IFS= read -r line; do
+    # Breaking change: "<type>!:" in subject, or "BREAKING CHANGE:" anywhere
+    if [[ "$line" =~ $re_breaking ]] || [[ "$line" == *"BREAKING CHANGE:"* ]] || [[ "$line" == *"BREAKING-CHANGE:"* ]]; then
+      echo "major"; return
+    fi
+    # feat: → minor (only upgrade, never downgrade)
+    if [[ "$line" =~ $re_feat ]]; then
+      level="minor"
+    fi
+  done <<< "$log"
+
+  echo "$level"
+}
+
 set-v-suggest() {
-  local V_PREV_LIST V_MAJOR V_MINOR V_PATCH
+  local V_PREV_LIST V_MAJOR V_MINOR V_PATCH BUMP
+
+  # Prerelease counter bumping: if the previous version has a prerelease
+  # identifier (e.g. 4.0.0-dev.6, 1.2.3-rc.1, 1.0.0-alpha), bump the trailing
+  # numeric counter — or append ".1" if there isn't one. Takes precedence
+  # over conventional-commit bumping because pre-release workflows iterate
+  # on the same MAJOR.MINOR.PATCH.
+  if [[ "$1" == *-* ]] && is_semver "$1"; then
+    V_SUGGEST=$(bump-prerelease "$1")
+    echo -e "${S_LIGHT}Detected ${S_NOTICE}prerelease${S_LIGHT} — bumping trailing counter → ${S_NORM}$V_SUGGEST${S_LIGHT}."
+    return
+  fi
 
   # shellcheck disable=SC2207
   V_PREV_LIST=( $( echo "$1" | tr '.' ' ' ) )
@@ -216,9 +599,23 @@ set-v-suggest() {
   V_MINOR=${V_PREV_LIST[1]}
   V_PATCH=${V_PREV_LIST[2]}
 
-  # If all three components are decimal integers, increment the patch.
+  # If all three components are decimal integers, bump according to conventional
+  # commits between the previous tag and HEAD (falls back to patch).
   if is_number "$V_MAJOR" && is_number "$V_MINOR" && is_number "$V_PATCH"; then
-    V_PATCH=$((V_PATCH + 1))
+    BUMP=$(suggest-bump-level "$1")
+    case "$BUMP" in
+      major)
+        V_MAJOR=$((V_MAJOR + 1)); V_MINOR=0; V_PATCH=0
+        echo -e "${S_LIGHT}Detected ${S_NOTICE}breaking change${S_LIGHT} in commits — suggesting ${S_NORM}major${S_LIGHT} bump."
+      ;;
+      minor)
+        V_MINOR=$((V_MINOR + 1)); V_PATCH=0
+        echo -e "${S_LIGHT}Detected ${S_NOTICE}feat:${S_LIGHT} commits — suggesting ${S_NORM}minor${S_LIGHT} bump."
+      ;;
+      *)
+        V_PATCH=$((V_PATCH + 1))
+      ;;
+    esac
     V_SUGGEST="$V_MAJOR.$V_MINOR.$V_PATCH"
     return
   fi
@@ -240,7 +637,7 @@ check-branch-notexist() {
 # Only tag if tag doesn't already exist
 check-tag-exists() {
   local TAG_MSG
-  TAG_MSG=$( git tag -l "v${V_NEW}" )
+  TAG_MSG=$( git tag -l "${TAG_PREFIX}${V_NEW}" )
   if [ -n "$TAG_MSG" ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error: A release with that tag version number already exists!\n\n$TAG_MSG\n"
     exit 1
@@ -248,31 +645,55 @@ check-tag-exists() {
 }
 
 do-packagefile-bump() {
-  local NOTICE_MSG NPM_MSG NPM_RC
+  local NOTICE_MSG
   NOTICE_MSG="<${S_NORM}package.json${S_NOTICE}>"
   if [ "$V_NEW" = "$V_PREV" ]; then
     echo -e "\n${I_WARN}${NOTICE_MSG}${S_WARN} already contains version ${V_NEW}."
+    return
+  fi
+
+  if [ "$FLAG_DRYRUN" = true ]; then
+    echo -e "${S_LIGHT}[dry-run]${S_NORM} would set .version = '$V_NEW' in package.json" >&2
+    [ -f package-lock.json ] && echo -e "${S_LIGHT}[dry-run]${S_NORM} would set .version = '$V_NEW' in package-lock.json" >&2
   else
-    NPM_MSG=$( npm version "${V_NEW}" --git-tag-version=false --force 2>&1 ); NPM_RC=$?
-    if [ "$NPM_RC" -ne 0 ]; then
-      echo -e "\n${I_STOP} ${S_ERROR}Error updating <package.json> and/or <package-lock.json>.\n\n$NPM_MSG\n"
+    # Bump package.json via jq (no npm dependency).
+    # Note: $V is a jq variable (set via --arg), not a bash expansion — single
+    # quotes on the jq program are correct.
+    # shellcheck disable=SC2016
+    if ! jq_inplace package.json '.version = $V' --arg V "$V_NEW"; then
+      echo -e "\n${I_STOP} ${S_ERROR}Error updating <package.json>.\n"
       exit 1
-    else
-      git add package.json
-      GIT_MSG+="updated package.json, "
-      if [ -f package-lock.json ]; then
-        git add package-lock.json
-        GIT_MSG+="updated package-lock.json, "
-        NOTICE_MSG+=" and <${S_NORM}package-lock.json${S_NOTICE}>"
+    fi
+    # package-lock.json: update both top-level .version and (if present) the
+    # root package entry .packages[""].version — matches npm's own behaviour.
+    if [ -f package-lock.json ]; then
+      # shellcheck disable=SC2016
+      if ! jq_inplace package-lock.json '
+        .version = $V
+        | if has("packages") and (.packages | has("")) then
+            .packages[""].version = $V
+          else . end
+      ' --arg V "$V_NEW"; then
+        echo -e "\n${I_STOP} ${S_ERROR}Error updating <package-lock.json>.\n"
+        exit 1
       fi
-      echo -e "\n${I_OK} ${S_NOTICE}Bumped version in ${NOTICE_MSG}."
     fi
   fi
+
+  dryrun git add package.json
+  GIT_MSG+="updated package.json, "
+  if [ -f package-lock.json ]; then
+    dryrun git add package-lock.json
+    GIT_MSG+="updated package-lock.json, "
+    NOTICE_MSG+=" and <${S_NORM}package-lock.json${S_NOTICE}>"
+  fi
+
+  echo -e "\n${I_OK} ${S_NOTICE}Bumped version in ${NOTICE_MSG}."
 }
 
 # Change `version:` value in JSON files, like packager.json, composer.json, etc
 bump-json-files() {
-  local FILE FILE_V_PREV JQ_ERR
+  local FILE FILE_V_PREV
   local JSON_PROCESSED=( ) # holds filenames after they've been changed
 
   for FILE in "${JSON_FILES[@]}"; do
@@ -284,19 +705,17 @@ bump-json-files() {
         echo -e "\n${I_STOP} ${S_ERROR}Error updating version in file <${S_NORM}$FILE${S_NOTICE}> - a version name/value pair was not found to replace!"
       elif [ "$FILE_V_PREV" = "$V_NEW" ]; then
         echo -e "\n${I_WARN} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$FILE_V_PREV"
+      elif [ "$FLAG_DRYRUN" = true ]; then
+        echo -e "${S_LIGHT}[dry-run]${S_NORM} would set .version = '$V_NEW' in $FILE (was $FILE_V_PREV)" >&2
+        GIT_MSG+="updated $FILE, "
       else
-        # Write to output file; redirection order captures stderr into JQ_ERR
-        # while stdout (the json) goes to the temp file.
-        # shellcheck disable=SC2261
-        if JQ_ERR=$( jq --arg V_NEW "$V_NEW" '.version = $V_NEW' "$FILE" 2>&1 >"${FILE}.temp" ) \
-           && [ -s "${FILE}.temp" ]; then
-          mv -f "${FILE}.temp" "${FILE}"
+        # shellcheck disable=SC2016
+        if jq_inplace "$FILE" '.version = $V' --arg V "$V_NEW"; then
           echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$FILE_V_PREV ${S_NOTICE}-> ${S_QUESTION}$V_NEW"
           # Add file change to commit message:
           GIT_MSG+="updated $FILE, "
         else
-          rm -f "${FILE}.temp"
-          echo -e "\n${I_STOP} ${S_ERROR}Error updating <${S_NORM}$FILE${S_ERROR}> with jq.\n${JQ_ERR}"
+          echo -e "\n${I_STOP} ${S_ERROR}Error updating <${S_NORM}$FILE${S_ERROR}> with jq."
         fi
       fi
 
@@ -306,19 +725,23 @@ bump-json-files() {
     fi
   done
   # Stage files that were changed:
-  ((${#JSON_PROCESSED[@]})) && git add "${JSON_PROCESSED[@]}"
+  ((${#JSON_PROCESSED[@]})) && dryrun git add "${JSON_PROCESSED[@]}"
 }
 
 # Handle VERSION file - for backward compatibility
 do-versionfile() {
   if [ -f VERSION ]; then
     GIT_MSG+="updated VERSION, "
-    echo "$V_NEW" > VERSION # Overwrite file
+    if [ "$FLAG_DRYRUN" = true ]; then
+      echo -e "${S_LIGHT}[dry-run]${S_NORM} would write '$V_NEW' to VERSION" >&2
+    else
+      echo "$V_NEW" > VERSION # Overwrite file
+    fi
     # Stage file for commit
-    git add VERSION
+    dryrun git add VERSION
 
     echo -e "\n${I_OK} ${S_NOTICE}Updated [${S_NORM}VERSION${S_NOTICE}] file."\
-            "\n${I_WARN} ${S_ERROR}Deprecation warning: using a <${S_NORM}VERSION${S_ERROR}> file is deprecated since v0.2.0 - support will be removed in future versions."      
+            "\n${I_WARN} ${S_ERROR}Deprecation warning: using a <${S_NORM}VERSION${S_ERROR}> file is deprecated since v0.2.0 - support will be removed in future versions."
   fi
 }
 
@@ -335,9 +758,9 @@ capitalise() {
 # Dump git log history to CHANGELOG.md
 do-changelog() {
   [ "$FLAG_NOCHANGELOG" = true ] && return
-  local ACTION_MSG COMMITS_MSG LOG_MSG LOG_RC RANGE
+  local ACTION_MSG COMMITS_MSG LOG_MSG LOG_RC RANGE TMP
 
-  RANGE=$([ "$(git tag -l v"${V_PREV}")" ] && echo "v${V_PREV}..HEAD")
+  RANGE=$([ "$(git tag -l "${TAG_PREFIX}${V_PREV}")" ] && echo "${TAG_PREFIX}${V_PREV}..HEAD")
   # shellcheck disable=SC2086
   COMMITS_MSG=$( git log --pretty=format:"- %s" ${RANGE} 2>&1 ); LOG_RC=$?
   if [ "$LOG_RC" -ne 0 ]; then
@@ -353,38 +776,46 @@ do-changelog() {
   # Add info to commit message for later:
   GIT_MSG+="${ACTION_MSG} CHANGELOG.md, "
 
-  # Add heading
-  echo "## $V_NEW ($NOW)" > tmpfile
+  # Build new CHANGELOG content in a temp file next to the target, so a
+  # partial write can't leave garbage in the repo root.
+  TMP=$(mktemp "./CHANGELOG.md.XXXXXX")
+  # Heading
+  echo "## $V_NEW ($NOW)" > "$TMP"
 
   # Log the bumping commit:
   # - The final commit is done after do-changelog(), so we need to create the log entry for it manually:
   LOG_MSG="${GIT_MSG}$(get-commit-msg)"
-  # LOG_MSG="$( capitalise "${LOG_MSG}" )" # Capitalise first letter
-  echo "- ${COMMIT_MSG_PREFIX}${LOG_MSG}" >> tmpfile
+  echo "- ${COMMIT_MSG_PREFIX}${LOG_MSG}" >> "$TMP"
   # Add previous commits
-  [ -n "$COMMITS_MSG" ] && echo "$COMMITS_MSG" >> tmpfile
+  [ -n "$COMMITS_MSG" ] && echo "$COMMITS_MSG" >> "$TMP"
 
-  echo -en "\n" >> tmpfile
+  echo -en "\n" >> "$TMP"
 
   if [ -f CHANGELOG.md ]; then
     # Append existing log
-    cat CHANGELOG.md >> tmpfile
+    cat CHANGELOG.md >> "$TMP"
   else
     echo -e "\n${S_WARN}An existing [${S_NORM}CHANGELOG.md${S_WARN}] file was not found. Creating one..."
   fi
 
-  mv tmpfile CHANGELOG.md
+  if [ "$FLAG_DRYRUN" = true ]; then
+    echo -e "${S_LIGHT}[dry-run]${S_NORM} would replace CHANGELOG.md with:" >&2
+    cat "$TMP" >&2
+    rm -f "$TMP"
+  else
+    mv -f "$TMP" CHANGELOG.md
+  fi
 
   echo -e "\n${I_OK} ${S_NOTICE}$( capitalise "${ACTION_MSG}" ) [${S_NORM}CHANGELOG.md${S_NOTICE}] file."
 
   # Optionally pause & allow user to open and edit the file:
-  if [ "$FLAG_CHANGELOG_PAUSE" = true ]; then
+  if [ "$FLAG_CHANGELOG_PAUSE" = true ] && [ "$FLAG_DRYRUN" != true ]; then
     echo -en "\n${S_QUESTION}Make adjustments to [${S_NORM}CHANGELOG.md${S_QUESTION}] if required now. Press <enter> to continue."
     read -r
   fi
 
   # Stage log file, to commit later
-  git add CHANGELOG.md
+  dryrun git add CHANGELOG.md
 }
 
 do-branch() {
@@ -393,6 +824,12 @@ do-branch() {
   local BRANCH_MSG
 
   echo -e "\n${S_NOTICE}Creating new release branch..."
+
+  if [ "$FLAG_DRYRUN" = true ]; then
+    echo -e "${S_LIGHT}[dry-run]${S_NORM} would run: git branch ${REL_PREFIX}${V_NEW} && git checkout ${REL_PREFIX}${V_NEW}" >&2
+    echo -e "\n${I_OK} ${S_NOTICE}Switched to (dry-run) branch '${REL_PREFIX}${V_NEW}'"
+    return
+  fi
 
   BRANCH_MSG=$(git branch "${REL_PREFIX}${V_NEW}" 2>&1)
   if [ -z "$BRANCH_MSG" ]; then
@@ -412,6 +849,13 @@ do-commit() {
 
   GIT_MSG+="$(get-commit-msg)"
   echo -e "\n${S_NOTICE}Committing..."
+
+  if [ "$FLAG_DRYRUN" = true ]; then
+    echo -e "${S_LIGHT}[dry-run]${S_NORM} would run: git commit -m '${COMMIT_MSG_PREFIX}${GIT_MSG}'" >&2
+    echo -e "\n${I_OK} ${S_NOTICE}(dry-run) commit prepared"
+    return
+  fi
+
   COMMIT_MSG=$( git commit -m "${COMMIT_MSG_PREFIX}${GIT_MSG}" 2>&1 ); COMMIT_RC=$?
   if [ "$COMMIT_RC" -ne 0 ]; then
     echo -e "\n${I_STOP} ${S_ERROR}Error\n$COMMIT_MSG\n"
@@ -421,19 +865,22 @@ do-commit() {
   fi
 }
 
-# Create a Git tag using the SemVar
+# Create a Git tag using the SemVer
 do-tag() {
   # If we skipped committing, the version bumps are not persisted, so tagging
   # would point at the wrong (pre-bump) commit. Skip the tag too.
   [ "$FLAG_NOCOMMIT" = true ] && return
 
-  if [ -z "${REL_NOTE}" ]; then
-    # Default release note
-    git tag -a "v${V_NEW}" -m "Tag version ${V_NEW}."
-  else
-    # Custom release note
-    git tag -a "v${V_NEW}" -m "${REL_NOTE}"
+  local tag_msg
+  tag_msg="${REL_NOTE:-Tag version ${V_NEW}.}"
+
+  if [ "$FLAG_DRYRUN" = true ]; then
+    echo -e "${S_LIGHT}[dry-run]${S_NORM} would run: git tag -a ${TAG_PREFIX}${V_NEW} -m '${tag_msg}'" >&2
+    echo -e "\n${I_OK} ${S_NOTICE}Added GIT tag"
+    return
   fi
+
+  git tag -a "${TAG_PREFIX}${V_NEW}" -m "${tag_msg}"
   echo -e "\n${I_OK} ${S_NOTICE}Added GIT tag"
 }
 
@@ -458,7 +905,14 @@ do-push() {
       else
         REMOTE_REF="${REL_PREFIX}${V_NEW}"
       fi
-      PUSH_MSG=$( git push -u "${PUSH_DEST}" "${REMOTE_REF}" "v${V_NEW}" 2>&1 ); PUSH_RC=$?
+
+      if [ "$FLAG_DRYRUN" = true ]; then
+        echo -e "${S_LIGHT}[dry-run]${S_NORM} would run: git push -u ${PUSH_DEST} ${REMOTE_REF} ${TAG_PREFIX}${V_NEW}" >&2
+        echo -e "\n${I_OK} ${S_NOTICE}(dry-run) push prepared"
+        return
+      fi
+
+      PUSH_MSG=$( git push -u "${PUSH_DEST}" "${REMOTE_REF}" "${TAG_PREFIX}${V_NEW}" 2>&1 ); PUSH_RC=$?
       if [ "$PUSH_RC" -ne 0 ]; then
         echo -e "\n${I_STOP} ${S_WARN}Warning\n$PUSH_MSG"
       else

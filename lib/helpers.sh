@@ -19,11 +19,11 @@ fail() {
   local code=$1
   local msg=$2
   local hint=${3-}
-  echo -e "\n${S_ERROR}${I_ERROR} Error:${S_NORM} ${msg}${RESET}" >&2
-  if [ -n "${hint}" ]; then
-    echo -e "${S_LIGHT}  Hint: ${hint}${RESET}" >&2
+  printf '\n%b%s Error:%b %s%b\n' "${S_ERROR-}" "${I_ERROR-}" "${S_NORM-}" "$msg" "${RESET-}" >&2
+  if [ -n "$hint" ]; then
+    printf '%b  Hint: %s%b\n' "${S_LIGHT-}" "$hint" "${RESET-}" >&2
   fi
-  exit "${code}"
+  exit "$code"
 }
 
 # Returns 0 (success) if $1 is a non-empty decimal integer, non-zero otherwise.

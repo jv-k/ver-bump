@@ -177,6 +177,44 @@ $ ver-bump [-v|--version <v>] [-m|--message <msg>] [-f|--file <file.json>]... \
 Every option has a short form and a GNU-style long form. Long forms accept
 `--name value` or `--name=value`.
 
+### Config file (`.ver-bumprc`)
+
+`ver-bump` looks for a `.ver-bumprc` file by walking up from your current
+directory toward `/`. The first file found is shell-sourced so teams can
+commit their project-wide defaults alongside the repo.
+
+Supported keys (each maps 1:1 to an existing global):
+
+| Key | Equivalent flag | Default |
+| --- | --- | --- |
+| `TAG_PREFIX` | `-t` / `--tag-prefix` | `v` |
+| `REL_PREFIX` | `-B` / `--branch-prefix` | `release-` |
+| `PUSH_DEST` | `-p` / `--push` | `origin` |
+| `COMMIT_MSG_PREFIX` | *(no flag)* | `"chore: "` |
+| `FLAG_NOBRANCH` | `-b` / `--no-branch` | *unset* |
+| `FLAG_NOCHANGELOG` | `-c` / `--no-changelog` | *unset* |
+| `FLAG_CHANGELOG_PAUSE` | `-l` / `--pause-changelog` | *unset* |
+
+Example:
+
+```sh
+# .ver-bumprc — committed at repo root
+TAG_PREFIX="release/"
+REL_PREFIX="hotfix-"
+PUSH_DEST="upstream"
+COMMIT_MSG_PREFIX="release: "
+FLAG_NOCHANGELOG=true
+```
+
+**Precedence** — highest to lowest: **CLI flag** > **environment variable**
+> **`.ver-bumprc`** > **built-in default**. So an exported
+`TAG_PREFIX=foo` overrides whatever the file says, and passing `-t bar`
+overrides both.
+
+**Security** — `ver-bump` *sources* this file as shell, so do not commit
+one you wouldn't execute. As a safeguard, `ver-bump` refuses to load a
+world-writable rc and exits with code 3; `chmod 644 .ver-bumprc` fixes it.
+
 ```text
 -v, --version <version>       Manual SemVer version (validated against SemVer 2.0).
 -m, --message <message>       Custom annotated-tag release message.

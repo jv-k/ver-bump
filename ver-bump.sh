@@ -18,6 +18,7 @@ MODULE_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 
 source "$MODULE_DIR/lib/helpers.sh"
 source "$MODULE_DIR/lib/icons.sh"
+source "$MODULE_DIR/lib/config.sh"
 
 NOW="$(date +%F)"
 
@@ -31,11 +32,21 @@ COMMIT_MSG_PREFIX="chore: " # Commit msg prefix for the file changes this script
 PUSH_DEST="origin"
 FLAG_DRYRUN=false
 
+# Note: load-config (called from main()) only preserves variables that were
+# *exported* from the environment, not plain script globals. That means the
+# four defaults above are still beaten by .ver-bumprc — see lib/config.sh.
+
 JSON_FILES=()
 
 #### Initiate Script ###########################
 
 main() {
+  # Load .ver-bumprc (if any) and apply defaults BEFORE parsing CLI args.
+  # Precedence: CLI (process-arguments below) > env (preserved in load-config)
+  #             > file (.ver-bumprc) > default (apply-config-defaults).
+  load-config
+  apply-config-defaults
+
   # Process and prepare
   process-arguments "$@"
   check-dependencies

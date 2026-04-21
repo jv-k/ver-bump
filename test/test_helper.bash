@@ -50,7 +50,10 @@ get_help_msg() {
 }
 
 create_ver_file() {
-  F_TEMPS+=($(mktemp ${repo_dir}/XXXXXXXXXXXXXXXXXXXX)) # push
+  # Create the scratch JSON in $PWD so tests that cd into scratch_repo don't
+  # leak files into the real project checkout. Callers are expected to have
+  # cd'd into their desired working directory before invoking.
+  F_TEMPS+=($(mktemp ${PWD}/XXXXXXXXXXXXXXXXXXXX)) # push
   F_TMP=${F_TEMPS[${#F_TEMPS[@]}-1]} # last pushed
   printf "{ \n\"version\": \"${V_TEST}\"\n }" > $F_TMP
   VER_FILE=$F_TMP # set value used in test target

@@ -123,7 +123,10 @@ load 'test_helper'
   local dir
   dir=$(mktemp -d)
   CLEANUP_CMDS+=("rm -rf ${dir}")
-  (cd "$dir" && git init -q -b main 2>/dev/null || git init -q "$dir")
+  # Init without a starting branch name, so both old and new git work.
+  # --initial-branch is git 2.28+; fall back cleanly on older versions.
+  git init -q "$dir"
+  ( cd "$dir" && git symbolic-ref HEAD refs/heads/main 2>/dev/null || true )
   cd "$dir"
   run check-commits-exist
   assert_failure 3
@@ -175,14 +178,20 @@ SH
 
 # Exit-code coverage: user abort path reserved -> 5 ###########################
 
-@test "exit code: fail 5 path is wired for future user-abort sites" {
-  # do-push currently falls through the case statement on a decline rather
-  # than calling fail 5, so the user-abort path has no live call site yet
-  # (v5 plan reserves code 5 for --yes/--ci work). Exercise the helper
-  # directly so regressions in the exit-code constant are caught.
+@test "exit code: fail 5 helper honours exit code" {
   source ${profile_script}
   run fail 5 "user declined push" "Re-run without declining, or pass --yes to auto-confirm."
   assert_failure 5
   assert_output --partial "user declined push"
   assert_output --partial "--yes"
+}
+
+@test "exit code: do-push declining the prompt -> 5" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  # FLAG_PUSH defaults to unset, so do-push takes the interactive branch
+  # and reads from stdin. Anything other than y/yes is "declined" -> 5.
+  run do-push <<< "n"
+  assert_failure 5
+  assert_output --partial "push declined"
 }

@@ -78,3 +78,50 @@ BREAKING CHANGE: old consumers must migrate."
   git commit --allow-empty -qm "feat: thing"
   assert_equal "$(suggest-bump-level 0.1.0)" "minor"
 }
+
+# B2 — commit BODIES must not trigger major/minor bumps. Only the subject
+# line should be matched against the conventional-commits type patterns,
+# and BREAKING CHANGE must be anchored to the start of a body line.
+
+@test "suggest-bump-level: quoted 'BREAKING CHANGE:' in body does NOT trigger major" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git tag -a v0.1.0 -m "tag"
+  git commit --allow-empty -qm "docs: quote something
+
+See commit abc123 which said 'BREAKING CHANGE: removes old API'."
+  # Single docs commit with no real breaking footer → patch (default).
+  assert_equal "$(suggest-bump-level 0.1.0)" "patch"
+}
+
+@test "suggest-bump-level: 'feat:' inside a body does NOT trigger minor" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git tag -a v0.1.0 -m "tag"
+  git commit --allow-empty -qm "refactor: internal move
+
+Body mentions feat: something earlier in the day."
+  # Single refactor commit → patch; the body reference must not promote it.
+  assert_equal "$(suggest-bump-level 0.1.0)" "patch"
+}
+
+@test "suggest-bump-level: indented 'BREAKING CHANGE:' in body does NOT trigger major" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git tag -a v0.1.0 -m "tag"
+  # BREAKING CHANGE preceded by spaces is NOT a valid footer per the spec.
+  git commit --allow-empty -qm "chore: tidy
+
+    BREAKING CHANGE: this is indented and must not count."
+  assert_equal "$(suggest-bump-level 0.1.0)" "patch"
+}
+
+@test "suggest-bump-level: real BREAKING-CHANGE hyphen footer triggers major" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git tag -a v0.1.0 -m "tag"
+  git commit --allow-empty -qm "refactor: rename
+
+BREAKING-CHANGE: consumers must migrate."
+  assert_equal "$(suggest-bump-level 0.1.0)" "major"
+}

@@ -221,7 +221,8 @@ load 'test_helper'
   assert_equal "${FLAG_PUSH}" "true"
 
   run process-arguments -p "${TEST_DEST}"
-  assert_output --partial "Option set: Pushing to <${PUSH_DEST}>, as the last action in this script."
+  strip_ansi_output
+  assert_output --partial "Option set: push to <${PUSH_DEST}>"
 }
 
 @test "process-arguments: -n: set flag to prevent committing at the end" {
@@ -230,7 +231,8 @@ load 'test_helper'
   assert_equal "${FLAG_NOCOMMIT}" "true"
 
   run process-arguments -n
-  assert_output --partial "Disable commit (and tag + push) after bumping files."
+  strip_ansi_output
+  assert_output --partial "disable commit (and tag + push) after bumping files."
 }
 
 @test "process-arguments: -b: set flag to disable creating a release branch" {
@@ -239,7 +241,8 @@ load 'test_helper'
   assert_equal "${FLAG_NOBRANCH}" "true"
 
   run process-arguments -b
-  assert_output --partial "Disable creating a new release-x.x.x branch."
+  strip_ansi_output
+  assert_output --partial "disable creating a new release-x.x.x branch."
 }
 
 @test "process-arguments: -c: set flag to disable creating/updating CHANGELOG.md" {
@@ -248,7 +251,8 @@ load 'test_helper'
   assert_equal "${FLAG_NOCHANGELOG}" "true"
 
   run process-arguments -c
-  assert_output --partial "Option set: Disable updating CHANGELOG.md"
+  strip_ansi_output
+  assert_output --partial "Option set: disable updating CHANGELOG.md"
 }
 
 @test "process-arguments: -l: set flag to enable pausing after CHANGELOG.md is created" {
@@ -257,7 +261,8 @@ load 'test_helper'
   assert_equal "${FLAG_CHANGELOG_PAUSE}" "true"
 
   run process-arguments -l
-  assert_output --partial "Option set: Pause enabled for amending CHANGELOG.md"
+  strip_ansi_output
+  assert_output --partial "Option set: pause to allow amending CHANGELOG.md"
 }
 
 @test "process-arguments: fail on not-existing argument" {

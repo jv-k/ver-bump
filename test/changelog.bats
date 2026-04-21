@@ -17,8 +17,9 @@ load 'test_helper'
   CLEANUP_CMDS+=("rm ${F_CL} && mv ${F_CL}.backup ${F_CL}")
 
   run do-changelog <<< ""
+  strip_ansi_output
   assert_success
-  assert_output -p "Updated [CHANGELOG.md] file"
+  assert_output -p "Updated [CHANGELOG.md]"
 
   # Test CL.md actually contains the line
   grep -F "updated ${F_CL}, bumped ${V_PREV} -> ${V_NEW}" $F_CL

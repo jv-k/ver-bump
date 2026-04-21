@@ -59,7 +59,8 @@ load 'test_helper'
   V_NEW="0.2.0"
 
   run do-changelog <<< ""
+  strip_ansi_output
   assert_success
-  assert_output --partial "Created [CHANGELOG.md] file"
+  assert_output --partial "Created [CHANGELOG.md]"
   grep -F "feat: after previous tag" CHANGELOG.md
 }

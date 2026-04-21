@@ -55,7 +55,7 @@ main() {
 
   check-branch-notexist
   check-tag-exists
-  echo -e "\n${S_LIGHT}------"
+  echo -e "\n${S_LIGHT}------${RESET}"
 
   # Update files
   do-packagefile-bump
@@ -67,10 +67,10 @@ main() {
   do-tag
   do-push
 
-  echo -e "\n${S_LIGHT}------"
-  echo -ne "\n${I_OK} ${S_NOTICE}"
+  echo -e "\n${S_LIGHT}------${RESET}"
+  echo -ne "\n${I_OK} "
   capitalise "$( get-commit-msg )"
-  echo -e "\n${I_END} ${GREEN}Done!\n"
+  echo -e "\n${I_END} Done!\n"
 }
 
 # Execute script when it is executed as a script, and when it is brought into the environment with source (so it can be tested)

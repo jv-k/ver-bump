@@ -388,6 +388,13 @@ normalize-long-opts() {
     NORMALIZED_ARGV+=("$short")
     if (( needs_arg )); then
       if (( has_val )); then
+        # Reject --name= (empty value after '='). Without this, getopts would
+        # silently consume the next positional as the flag's value.
+        if [ -z "$val" ]; then
+          fail 2 \
+            "Option --${name} requires a non-empty value." \
+            "Pass a value: --${name} <value> or --${name}=<value>."
+        fi
         NORMALIZED_ARGV+=("$val")
       elif (( $# )) && [ "${1:0:1}" != "-" ]; then
         NORMALIZED_ARGV+=("$1"); shift
@@ -519,21 +526,22 @@ check-commits-exist() {
 # — MINOR version when you add functionality in a backwards compatible manner, and
 # — PATCH version when you make backwards compatible bug fixes.
 process-version() {
-  # As a minimum pre-requisite ver-bump needs a version number from a JSON file
-  # to read + bump. If it doesn't exist, throw an error + exit:
+  # Read V_PREV from VER_FILE (package.json) for display + same-version dedup.
+  # When -v is supplied, V_PREV is best-effort: the user already gave us V_NEW,
+  # so missing/empty VER_FILE is allowed. Without -v we need a version to bump,
+  # so a missing VER_FILE is a hard error.
   if [ -f "$VER_FILE" ] && [ -s "$VER_FILE" ]; then
-    # Get the existing version number (top-level .version only)
     V_PREV=$( jq -r '.version // empty' "$VER_FILE" 2>/dev/null )
 
     if [ -n "$V_PREV" ]; then
       echo -e "\nCurrent version read from <${S_NORM}${VER_FILE}${RESET}>: ${S_NORM}$V_PREV${RESET}"
       set-v-suggest "$V_PREV" # check + compute next version from conventional commits (or patch +1)
-    else
+    elif [ -z "$V_USR_SUPPLIED" ]; then
       fail 3 \
         "<${VER_FILE}> doesn't contain a 'version' field." \
         "Add a top-level \"version\" key to ${VER_FILE}, or pass an explicit version with -v <version>."
     fi
-  else
+  elif [ -z "$V_USR_SUPPLIED" ]; then
     local reason
     if [ ! -f "$VER_FILE" ]; then
       reason="was not found"
@@ -544,7 +552,7 @@ process-version() {
     fi
     fail 3 \
       "<${VER_FILE}> ${reason}." \
-      "Run ver-bump inside a directory with a valid package.json, or override via VER_FILE=<path>."
+      "Run ver-bump inside a directory with a valid ${VER_FILE}, pass -v <version> to bypass, or override via VER_FILE=<path>."
   fi
 
   # If a version number is supplied by the user with [-v <version number>] — use it!
@@ -579,28 +587,58 @@ process-version() {
 #   - feat:                     → minor
 #   - anything else             → patch
 # Falls back to patch if no tag for previous version exists, or if parsing fails.
+#
+# Subject vs. body handling: we split every commit into its subject (first
+# line) and body (rest) via a record-separator/unit-separator format. Only
+# the subject is matched against the "<type>:" / "<type>!:" patterns, so a
+# commit body that quotes a prior subject can't trigger a spurious bump.
+# "BREAKING CHANGE:" / "BREAKING-CHANGE:" is matched only when it appears as
+# a footer — start-of-line followed by the token and a colon.
 suggest-bump-level() {
-  local prev_tag log level="patch" line
+  local prev_tag log level="patch" record subject body line
   prev_tag="${TAG_PREFIX}${1}"
 
   if ! git rev-parse --verify "refs/tags/${prev_tag}" >/dev/null 2>&1; then
     echo "patch"; return
   fi
 
-  # %B includes body for BREAKING CHANGE detection
-  log=$(git log --format='%B%n---COMMIT-END---' "${prev_tag}..HEAD" 2>/dev/null) || {
+  # %s = subject, %b = body. RS (0x1e) separates subject/body; US (0x1f)
+  # separates commits. Both are unlikely in any sane commit message.
+  log=$(git log --format='%s%x1e%b%x1f' "${prev_tag}..HEAD" 2>/dev/null) || {
     echo "patch"; return
   }
 
-  local re_breaking='^[a-zA-Z]+(\([^)]*\))?!:'
+  local re_breaking_subject='^[a-zA-Z]+(\([^)]*\))?!:'
   local re_feat='^feat(\([^)]*\))?:'
-  while IFS= read -r line; do
-    # Breaking change: "<type>!:" in subject, or "BREAKING CHANGE:" anywhere
-    if [[ "$line" =~ $re_breaking ]] || [[ "$line" == *"BREAKING CHANGE:"* ]] || [[ "$line" == *"BREAKING-CHANGE:"* ]]; then
+  local re_breaking_footer='^BREAKING[ -]CHANGE:'
+
+  while IFS= read -r -d $'\x1f' record; do
+    # Trim the newline git inserts between format records.
+    record="${record#$'\n'}"
+    [ -z "$record" ] && continue
+    subject="${record%%$'\x1e'*}"
+    if [[ "$record" == *$'\x1e'* ]]; then
+      body="${record#*$'\x1e'}"
+    else
+      body=""
+    fi
+
+    # Breaking change via "<type>!:" — subject only.
+    if [[ "$subject" =~ $re_breaking_subject ]]; then
       echo "major"; return
     fi
-    # feat: → minor (only upgrade, never downgrade)
-    if [[ "$line" =~ $re_feat ]]; then
+
+    # Breaking change footer — anchored at start of a body line.
+    if [ -n "$body" ]; then
+      while IFS= read -r line; do
+        if [[ "$line" =~ $re_breaking_footer ]]; then
+          echo "major"; return
+        fi
+      done <<< "$body"
+    fi
+
+    # feat: → minor (subject only; never downgrade).
+    if [[ "$subject" =~ $re_feat ]]; then
       level="minor"
     fi
   done <<< "$log"
@@ -611,26 +649,26 @@ suggest-bump-level() {
 set-v-suggest() {
   local V_PREV_LIST V_MAJOR V_MINOR V_PATCH BUMP
 
-  # Prerelease counter bumping: if the previous version has a prerelease
-  # identifier (e.g. 4.0.0-dev.6, 1.2.3-rc.1, 1.0.0-alpha), bump the trailing
-  # numeric counter — or append ".1" if there isn't one. Takes precedence
-  # over conventional-commit bumping because pre-release workflows iterate
-  # on the same MAJOR.MINOR.PATCH.
-  if [[ "$1" == *-* ]] && is_semver "$1"; then
-    V_SUGGEST=$(bump-prerelease "$1")
-    echo -e "${S_LIGHT}Detected prerelease — bumping trailing counter → ${S_NORM}$V_SUGGEST${RESET}"
-    return
-  fi
+  # Dispatch on whether the input is a valid SemVer 2.0 string first.
+  # Semver inputs take the prerelease-counter or conventional-commits branch.
+  # Anything else is treated as best-effort "dotted numeric" and only bumped
+  # when every component is a decimal integer.
+  if is_semver "$1"; then
+    # Prerelease counter bumping: if the previous version has a prerelease
+    # identifier (e.g. 4.0.0-dev.6, 1.2.3-rc.1, 1.0.0-alpha), bump the
+    # trailing numeric counter — or append ".1" if there isn't one. Takes
+    # precedence over conventional-commit bumping because pre-release
+    # workflows iterate on the same MAJOR.MINOR.PATCH.
+    if [[ "$1" == *-* ]]; then
+      V_SUGGEST=$(bump-prerelease "$1")
+      echo -e "${S_LIGHT}Detected prerelease — bumping trailing counter → ${S_NORM}$V_SUGGEST${RESET}"
+      return
+    fi
 
-  # shellcheck disable=SC2207
-  V_PREV_LIST=( $( echo "$1" | tr '.' ' ' ) )
-  V_MAJOR=${V_PREV_LIST[0]}
-  V_MINOR=${V_PREV_LIST[1]}
-  V_PATCH=${V_PREV_LIST[2]}
-
-  # If all three components are decimal integers, bump according to conventional
-  # commits between the previous tag and HEAD (falls back to patch).
-  if is_number "$V_MAJOR" && is_number "$V_MINOR" && is_number "$V_PATCH"; then
+    # Pristine MAJOR.MINOR.PATCH (+build): bump per conventional commits.
+    # is_semver already guarantees numeric components, so we can strip any
+    # build metadata and bash-arithmetic the rest without re-validating.
+    IFS='.' read -r V_MAJOR V_MINOR V_PATCH <<< "${1%%+*}"
     BUMP=$(suggest-bump-level "$1")
     case "$BUMP" in
       major)
@@ -645,6 +683,24 @@ set-v-suggest() {
         V_PATCH=$((V_PATCH + 1))
       ;;
     esac
+    V_SUGGEST="$V_MAJOR.$V_MINOR.$V_PATCH"
+    return
+  fi
+
+  # Non-SemVer input: best-effort dotted-numeric bump. Split via IFS read so
+  # globbing can't kick in (silences ShellCheck SC2207 too). Only bump when
+  # every component is a decimal integer; otherwise keep the input verbatim.
+  local -a V_PREV_LIST
+  IFS='.' read -r -a V_PREV_LIST <<< "$1"
+  V_MAJOR=${V_PREV_LIST[0]-}
+  V_MINOR=${V_PREV_LIST[1]-}
+  V_PATCH=${V_PREV_LIST[2]-}
+
+  if [ "${#V_PREV_LIST[@]}" -eq 3 ] \
+     && is_number "$V_MAJOR" \
+     && is_number "$V_MINOR" \
+     && is_number "$V_PATCH"; then
+    V_PATCH=$((V_PATCH + 1))
     V_SUGGEST="$V_MAJOR.$V_MINOR.$V_PATCH"
     return
   fi
@@ -678,8 +734,17 @@ check-tag-exists() {
 do-packagefile-bump() {
   local NOTICE_MSG
   NOTICE_MSG="<${S_NORM}package.json${RESET}>"
+
+  # Skip entirely if package.json is absent. With -v + -f, the user may be
+  # bumping only auxiliary JSON files — process-version already allowed
+  # missing VER_FILE in that path.
+  if [ ! -f package.json ]; then
+    echo -e "\n${I_WARN} ${S_WARN}Warning:${RESET} ${NOTICE_MSG} not found — skipping."
+    return
+  fi
+
   if [ "$V_NEW" = "$V_PREV" ]; then
-    echo -e "\n${I_WARN} ${S_WARN}Warning:${RESET} ${NOTICE_MSG} already contains version ${S_NORM}${V_NEW}${RESET}."
+    echo -e "\n${I_WARN} ${S_WARN}Warning:${RESET} ${NOTICE_MSG} already contains version ${S_NORM}${V_PREV}${RESET}."
     return
   fi
 
@@ -823,28 +888,28 @@ do-changelog() {
   # Add previous commits
   [ -n "$COMMITS_MSG" ] && echo "$COMMITS_MSG" >> "$TMP"
 
-  echo -en "\n" >> "$TMP"
+  printf '\n' >> "$TMP"
 
   if [ -f CHANGELOG.md ]; then
     # Append existing log
     cat CHANGELOG.md >> "$TMP"
   else
-    echo -e "\nNo existing [${S_NORM}CHANGELOG.md${RESET}] found — creating one."
+    printf '\nNo existing [%sCHANGELOG.md%s] found — creating one.\n' "${S_NORM}" "${RESET}"
   fi
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would replace CHANGELOG.md with:" >&2
+    printf '%s[dry-run]%s would replace CHANGELOG.md with:\n' "${S_LIGHT}" "${RESET}" >&2
     cat "$TMP" >&2
     rm -f "$TMP"
   else
     mv -f "$TMP" CHANGELOG.md
   fi
 
-  echo -e "\n${I_OK} $( capitalise "${ACTION_MSG}" ) [${S_NORM}CHANGELOG.md${RESET}]."
+  printf '\n%s %s [%sCHANGELOG.md%s].\n' "${I_OK}" "$( capitalise "${ACTION_MSG}" )" "${S_NORM}" "${RESET}"
 
   # Optionally pause & allow user to open and edit the file:
   if [ "$FLAG_CHANGELOG_PAUSE" = true ] && [ "$FLAG_DRYRUN" != true ]; then
-    echo -en "\n${S_QUESTION}Make adjustments to [${S_NORM}CHANGELOG.md${S_QUESTION}] if required now. Press <enter> to continue.${RESET}"
+    printf '\n%sMake adjustments to [%sCHANGELOG.md%s] if required now. Press <enter> to continue.%s' "${S_QUESTION}" "${S_NORM}" "${S_QUESTION}" "${RESET}"
     read -r
   fi
 
@@ -954,6 +1019,11 @@ do-push() {
       else
         echo -e "\n${I_OK} $PUSH_MSG"
       fi
+    ;;
+    * )
+      fail 5 \
+        "push declined" \
+        "Re-run and answer 'y' when prompted, or pass -p/--push <remote> to skip the prompt."
     ;;
   esac
 }

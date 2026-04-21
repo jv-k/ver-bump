@@ -60,6 +60,17 @@ jsonfile_get_ver() {
   sed -n 's/.*"version":.*"\(.*\)"\(,\)\{0,1\}/\1/p' $1
 }
 
+# Strip ANSI CSI sequences from $output in place, so assert_output --partial
+# can match plain narrative substrings regardless of inline colour escapes.
+# Call immediately after `run <cmd>` in tests that assert on user-facing text.
+strip_ansi_output() {
+  # shellcheck disable=SC2001
+  output=$(printf '%s' "$output" | sed $'s/\x1b\\[[0-9;]*m//g')
+  lines=()
+  local _line
+  while IFS= read -r _line; do lines+=("$_line"); done <<< "$output"
+}
+
 # Make a throwaway git repo under /tmp and echo its path. Adds cleanup.
 # Initial state: one empty commit on the default branch. No tags.
 scratch_repo() {

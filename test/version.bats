@@ -72,7 +72,10 @@ load 'test_helper'
   assert_equal "${V_SUGGEST}" "${TEST_V_BAD}"
 
   run set-v-suggest "${TEST_V_BAD}" || return 1
-  assert_output --partial "Warning: ${TEST_V_BAD} doesn't look like a SemVer compatible version"
+  strip_ansi_output
+  assert_output --partial "Warning:"
+  assert_output --partial "${TEST_V_BAD}"
+  assert_output --partial "doesn't look like a SemVer"
 }
 
 @test "process-version: fail on entering non-SemVer input" {

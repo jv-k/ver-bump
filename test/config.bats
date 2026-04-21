@@ -118,6 +118,7 @@ _clear_config_env() {
   # makes do-push non-interactive. The "git tag -a" dry-run line is what
   # carries TAG_PREFIX and is what we assert against.
   run ${profile_script} -d -b -c -p origin -t y -v 1.0.1
+  strip_ansi_output
   assert_success
   # With TAG_PREFIX=y the dry-run tag line should show "y1.0.1", not "from-file1.0.1"
   assert_output --partial "git tag -a y1.0.1"

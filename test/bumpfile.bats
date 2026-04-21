@@ -28,6 +28,7 @@ load 'test_helper'
 
   V_NEW="35.12.23"
   run do-packagefile-bump
+  strip_ansi_output
   assert_output -p "Bumped version in <package.json> and <package-lock.json>"
 
   run jsonfile_get_ver $pkg
@@ -44,7 +45,8 @@ load 'test_helper'
   JSON_FILES=( "${VER_FILE}" )
 
   run bump-json-files # >&3
-  assert_output -p "from ${V_TEST} -> ${V_NEW}"
+  strip_ansi_output
+  assert_output -p "${V_TEST} -> ${V_NEW}"
 
   run jsonfile_get_ver $VER_FILE
   assert_output "${V_NEW}"
@@ -60,6 +62,7 @@ load 'test_helper'
   JSON_FILES=( "${VER_FILE}" )
 
   run bump-json-files # >&3
+  strip_ansi_output
   assert_output --partial "already contains version ${V_TEST}"
 
   run jsonfile_get_ver $VER_FILE
@@ -77,7 +80,8 @@ load 'test_helper'
   JSON_FILES=( "${VER_FILE}" )
 
   run bump-json-files # >&3
-  assert_output --partial "a version name/value pair was not found to replace!"
+  strip_ansi_output
+  assert_output --partial "no .version field in"
 }
 
 @test "bump-json-files: does not stomp global V_PREV (needed by do-changelog)" {

@@ -431,45 +431,45 @@ process-arguments() {
       m )
         REL_NOTE=$OPTARG
         # Custom release note
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Release note: ${S_NORM} '$REL_NOTE'"
+        echo -e "\n${S_LIGHT}Option set:${RESET} release note: ${S_NORM}'$REL_NOTE'${RESET}"
       ;;
       f )
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}JSON file via [-f]: <${S_NORM}${OPTARG}${S_LIGHT}>"
+        echo -e "\n${S_LIGHT}Option set:${RESET} JSON file via [-f]: <${S_NORM}${OPTARG}${RESET}>"
         # Store JSON filenames(s)
         JSON_FILES+=("$OPTARG")
       ;;
       p )
         FLAG_PUSH=true
         PUSH_DEST=${OPTARG} # Replace default with user input
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Pushing to <${S_NORM}${PUSH_DEST}${S_LIGHT}>, as the last action in this script."
+        echo -e "\n${S_LIGHT}Option set:${RESET} push to <${S_NORM}${PUSH_DEST}${RESET}> as the last step."
       ;;
       t )
         TAG_PREFIX=$OPTARG
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Tag prefix: <${S_NORM}${TAG_PREFIX}${S_LIGHT}>"
+        echo -e "\n${S_LIGHT}Option set:${RESET} tag prefix: <${S_NORM}${TAG_PREFIX}${RESET}>"
       ;;
       B )
         REL_PREFIX=$OPTARG
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Branch prefix: <${S_NORM}${REL_PREFIX}${S_LIGHT}>"
+        echo -e "\n${S_LIGHT}Option set:${RESET} branch prefix: <${S_NORM}${REL_PREFIX}${RESET}>"
       ;;
       d )
         FLAG_DRYRUN=true
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Dry-run enabled — no files, commits, tags, or pushes will be made."
+        echo -e "\n${S_LIGHT}Option set:${RESET} dry-run — no files, commits, tags, or pushes will be made."
       ;;
       n )
         FLAG_NOCOMMIT=true
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable commit (and tag + push) after bumping files."
+        echo -e "\n${S_LIGHT}Option set:${RESET} disable commit (and tag + push) after bumping files."
       ;;
       b )
         FLAG_NOBRANCH=true
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable creating a new release-x.x.x branch."
+        echo -e "\n${S_LIGHT}Option set:${RESET} disable creating a new release-x.x.x branch."
       ;;
       c )
         FLAG_NOCHANGELOG=true
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Disable updating CHANGELOG.md automatically with new commits since last release tag."
+        echo -e "\n${S_LIGHT}Option set:${RESET} disable updating CHANGELOG.md automatically."
       ;;
       l )
         FLAG_CHANGELOG_PAUSE=true
-        echo -e "\n${S_LIGHT}Option set: ${S_NOTICE}Pause enabled for amending CHANGELOG.md"
+        echo -e "\n${S_LIGHT}Option set:${RESET} pause to allow amending CHANGELOG.md."
       ;;
       \? )
         fail 2 \
@@ -526,7 +526,7 @@ process-version() {
     V_PREV=$( jq -r '.version // empty' "$VER_FILE" 2>/dev/null )
 
     if [ -n "$V_PREV" ]; then
-      echo -e "\n${S_NOTICE}Current version read from <${S_QUESTION}${VER_FILE}${S_NOTICE}> file: ${S_QUESTION}$V_PREV"
+      echo -e "\nCurrent version read from <${S_NORM}${VER_FILE}${RESET}>: ${S_NORM}$V_PREV${RESET}"
       set-v-suggest "$V_PREV" # check + compute next version from conventional commits (or patch +1)
     else
       fail 3 \
@@ -549,12 +549,11 @@ process-version() {
 
   # If a version number is supplied by the user with [-v <version number>] — use it!
   if [ -n "$V_USR_SUPPLIED" ]; then
-    echo -e "\n${S_NOTICE}You selected version using [-v]:" "${S_WARN}${V_USR_SUPPLIED}"
+    echo -e "\nVersion supplied via [-v]: ${S_NORM}${V_USR_SUPPLIED}${RESET}"
     V_NEW="${V_USR_SUPPLIED}"
   else
     # Display a suggested version
-    echo -ne "\n${S_QUESTION}Enter a new version number or press <enter> to use [${S_NORM}$V_SUGGEST${S_QUESTION}]: "
-    echo -ne "$S_WARN"
+    echo -ne "\n${S_QUESTION}Enter a new version number or press <enter> to use [${S_NORM}$V_SUGGEST${S_QUESTION}]:${RESET} "
     read -r V_USR_INPUT
 
     if [ "$V_USR_INPUT" = "" ]; then
@@ -619,7 +618,7 @@ set-v-suggest() {
   # on the same MAJOR.MINOR.PATCH.
   if [[ "$1" == *-* ]] && is_semver "$1"; then
     V_SUGGEST=$(bump-prerelease "$1")
-    echo -e "${S_LIGHT}Detected ${S_NOTICE}prerelease${S_LIGHT} — bumping trailing counter → ${S_NORM}$V_SUGGEST${S_LIGHT}."
+    echo -e "${S_LIGHT}Detected prerelease — bumping trailing counter → ${S_NORM}$V_SUGGEST${RESET}"
     return
   fi
 
@@ -636,11 +635,11 @@ set-v-suggest() {
     case "$BUMP" in
       major)
         V_MAJOR=$((V_MAJOR + 1)); V_MINOR=0; V_PATCH=0
-        echo -e "${S_LIGHT}Detected ${S_NOTICE}breaking change${S_LIGHT} in commits — suggesting ${S_NORM}major${S_LIGHT} bump."
+        echo -e "${S_LIGHT}Detected breaking change — suggesting ${S_NORM}major${RESET}${S_LIGHT} bump.${RESET}"
       ;;
       minor)
         V_MINOR=$((V_MINOR + 1)); V_PATCH=0
-        echo -e "${S_LIGHT}Detected ${S_NOTICE}feat:${S_LIGHT} commits — suggesting ${S_NORM}minor${S_LIGHT} bump."
+        echo -e "${S_LIGHT}Detected feat: commits — suggesting ${S_NORM}minor${RESET}${S_LIGHT} bump.${RESET}"
       ;;
       *)
         V_PATCH=$((V_PATCH + 1))
@@ -650,7 +649,7 @@ set-v-suggest() {
     return
   fi
 
-  echo -e "\n${I_WARN} ${S_WARN}Warning: ${S_QUESTION}${1}${S_WARN} doesn't look like a SemVer compatible version number! Couldn't automatically bump the patch value. \n"
+  echo -e "\n${I_WARN} ${S_WARN}Warning:${RESET} ${S_NORM}${1}${RESET} doesn't look like a SemVer-compatible version — couldn't bump automatically.\n"
   # Keep the input as-is
   V_SUGGEST="$1"
 }
@@ -678,9 +677,9 @@ check-tag-exists() {
 
 do-packagefile-bump() {
   local NOTICE_MSG
-  NOTICE_MSG="<${S_NORM}package.json${S_NOTICE}>"
+  NOTICE_MSG="<${S_NORM}package.json${RESET}>"
   if [ "$V_NEW" = "$V_PREV" ]; then
-    echo -e "\n${I_WARN}${NOTICE_MSG}${S_WARN} already contains version ${V_NEW}."
+    echo -e "\n${I_WARN} ${S_WARN}Warning:${RESET} ${NOTICE_MSG} already contains version ${S_NORM}${V_NEW}${RESET}."
     return
   fi
 
@@ -719,10 +718,10 @@ do-packagefile-bump() {
   if [ -f package-lock.json ]; then
     dryrun git add package-lock.json
     GIT_MSG+="updated package-lock.json, "
-    NOTICE_MSG+=" and <${S_NORM}package-lock.json${S_NOTICE}>"
+    NOTICE_MSG+=" and <${S_NORM}package-lock.json${RESET}>"
   fi
 
-  echo -e "\n${I_OK} ${S_NOTICE}Bumped version in ${NOTICE_MSG}."
+  echo -e "\n${I_OK} Bumped version in ${NOTICE_MSG}."
 }
 
 # Change `version:` value in JSON files, like packager.json, composer.json, etc
@@ -736,26 +735,26 @@ bump-json-files() {
       FILE_V_PREV=$( jq -r '.version // empty' "$FILE" 2>/dev/null )
 
       if [ -z "$FILE_V_PREV" ]; then
-        echo -e "\n${I_STOP} ${S_ERROR}Error updating version in file <${S_NORM}$FILE${S_NOTICE}> - a version name/value pair was not found to replace!"
+        echo -e "\n${I_STOP} ${S_ERROR}Error:${RESET} no .version field in <${S_NORM}$FILE${RESET}> to replace."
       elif [ "$FILE_V_PREV" = "$V_NEW" ]; then
-        echo -e "\n${I_WARN} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$FILE_V_PREV"
+        echo -e "\n${I_WARN} ${S_WARN}Warning:${RESET} <${S_NORM}$FILE${RESET}> already contains version ${S_NORM}$FILE_V_PREV${RESET}."
       elif [ "$FLAG_DRYRUN" = true ]; then
-        echo -e "${S_LIGHT}[dry-run]${S_NORM} would set .version = '$V_NEW' in $FILE (was $FILE_V_PREV)" >&2
+        echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_NORM}$V_NEW${RESET}' in ${S_NORM}$FILE${RESET} (was ${S_NORM}$FILE_V_PREV${RESET})" >&2
         GIT_MSG+="updated $FILE, "
       else
         # shellcheck disable=SC2016
         if jq_inplace "$FILE" '.version = $V' --arg V "$V_NEW"; then
-          echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$FILE_V_PREV ${S_NOTICE}-> ${S_QUESTION}$V_NEW"
+          echo -e "\n${I_OK} Updated <${S_NORM}$FILE${RESET}>: ${S_NORM}$FILE_V_PREV${RESET} -> ${S_NORM}$V_NEW${RESET}"
           # Add file change to commit message:
           GIT_MSG+="updated $FILE, "
         else
-          echo -e "\n${I_STOP} ${S_ERROR}Error updating <${S_NORM}$FILE${S_ERROR}> with jq."
+          echo -e "\n${I_STOP} ${S_ERROR}Error:${RESET} failed to update <${S_NORM}$FILE${RESET}> via jq."
         fi
       fi
 
       JSON_PROCESSED+=("$FILE")
     else
-      echo -e "\n${S_WARN}File <${S_NORM}$FILE${S_WARN}> not found."
+      echo -e "\n${I_WARN} ${S_WARN}Warning:${RESET} file <${S_NORM}$FILE${RESET}> not found."
     fi
   done
   # Stage files that were changed:
@@ -767,15 +766,15 @@ do-versionfile() {
   if [ -f VERSION ]; then
     GIT_MSG+="updated VERSION, "
     if [ "$FLAG_DRYRUN" = true ]; then
-      echo -e "${S_LIGHT}[dry-run]${S_NORM} would write '$V_NEW' to VERSION" >&2
+      echo -e "${S_LIGHT}[dry-run]${RESET} would write '${S_NORM}$V_NEW${RESET}' to VERSION" >&2
     else
       echo "$V_NEW" > VERSION # Overwrite file
     fi
     # Stage file for commit
     dryrun git add VERSION
 
-    echo -e "\n${I_OK} ${S_NOTICE}Updated [${S_NORM}VERSION${S_NOTICE}] file."\
-            "\n${I_WARN} ${S_ERROR}Deprecation warning: using a <${S_NORM}VERSION${S_ERROR}> file is deprecated since v0.2.0 - support will be removed in future versions."
+    echo -e "\n${I_OK} Updated [${S_NORM}VERSION${RESET}] file."\
+            "\n${I_WARN} ${S_WARN}Deprecation:${RESET} the <${S_NORM}VERSION${RESET}> file is deprecated since v0.2.0 — support will be removed in a future version."
   fi
 }
 
@@ -830,22 +829,22 @@ do-changelog() {
     # Append existing log
     cat CHANGELOG.md >> "$TMP"
   else
-    echo -e "\n${S_WARN}An existing [${S_NORM}CHANGELOG.md${S_WARN}] file was not found. Creating one..."
+    echo -e "\nNo existing [${S_NORM}CHANGELOG.md${RESET}] found — creating one."
   fi
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${S_NORM} would replace CHANGELOG.md with:" >&2
+    echo -e "${S_LIGHT}[dry-run]${RESET} would replace CHANGELOG.md with:" >&2
     cat "$TMP" >&2
     rm -f "$TMP"
   else
     mv -f "$TMP" CHANGELOG.md
   fi
 
-  echo -e "\n${I_OK} ${S_NOTICE}$( capitalise "${ACTION_MSG}" ) [${S_NORM}CHANGELOG.md${S_NOTICE}] file."
+  echo -e "\n${I_OK} $( capitalise "${ACTION_MSG}" ) [${S_NORM}CHANGELOG.md${RESET}]."
 
   # Optionally pause & allow user to open and edit the file:
   if [ "$FLAG_CHANGELOG_PAUSE" = true ] && [ "$FLAG_DRYRUN" != true ]; then
-    echo -en "\n${S_QUESTION}Make adjustments to [${S_NORM}CHANGELOG.md${S_QUESTION}] if required now. Press <enter> to continue."
+    echo -en "\n${S_QUESTION}Make adjustments to [${S_NORM}CHANGELOG.md${S_QUESTION}] if required now. Press <enter> to continue.${RESET}"
     read -r
   fi
 
@@ -858,18 +857,18 @@ do-branch() {
 
   local BRANCH_MSG
 
-  echo -e "\n${S_NOTICE}Creating new release branch..."
+  echo -e "\nCreating release branch..."
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${S_NORM} would run: git branch ${REL_PREFIX}${V_NEW} && git checkout ${REL_PREFIX}${V_NEW}" >&2
-    echo -e "\n${I_OK} ${S_NOTICE}Switched to (dry-run) branch '${REL_PREFIX}${V_NEW}'"
+    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git branch ${S_NORM}${REL_PREFIX}${V_NEW}${RESET} && git checkout ${S_NORM}${REL_PREFIX}${V_NEW}${RESET}" >&2
+    echo -e "\n${I_OK} Switched to (dry-run) branch '${S_NORM}${REL_PREFIX}${V_NEW}${RESET}'"
     return
   fi
 
   BRANCH_MSG=$(git branch "${REL_PREFIX}${V_NEW}" 2>&1)
   if [ -z "$BRANCH_MSG" ]; then
     BRANCH_MSG=$(git checkout "${REL_PREFIX}${V_NEW}" 2>&1)
-    echo -e "\n${I_OK} ${S_NOTICE}${BRANCH_MSG}"
+    echo -e "\n${I_OK} ${BRANCH_MSG}"
   else
     fail 1 \
       "Failed to create release branch: ${BRANCH_MSG}" \
@@ -884,11 +883,11 @@ do-commit() {
   local COMMIT_MSG COMMIT_RC
 
   GIT_MSG+="$(get-commit-msg)"
-  echo -e "\n${S_NOTICE}Committing..."
+  echo -e "\nCommitting..."
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${S_NORM} would run: git commit -m '${COMMIT_MSG_PREFIX}${GIT_MSG}'" >&2
-    echo -e "\n${I_OK} ${S_NOTICE}(dry-run) commit prepared"
+    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git commit -m '${S_NORM}${COMMIT_MSG_PREFIX}${GIT_MSG}${RESET}'" >&2
+    echo -e "\n${I_OK} (dry-run) commit prepared"
     return
   fi
 
@@ -898,7 +897,7 @@ do-commit() {
       "git commit failed: ${COMMIT_MSG}" \
       "Resolve the git commit error above, or pass -n/--no-commit to skip committing."
   else
-    echo -e "\n${I_OK} ${S_NOTICE}$COMMIT_MSG"
+    echo -e "\n${I_OK} $COMMIT_MSG"
   fi
 }
 
@@ -912,13 +911,13 @@ do-tag() {
   tag_msg="${REL_NOTE:-Tag version ${V_NEW}.}"
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${S_NORM} would run: git tag -a ${TAG_PREFIX}${V_NEW} -m '${tag_msg}'" >&2
-    echo -e "\n${I_OK} ${S_NOTICE}Added GIT tag"
+    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git tag -a ${S_NORM}${TAG_PREFIX}${V_NEW}${RESET} -m '${tag_msg}'" >&2
+    echo -e "\n${I_OK} Tagged ${S_NORM}${TAG_PREFIX}${V_NEW}${RESET}"
     return
   fi
 
   git tag -a "${TAG_PREFIX}${V_NEW}" -m "${tag_msg}"
-  echo -e "\n${I_OK} ${S_NOTICE}Added GIT tag"
+  echo -e "\n${I_OK} Tagged ${S_NORM}${TAG_PREFIX}${V_NEW}${RESET}"
 }
 
 # Pushes branch + tag to remote repo. Changes are staged by earlier functions
@@ -930,13 +929,13 @@ do-push() {
   if [ "$FLAG_PUSH" = true ]; then
     CONFIRM="Y"
   else
-    echo -ne "\n${S_QUESTION}Push branch + tags to <${S_NORM}${PUSH_DEST}${S_QUESTION}>? [${S_NORM}N/y${S_QUESTION}]: "
+    echo -ne "\n${S_QUESTION}Push branch + tags to <${S_NORM}${PUSH_DEST}${S_QUESTION}>? [${S_NORM}N/y${S_QUESTION}]:${RESET} "
     read -r CONFIRM
   fi
 
   case "$CONFIRM" in
     [yY][eE][sS]|[yY] )
-      echo -e "\n${S_NOTICE}Pushing branch + tag to <${S_NORM}${PUSH_DEST}${S_NOTICE}>..."
+      echo -e "\nPushing branch + tag to <${S_NORM}${PUSH_DEST}${RESET}>..."
       if [ "$FLAG_NOBRANCH" = true ]; then
         REMOTE_REF=$(git rev-parse --abbrev-ref HEAD)
       else
@@ -944,16 +943,16 @@ do-push() {
       fi
 
       if [ "$FLAG_DRYRUN" = true ]; then
-        echo -e "${S_LIGHT}[dry-run]${S_NORM} would run: git push -u ${PUSH_DEST} ${REMOTE_REF} ${TAG_PREFIX}${V_NEW}" >&2
-        echo -e "\n${I_OK} ${S_NOTICE}(dry-run) push prepared"
+        echo -e "${S_LIGHT}[dry-run]${RESET} would run: git push -u ${S_NORM}${PUSH_DEST}${RESET} ${S_NORM}${REMOTE_REF}${RESET} ${S_NORM}${TAG_PREFIX}${V_NEW}${RESET}" >&2
+        echo -e "\n${I_OK} (dry-run) push prepared"
         return
       fi
 
       PUSH_MSG=$( git push -u "${PUSH_DEST}" "${REMOTE_REF}" "${TAG_PREFIX}${V_NEW}" 2>&1 ); PUSH_RC=$?
       if [ "$PUSH_RC" -ne 0 ]; then
-        echo -e "\n${I_STOP} ${S_WARN}Warning\n$PUSH_MSG"
+        echo -e "\n${I_STOP} ${S_WARN}Warning:${RESET}\n$PUSH_MSG"
       else
-        echo -e "\n${I_OK} ${S_NOTICE}$PUSH_MSG"
+        echo -e "\n${I_OK} $PUSH_MSG"
       fi
     ;;
   esac

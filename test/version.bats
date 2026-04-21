@@ -58,6 +58,23 @@ load 'test_helper'
   assert_equal "${V_SUGGEST}" "1.0.0-alpha.1"
 }
 
+# S6 — set-v-suggest dispatches on is_semver; legacy "contains a dash"
+# heuristic could misroute inputs like "1-2.3.4" (not SemVer, no prerelease
+# to bump). Should fall through to the warn-and-return-unchanged branch.
+@test "set-v-suggest: non-SemVer containing a dash stays unchanged and warns" {
+  source ${profile_script}
+  local input="1-2.3.4"
+  run set-v-suggest "${input}"
+  strip_ansi_output
+  assert_output --partial "Warning:"
+  assert_output --partial "${input}"
+
+  # Also verify V_SUGGEST is the untouched input when the function is called
+  # in-process (the `run` above ran in a subshell).
+  set-v-suggest "${input}"
+  assert_equal "${V_SUGGEST}" "${input}"
+}
+
 @test "set-v-suggest: fails to increments non SemVer version" {
   source ${profile_script}
 

@@ -149,6 +149,59 @@ _clear_config_env() {
   assert_output --partial "Hint:"
 }
 
+@test "load-config: refuses group-writable .ver-bumprc (exit code 3)" {
+  source ${profile_script}
+  local repo rc
+  repo="$(scratch_repo)"
+  cd "$repo"
+  _clear_config_env
+
+  rc="$repo/.ver-bumprc"
+  printf 'TAG_PREFIX=unsafe\n' > "$rc"
+  chmod 664 "$rc"
+  [ "$(stat -f '%Lp' "$rc" 2>/dev/null || stat -c '%a' "$rc" 2>/dev/null)" = "664" ]
+
+  CLEANUP_CMDS+=("chmod 644 '$rc' 2>/dev/null || true")
+
+  run load-config
+  assert_failure 3
+  assert_output --partial "group-writable"
+  assert_output --partial "Hint:"
+}
+
+@test "load-config: refuses .ver-bumprc not owned by current user (exit code 3)" {
+  # Needs root to chown to another user; skip unless available.
+  if [ "$(id -u)" != "0" ] && ! command -v sudo >/dev/null 2>&1; then
+    skip "needs root or sudo to chown to a different user"
+  fi
+  # Pick a uid that isn't ours. 'nobody' is uid 65534 on most *nixes,
+  # but on macOS it's -2 (4294967294). Resolve via id if present.
+  local other_uid
+  other_uid=$(id -u nobody 2>/dev/null || echo 65534)
+  [ "$other_uid" != "$(id -u)" ] || skip "cannot find a non-self uid"
+
+  source ${profile_script}
+  local repo rc
+  repo="$(scratch_repo)"
+  cd "$repo"
+  _clear_config_env
+
+  rc="$repo/.ver-bumprc"
+  printf 'TAG_PREFIX=unsafe\n' > "$rc"
+  # shellcheck disable=SC2015
+  if [ "$(id -u)" = "0" ]; then
+    chown "$other_uid" "$rc" || skip "chown failed"
+  else
+    sudo -n chown "$other_uid" "$rc" 2>/dev/null || skip "passwordless sudo not available"
+  fi
+  CLEANUP_CMDS+=("sudo -n chown $(id -u) '$rc' 2>/dev/null || chown $(id -u) '$rc' 2>/dev/null || true")
+
+  run load-config
+  assert_failure 3
+  assert_output --partial "not owned by the current user"
+  assert_output --partial "Hint:"
+}
+
 # Round-trip all keys ##########################################################
 
 @test "load-config: round-trips every supported key from the file" {

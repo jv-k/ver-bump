@@ -272,3 +272,19 @@ load 'test_helper'
   assert_failure 2
   assert_output --partial "Invalid option: -X"
 }
+
+# S4 — --name= (empty value after '=') must fail, not silently consume the
+# following positional as the flag's value.
+@test "process-arguments: --push= (empty value) -> 2" {
+  source ${profile_script}
+  run process-arguments --push= -d
+  assert_failure 2
+  assert_output --partial "Option --push requires a non-empty value"
+}
+
+@test "process-arguments: --version= (empty value) -> 2" {
+  source ${profile_script}
+  run process-arguments --version= -d
+  assert_failure 2
+  assert_output --partial "Option --version requires a non-empty value"
+}

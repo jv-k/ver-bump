@@ -26,15 +26,18 @@ V_SUGGEST="0.1.0" # This is suggested in case VERSION file or user supplied vers
 VER_FILE="package.json"
 GIT_MSG=""
 REL_NOTE=""
-REL_PREFIX="release-"
-TAG_PREFIX="v"
-COMMIT_MSG_PREFIX="chore: " # Commit msg prefix for the file changes this script makes
-PUSH_DEST="origin"
 FLAG_DRYRUN=false
 
-# Note: load-config (called from main()) only preserves variables that were
-# *exported* from the environment, not plain script globals. That means the
-# four defaults above are still beaten by .ver-bumprc — see lib/config.sh.
+# Config-keyed defaults use `:=` so exported env values survive. An
+# unconditional assignment (e.g. `TAG_PREFIX="v"`) would clobber
+# `export TAG_PREFIX=from-env` here — load-config's env-vs-file snapshot
+# would then see the default, and env would silently lose to .ver-bumprc.
+# apply-config-defaults (lib/config.sh) is the canonical source of defaults;
+# these `:=` lines just keep sourcing ver-bump.sh directly (from tests) sane.
+: "${REL_PREFIX:=release-}"
+: "${TAG_PREFIX:=v}"
+: "${COMMIT_MSG_PREFIX:=chore: }" # Commit msg prefix for the file changes this script makes
+: "${PUSH_DEST:=origin}"
 
 JSON_FILES=()
 

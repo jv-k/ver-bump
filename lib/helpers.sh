@@ -151,7 +151,7 @@ usage() {
           "\nIt does several things that are typically required for releasing a Git repository, like git tagging, automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files."
 
   echo -e "\n${S_NORM}${BOLD}Usage:${RESET}"\
-          "\n${SCRIPT_NAME} [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]" 1>&2;
+          "\n${SCRIPT_NAME} [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h] [--completions <shell>]" 1>&2;
 
   # Column width for the label (flag + arg) column. The longest label is
   # "-B, --branch-prefix <prefix>" = 28 chars; 32 gives a 4-space gutter.
@@ -495,7 +495,7 @@ process-arguments() {
 # Dry-run helper: runs $@ if not in dry-run mode, otherwise prints what would run.
 dryrun() {
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${S_NORM} $*" >&2
+    echo -e "${S_LIGHT}[dry-run]${RESET} $*" >&2
     return 0
   fi
   "$@"
@@ -749,8 +749,8 @@ do-packagefile-bump() {
   fi
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${S_NORM} would set .version = '$V_NEW' in package.json" >&2
-    [ -f package-lock.json ] && echo -e "${S_LIGHT}[dry-run]${S_NORM} would set .version = '$V_NEW' in package-lock.json" >&2
+    echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_NORM}$V_NEW${RESET}' in package.json" >&2
+    [ -f package-lock.json ] && echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_NORM}$V_NEW${RESET}' in package-lock.json" >&2
   else
     # Bump package.json via jq (no npm dependency).
     # Note: $V is a jq variable (set via --arg), not a bash expansion — single
@@ -894,22 +894,22 @@ do-changelog() {
     # Append existing log
     cat CHANGELOG.md >> "$TMP"
   else
-    printf '\nNo existing [%sCHANGELOG.md%s] found — creating one.\n' "${S_NORM}" "${RESET}"
+    printf '\nNo existing [%bCHANGELOG.md%b] found — creating one.\n' "${S_NORM}" "${RESET}"
   fi
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    printf '%s[dry-run]%s would replace CHANGELOG.md with:\n' "${S_LIGHT}" "${RESET}" >&2
+    printf '%b[dry-run]%b would replace CHANGELOG.md with:\n' "${S_LIGHT}" "${RESET}" >&2
     cat "$TMP" >&2
     rm -f "$TMP"
   else
     mv -f "$TMP" CHANGELOG.md
   fi
 
-  printf '\n%s %s [%sCHANGELOG.md%s].\n' "${I_OK}" "$( capitalise "${ACTION_MSG}" )" "${S_NORM}" "${RESET}"
+  printf '\n%s %s [%bCHANGELOG.md%b].\n' "${I_OK}" "$( capitalise "${ACTION_MSG}" )" "${S_NORM}" "${RESET}"
 
   # Optionally pause & allow user to open and edit the file:
   if [ "$FLAG_CHANGELOG_PAUSE" = true ] && [ "$FLAG_DRYRUN" != true ]; then
-    printf '\n%sMake adjustments to [%sCHANGELOG.md%s] if required now. Press <enter> to continue.%s' "${S_QUESTION}" "${S_NORM}" "${S_QUESTION}" "${RESET}"
+    printf '\n%bMake adjustments to [%bCHANGELOG.md%b] if required now. Press <enter> to continue.%b' "${S_QUESTION}" "${S_NORM}" "${S_QUESTION}" "${RESET}"
     read -r
   fi
 

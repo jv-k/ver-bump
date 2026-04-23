@@ -1,6 +1,6 @@
 # ver-bump
 
-A fully automated handy CLI utility that takes care of releasing GitHub software projects, written in 100% pure bash.
+An opinionated release tool for Git projects with a `package.json` (Node / JS / TS, or any repo that follows SemVer via `-f <file>.json`). Automates SemVer bumps, CHANGELOG updates, release branching, tagging, and pushing — driven by Conventional Commits. Single-file bash at runtime; `git` + `jq` only.
 
 <p>
   <img src="https://raw.githubusercontent.com/jv-k/ver-bump/main/img/demo.gif?raw=true">

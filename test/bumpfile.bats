@@ -41,7 +41,7 @@ load 'test_helper'
 
   run bump-json-files # >&3
   strip_ansi_output
-  assert_output -p "${V_TEST} -> ${V_NEW}"
+  assert_output -p "${V_TEST} → ${V_NEW}"
 
   run jsonfile_get_ver $VER_FILE
   assert_output "${V_NEW}"

@@ -40,6 +40,7 @@ It does several things that are typically required for releasing a Git repositor
   - [Pre-requisites](#pre-requisites)
   - [CLI](#cli)
 - [Options](#options)
+  - [Config file (`.ver-bumprc`)](#config-file-ver-bumprc)
   - [Version suggestion](#version-suggestion)
   - [Dry-run](#dry-run)
 - [Shell completions](#shell-completions)

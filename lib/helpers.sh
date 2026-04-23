@@ -216,36 +216,40 @@ usage() {
   printf  "%s|__/ %s|___>%s|_\_\%s     %s|___/%s\___/%s|_|_|_|%s|_|   %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
 
   # Branded header pill + author/homepage bullets + dim tagline.
-  printf '\n  %b %s v%s %b\n' "${S_HDR_CYAN-}" "${SCRIPT_NAME}" "${SCRIPT_VER}" "${S_HDR_END-}"
+  # Green inverse pill for name + version, blank line, then author/homepage bullets and dim tagline.
+  printf '\n  %b %s v%s %b\n\n' "${S_HDR_SUB-}" "${SCRIPT_NAME}" "${SCRIPT_VER}" "${S_HDR_END-}"
   printf '  %b%s%b Author:   %s\n'   "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_AUTH}"
   printf '  %b%s%b Homepage: %s\n\n' "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_HOME}"
-  printf '  %bA bash release CLI — SemVer bump, CHANGELOG, tag, push, driven by Conventional Commits.%b\n' \
+  printf '  %bAn opinionated release tool for Git projects with a package.json — automates SemVer%b\n' \
+    "${S_DIM-}" "${RESET-}"
+  printf '  %bbump, CHANGELOG, tag, and push, driven by Conventional Commits.%b\n' \
     "${S_DIM-}" "${RESET-}"
 
   # USAGE section pill
   printf '\n%b USAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   printf '  %b%s%b [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
-  printf '  %b%s%b [--completions <shell>] [--about]\n' \
+  printf '  %b%s%b [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}" 1>&2;
 
-  # Column width for the label (flag + arg) column. The longest label is
-  # "-B, --branch-prefix <prefix>" = 28 chars; 32 gives a 4-space gutter.
-  local OPT_COL=32
+  # Column width for label + 2-space gutter. Longest label is
+  # "  --install-completions [=<shell>]" = 34 chars. OPT_COL 40 gives a
+  # comfortable description column start.
+  local OPT_COL=40
 
   # print-opt-row <short> <long> <arg-or-empty> <description>
-  # Pads the visible label to $OPT_COL columns (ignoring ANSI), then
-  # emits the colored label + description.
+  # 2-space left gutter on every row. Flag names are bold + default colour
+  # (no red/pink accent). Long-only rows align under the long-flag column.
   print-opt-row() {
     local short="$1" long="$2" arg="$3" desc="$4"
     local plain label pad head_plain head_label
     if [ -n "$short" ]; then
-      head_plain="${short}, ${long}"
-      head_label="${S_WARN}${short}${S_NORM}, ${S_WARN}${long}${S_NORM}"
+      head_plain="  ${short}, ${long}"
+      head_label="  ${BOLD-}${short}${RESET-}, ${BOLD-}${long}${RESET-}"
     else
-      # Align long-only rows under the long-flag column (after "    ")
-      head_plain="    ${long}"
-      head_label="    ${S_WARN}${long}${S_NORM}"
+      # Align long-only rows under the long-flag column: 2-space gutter + "-x, " = 6 chars indent.
+      head_plain="      ${long}"
+      head_label="      ${BOLD-}${long}${RESET-}"
     fi
     if [ -n "$arg" ]; then
       plain="${head_plain} ${arg}"
@@ -268,16 +272,29 @@ usage() {
     echo -e "$1"
   }
 
-  printf '\n%b OPTIONS %b %b(long forms accept %b--name value%b or %b--name=value%b)%b\n' \
-    "${S_HDR_CYAN-}" "${S_HDR_END-}" \
-    "${S_DIM-}" "${S_NORM-}" "${S_DIM-}" "${S_NORM-}" "${S_DIM-}" "${RESET-}"
+  # print-example-row <command> <description> — 2-space gutter, bold command,
+  # description column aligned to OPT_COL. No "-x, --long" pattern.
+  print-example-row() {
+    local cmd="$1" desc="$2"
+    local plain pad
+    plain="  ${cmd}"
+    if (( ${#plain} >= OPT_COL )); then
+      pad=" "
+    else
+      printf -v pad '%*s' $((OPT_COL - ${#plain})) ''
+    fi
+    printf '  %b%s%b%s%s\n' "${BOLD-}" "${cmd}" "${RESET-}" "${pad# }" "${desc}"
+  }
+
+  # OPTIONS section pill (the "long forms accept ..." note moved to the bottom).
+  printf '\n%b OPTIONS %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   print-opt-row "-v" "--version"       "<version>"   "Specify a manual SemVer version number (validated)."
   print-opt-row "-m" "--message"       "<message>"   "Custom annotated-tag release message."
   print-opt-row "-f" "--file"          "<file.json>" "Also bump \"version\" in this JSON file. Repeatable:"
-  print-opt-cont "${S_NORM}ver-bump -f src/plugin/package.json -f composer.json"
+  print-opt-cont "ver-bump -f src/plugin/package.json -f composer.json"
   print-opt-row "-p" "--push"          "<remote>"    "Push release branch + tag to <remote> at end of run."
-  print-opt-row "-t" "--tag-prefix"    "<prefix>"    "Override tag prefix (default: ${S_NORM}v${S_LIGHT})."
-  print-opt-row "-B" "--branch-prefix" "<prefix>"    "Override branch prefix (default: ${S_NORM}release-${S_LIGHT})."
+  print-opt-row "-t" "--tag-prefix"    "<prefix>"    "Override tag prefix (default: v)."
+  print-opt-row "-B" "--branch-prefix" "<prefix>"    "Override branch prefix (default: release-)."
   print-opt-row "-d" "--dry-run"       ""            "Dry-run: print every side-effect without executing."
   print-opt-row "-n" "--no-commit"     ""            "Disable commit (and tag + push) after bumping files."
   print-opt-row "-b" "--no-branch"     ""            "Disable creating a new release-x.x.x branch."
@@ -285,20 +302,21 @@ usage() {
   print-opt-row "-l" "--pause-changelog" ""          "Pause before commit so CHANGELOG.md can be edited."
   print-opt-row "-h" "--help"          ""            "Show this help message."
   print-opt-row ""   "--about"              ""            "Print name, version, author, and homepage; then exit."
-  print-opt-row ""   "--completions"        "<shell>"     "Emit completion script for ${S_NORM}bash${S_LIGHT}, ${S_NORM}zsh${S_LIGHT}, or ${S_NORM}fish${S_LIGHT}."
-  print-opt-row ""   "--install-completions" "[=<shell>]" "Install completion script for the detected shell (or specified one)."
+  print-opt-row ""   "--completions"        "<shell>"     "Emit completion script for bash, zsh, or fish."
+  print-opt-row ""   "--install-completions" "[=<shell>]" "Install completion script (auto-detects shell)."
 
   # EXAMPLES section pill
   printf '\n%b EXAMPLES %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
-  print-opt-row "" "${SCRIPT_NAME}"                  ""              "Interactive — reads commits, suggests bump, prompts."
-  print-opt-row "" "${SCRIPT_NAME} -v 2.0.0"         ""              "Non-interactive, explicit version."
-  print-opt-row "" "${SCRIPT_NAME} --dry-run"        ""              "Preview every side-effect without executing."
-  print-opt-row "" "${SCRIPT_NAME} -p origin"        ""              "Push the release branch + tag when done."
-  print-opt-row "" "${SCRIPT_NAME} -t release/"      ""              "Use a custom tag prefix (e.g. ${S_NORM}release/1.2.3${S_LIGHT})."
-  print-opt-row "" "${SCRIPT_NAME} -f composer.json" ""              "Also bump version in an extra JSON file."
-  print-opt-row "" "${SCRIPT_NAME} --about"          ""              "Show branded version info."
-  print-opt-row "" "${SCRIPT_NAME} --install-completions" ""         "Install shell completions (auto-detects shell)."
-  echo
+  print-example-row "${SCRIPT_NAME}"                       "Interactive — reads commits, suggests bump, prompts."
+  print-example-row "${SCRIPT_NAME} -v 2.0.0"              "Non-interactive, explicit version."
+  print-example-row "${SCRIPT_NAME} --dry-run"             "Preview every side-effect without executing."
+  print-example-row "${SCRIPT_NAME} -p origin"             "Push the release branch + tag when done."
+  print-example-row "${SCRIPT_NAME} -t release/"           "Use a custom tag prefix (e.g. release/1.2.3)."
+  print-example-row "${SCRIPT_NAME} -f composer.json"      "Also bump version in an extra JSON file."
+  print-example-row "${SCRIPT_NAME} --about"               "Show branded version info."
+  print-example-row "${SCRIPT_NAME} --install-completions" "Install shell completions (auto-detects shell)."
+
+  printf '\n  %b(long forms accept --name value or --name=value)%b\n\n' "${S_DIM-}" "${RESET-}"
 }
 
 # Emit a shell completion script to stdout. Supported: bash, zsh, fish.

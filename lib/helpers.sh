@@ -284,8 +284,9 @@ usage() {
   print-opt-row "-c" "--no-changelog"  ""            "Disable updating CHANGELOG.md automatically."
   print-opt-row "-l" "--pause-changelog" ""          "Pause before commit so CHANGELOG.md can be edited."
   print-opt-row "-h" "--help"          ""            "Show this help message."
-  print-opt-row ""   "--about"         ""            "Print name, version, author, and homepage; then exit."
-  print-opt-row ""   "--completions"   "<shell>"     "Emit completion script for ${S_NORM}bash${S_LIGHT}, ${S_NORM}zsh${S_LIGHT}, or ${S_NORM}fish${S_LIGHT}."
+  print-opt-row ""   "--about"              ""            "Print name, version, author, and homepage; then exit."
+  print-opt-row ""   "--completions"        "<shell>"     "Emit completion script for ${S_NORM}bash${S_LIGHT}, ${S_NORM}zsh${S_LIGHT}, or ${S_NORM}fish${S_LIGHT}."
+  print-opt-row ""   "--install-completions" "[=<shell>]" "Install completion script for the detected shell (or specified one)."
 
   # EXAMPLES section pill
   printf '\n%b EXAMPLES %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
@@ -296,6 +297,7 @@ usage() {
   print-opt-row "" "${SCRIPT_NAME} -t release/"      ""              "Use a custom tag prefix (e.g. ${S_NORM}release/1.2.3${S_LIGHT})."
   print-opt-row "" "${SCRIPT_NAME} -f composer.json" ""              "Also bump version in an extra JSON file."
   print-opt-row "" "${SCRIPT_NAME} --about"          ""              "Show branded version info."
+  print-opt-row "" "${SCRIPT_NAME} --install-completions" ""         "Install shell completions (auto-detects shell)."
   echo
 }
 
@@ -322,6 +324,75 @@ emit-completions() {
   esac
 }
 
+# detect-shell — print bash|zsh|fish for the user's login shell, or return 1.
+# Primary signal: $SHELL basename. Fallback: parent process name. Strips any
+# leading '-' (login-shell argv[0] convention).
+detect-shell() {
+  local shell
+  if [ -n "${SHELL-}" ]; then
+    shell="$(basename "$SHELL")"
+  fi
+  if [ -z "${shell-}" ] && command -v ps >/dev/null 2>&1; then
+    shell="$(ps -p "$PPID" -o comm= 2>/dev/null | tr -d ' ')"
+    shell="$(basename "$shell")"
+  fi
+  shell="${shell#-}"
+  case "$shell" in
+    bash|zsh|fish) printf '%s' "$shell" ;;
+    *) return 1 ;;
+  esac
+}
+
+# install-completions <shell> — generate the matching completion script and
+# write it to a user-scope location that each shell is already configured to
+# read. Supports bash / zsh / fish. Overwrites an existing file (content is
+# deterministic). Honours FLAG_DRYRUN by printing the target path only.
+install-completions() {
+  local shell="$1" dir dest content
+  case "$shell" in
+    bash)
+      dir="${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions"
+      dest="${dir}/ver-bump"
+      content=$(_emit-bash-completion)
+      ;;
+    zsh)
+      dir="${HOME}/.zfunc"
+      dest="${dir}/_ver-bump"
+      content=$(_emit-zsh-completion)
+      ;;
+    fish)
+      dir="${__fish_config_dir:-${XDG_CONFIG_HOME:-$HOME/.config}/fish}/completions"
+      dest="${dir}/ver-bump.fish"
+      content=$(_emit-fish-completion)
+      ;;
+    *)
+      fail 2 \
+        "Unsupported shell: '${shell}'." \
+        "Supported: bash, zsh, fish. Pass --install-completions=<shell> explicitly."
+      ;;
+  esac
+
+  if [ "${FLAG_DRYRUN:-false}" = true ]; then
+    printf '%b[dry-run]%b would write %s\n' "${S_LIGHT-}" "${RESET-}" "$dest" >&2
+    return 0
+  fi
+
+  mkdir -p "$dir" || fail 3 \
+    "Cannot create directory: ${dir}" \
+    "Check filesystem permissions on the parent path."
+
+  printf '%s\n' "$content" > "$dest" || fail 3 \
+    "Cannot write to: ${dest}" \
+    "Check filesystem permissions or use a writable HOME."
+
+  log_success "Installed ${shell} completion → ${S_NORM}${dest}${RESET-}"
+
+  if [ "$shell" = zsh ]; then
+    log_info "Ensure ~/.zfunc is on \$fpath. Add to ~/.zshrc if missing:"
+    log_trace "fpath+=(~/.zfunc) && autoload -U compinit && compinit"
+  fi
+}
+
 _emit-bash-completion() {
   cat <<'BASH_EOF'
 # ver-bump bash completion — source this or drop it in your bash_completion.d
@@ -337,7 +408,7 @@ _ver_bump() {
             COMPREPLY=( $(compgen -f -X '!*.json' -- "$cur") )
             return 0
             ;;
-        --completions)
+        --completions|--install-completions)
             COMPREPLY=( $(compgen -W 'bash zsh fish' -- "$cur") )
             return 0
             ;;
@@ -349,7 +420,7 @@ _ver_bump() {
 
     opts="--version --message --file --push --tag-prefix --branch-prefix \
           --dry-run --no-commit --no-branch --no-changelog --pause-changelog \
-          --help --completions \
+          --help --completions --install-completions --about \
           -v -m -f -p -t -B -d -n -b -c -l -h"
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 }
@@ -378,7 +449,9 @@ _ver_bump() {
     '(-c --no-changelog)'{-c,--no-changelog}'[disable CHANGELOG.md update]' \
     '(-l --pause-changelog)'{-l,--pause-changelog}'[pause before commit]' \
     '(-h --help)'{-h,--help}'[show help]' \
-    '--completions[emit completion script]:shell:(bash zsh fish)'
+    '--completions[emit completion script]:shell:(bash zsh fish)' \
+    '--install-completions[install completion script for detected / specified shell]::shell:(bash zsh fish)' \
+    '--about[print branded version info and exit]'
 }
 
 _ver_bump "$@"
@@ -402,6 +475,8 @@ for _cmd in ver-bump ver-bump.sh
     complete -c $_cmd -s l -l pause-changelog -d 'Pause before commit'
     complete -c $_cmd -s h -l help           -d 'Show help'
     complete -c $_cmd      -l completions    -x -a 'bash zsh fish' -d 'Emit completion script'
+    complete -c $_cmd      -l install-completions -a 'bash zsh fish' -d 'Install completions for detected/specified shell'
+    complete -c $_cmd      -l about          -d 'Print branded version info and exit'
 end
 FISH_EOF
 }
@@ -428,6 +503,31 @@ normalize-long-opts() {
     if [ "$arg" = "--about" ]; then
       version_block
       exit 0
+    fi
+
+    # Special case: --install-completions[=shell] — detect the user's shell
+    # (or accept an explicit override) and drop the matching completion
+    # script into a user-scope location. Exits immediately.
+    if [ "$arg" = "--install-completions" ] || [[ "$arg" == "--install-completions="* ]]; then
+      local ic_shell ic_a
+      # getopts hasn't run yet, so FLAG_DRYRUN is unset even if --dry-run
+      # was seen earlier. Walk both already-normalized and remaining args
+      # so install-completions can honour dry-run in either order.
+      for ic_a in "$@" "${NORMALIZED_ARGV[@]}"; do
+        case "$ic_a" in --dry-run|-d) FLAG_DRYRUN=true; break ;; esac
+      done
+      if [[ "$arg" == "--install-completions="* ]]; then
+        ic_shell="${arg#--install-completions=}"
+        [ -z "$ic_shell" ] && fail 2 \
+          "--install-completions= requires a shell name." \
+          "Supported: bash, zsh, fish."
+      else
+        ic_shell=$(detect-shell) || fail 2 \
+          "Could not auto-detect your shell from \$SHELL." \
+          "Pass --install-completions=<bash|zsh|fish> explicitly."
+      fi
+      install-completions "$ic_shell"
+      exit $?
     fi
 
     # Special case: --completions [shell] — emit and exit immediately, so

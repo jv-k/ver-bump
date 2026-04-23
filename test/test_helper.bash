@@ -46,7 +46,7 @@ run_cleanup_cmds() {
 }
 
 get_help_msg() {
-  ${profile_script} -h | grep "This script automates"
+  ${profile_script} -h 2>&1
 }
 
 create_ver_file() {

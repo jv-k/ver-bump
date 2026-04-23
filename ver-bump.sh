@@ -53,14 +53,14 @@ main() {
   # Process and prepare
   process-arguments "$@"
   check-dependencies
+
+  section "Verify"
   check-commits-exist
   process-version
-
   check-branch-notexist
   check-tag-exists
-  echo -e "\n${S_LIGHT}------${RESET}"
 
-  # Update files
+  section "Release"
   do-packagefile-bump
   bump-json-files
   do-versionfile
@@ -70,9 +70,8 @@ main() {
   do-tag
   do-push
 
-  echo -e "\n${S_LIGHT}------${RESET}"
+  section "Done"
   log_success "$( capitalise "$( get-commit-msg )" )"
-  log_success "Done!"
   echo
 }
 

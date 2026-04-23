@@ -72,8 +72,16 @@ S_NOTICE="${GREEN}"
 # Inverted-video bold pills for section headers — ` TEXT ` reads as a solid
 # coloured bar. Four severity variants: cyan (primary), green (secondary),
 # yellow (outdated / warning), red (error). Close with S_HDR_END.
-S_HDR_CYAN="${INVERT}${BOLD}${CYAN}"
-S_HDR_SUB="${INVERT}${BOLD}${GREEN}"
-S_HDR_YELLOW="${INVERT}${BOLD}${YELLOW}"
-S_HDR_RED="${INVERT}${BOLD}${RED}"
-S_HDR_END="${RESET}"
+#
+# Built from a single combined ANSI sequence (7=invert, 1=bold, 3N=fg) rather
+# than ${INVERT}${BOLD}${COLOUR} concatenated, because the standalone fg codes
+# begin with "\033[0;" (reset) which cancels the preceding invert + bold.
+if [ "$USE_COLOR" = 1 ]; then
+  S_HDR_CYAN=$'\033[7;1;36m'
+  S_HDR_SUB=$'\033[7;1;32m'
+  S_HDR_YELLOW=$'\033[7;1;33m'
+  S_HDR_RED=$'\033[7;1;31m'
+  S_HDR_END=$'\033[0m'
+else
+  S_HDR_CYAN=''; S_HDR_SUB=''; S_HDR_YELLOW=''; S_HDR_RED=''; S_HDR_END=''
+fi

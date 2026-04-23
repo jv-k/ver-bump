@@ -11,9 +11,11 @@ load 'test_helper'
 }
 
 @test "process-arguments: -h: display help message" {
-  run get_help_msg
+  run ${profile_script} -h
   assert_success
-  assert_output --partial "This script automates bumping the git software project's version automatically."
+  assert_output --partial "USAGE"
+  assert_output --partial "OPTIONS"
+  assert_output --partial "--version"
 }
 
 @test "process-arguments: -v: fail when not supplying version" {

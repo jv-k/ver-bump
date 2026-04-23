@@ -71,9 +71,9 @@ main() {
   do-push
 
   echo -e "\n${S_LIGHT}------${RESET}"
-  echo -ne "\n${I_OK} "
-  capitalise "$( get-commit-msg )"
-  echo -e "\n${I_END} Done!\n"
+  log_success "$( capitalise "$( get-commit-msg )" )"
+  log_success "Done!"
+  echo
 }
 
 # Execute script when it is executed as a script, and when it is brought into the environment with source (so it can be tested)

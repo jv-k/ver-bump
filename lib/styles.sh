@@ -51,13 +51,18 @@ else
   RAINBOW_RST=''
 fi
 
-# Preset styles (character-level)
+# Preset styles (character-level) — semantic aliases. Call sites reference
+# these rather than raw colour vars so a single edit here re-skins the tool.
 S_NORM="${WHITE}"
 S_LIGHT="${LIGHTGRAY}"
 S_QUESTION="${YELLOW}"
 S_WARN="${LIGHTRED}"
 S_ERROR="${RED}"
 S_DIM="${DIM}"
+S_OK="${GREEN}"       # log_success    (✔ green)
+S_INFO="${CYAN}"      # log_info       (ℹ cyan)
+S_ATTN="${YELLOW}"    # log_warn       (! yellow)
+S_BULLET="${PURPLE}"  # version_block  (• magenta bullets)
 
 # Deprecated — retained as an alias to $GREEN until the last call site migrates
 # to a log_* helper. Tests forbid its use on narrative lines in lib/helpers.sh
@@ -68,7 +73,7 @@ S_NOTICE="${GREEN}"
 # coloured bar. Four severity variants: cyan (primary), green (secondary),
 # yellow (outdated / warning), red (error). Close with S_HDR_END.
 S_HDR_CYAN="${INVERT}${BOLD}${CYAN}"
-S_HDR_GREEN="${INVERT}${BOLD}${GREEN}"
+S_HDR_SUB="${INVERT}${BOLD}${GREEN}"
 S_HDR_YELLOW="${INVERT}${BOLD}${YELLOW}"
 S_HDR_RED="${INVERT}${BOLD}${RED}"
 S_HDR_END="${RESET}"

@@ -66,8 +66,9 @@ load 'test_helper'
   local input="1-2.3.4"
   run set-v-suggest "${input}"
   strip_ansi_output
-  assert_output --partial "Warning:"
+  assert_output --partial "!"
   assert_output --partial "${input}"
+  assert_output --partial "doesn't look like a SemVer"
 
   # Also verify V_SUGGEST is the untouched input when the function is called
   # in-process (the `run` above ran in a subshell).
@@ -90,7 +91,7 @@ load 'test_helper'
 
   run set-v-suggest "${TEST_V_BAD}" || return 1
   strip_ansi_output
-  assert_output --partial "Warning:"
+  assert_output --partial "!"
   assert_output --partial "${TEST_V_BAD}"
   assert_output --partial "doesn't look like a SemVer"
 }

@@ -186,22 +186,22 @@ version_block() {
   printf '  %b%s%b Homepage: %s\n\n' "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${home}"
 }
 
-# Show credits & help
+# Show --help.
 usage() {
-  local SCRIPT_VER SCRIPT_AUTH SCRIPT_HOME SCRIPT_NAME env_var env_var_val
-  local env_vars=( SCRIPT_VER SCRIPT_AUTH SCRIPT_NAME )
+  local SCRIPT_VER SCRIPT_NAME SCRIPT_AUTH SCRIPT_HOME env_var env_var_val
+  local env_vars=( SCRIPT_VER SCRIPT_NAME SCRIPT_AUTH SCRIPT_HOME )
 
   if command -v jq >/dev/null 2>&1; then
-    SCRIPT_VER=$(  jq -r '.version  // ""' "$MODULE_DIR/package.json" )
-    SCRIPT_AUTH=$( jq -r '.author   // ""' "$MODULE_DIR/package.json" )
-    SCRIPT_HOME=$( jq -r '.homepage // ""' "$MODULE_DIR/package.json" )
-    SCRIPT_NAME=$( jq -r '.name     // ""' "$MODULE_DIR/package.json" )
+    SCRIPT_VER=$(  jq -r '.version  // ""'         "$MODULE_DIR/package.json" )
+    SCRIPT_NAME=$( jq -r '.name     // "ver-bump"' "$MODULE_DIR/package.json" )
+    SCRIPT_AUTH=$( jq -r '.author   // ""'         "$MODULE_DIR/package.json" )
+    SCRIPT_HOME=$( jq -r '.homepage // ""'         "$MODULE_DIR/package.json" )
   else
     # Fallback: grep + trim (works without jq for --help alone)
     SCRIPT_VER=$(  cd "$MODULE_DIR" && grep version  package.json | head -1 )
+    SCRIPT_NAME=$( cd "$MODULE_DIR" && grep name     package.json | head -1 )
     SCRIPT_AUTH=$( cd "$MODULE_DIR" && grep author   package.json | head -1 )
     SCRIPT_HOME=$( cd "$MODULE_DIR" && grep homepage package.json | head -1 | sed -ne 's/.*\(http[^"]*\).*/\1/p' )
-    SCRIPT_NAME=$( cd "$MODULE_DIR" && grep name     package.json | head -1 )
 
     for env_var in "${env_vars[@]}"; do
       env_var_val=$( printf '%s' "${!env_var}" | awk -F: '{ print $2 }' | sed 's/[",]//g' | sed "s/^[ \t]*//" )
@@ -215,14 +215,19 @@ usage() {
   printf  "%s| ' |%s| _> %s|   /%s|___|%s| . \%s| ' |%s|     |%s|  _/ %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
   printf  "%s|__/ %s|___>%s|_\_\%s     %s|___/%s\___/%s|_|_|_|%s|_|   %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
 
-  echo -e "\t\t\t${LIGHTGRAY}    Version: $S_WARN${SCRIPT_VER}"
+  # Branded header pill + author/homepage bullets + dim tagline.
+  printf '\n  %b %s v%s %b\n' "${S_HDR_CYAN-}" "${SCRIPT_NAME}" "${SCRIPT_VER}" "${S_HDR_END-}"
+  printf '  %b%s%b Author:   %s\n'   "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_AUTH}"
+  printf '  %b%s%b Homepage: %s\n\n' "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_HOME}"
+  printf '  %bA bash release CLI — SemVer bump, CHANGELOG, tag, push, driven by Conventional Commits.%b\n' \
+    "${S_DIM-}" "${RESET-}"
 
-  echo -e "${S_NORM}${BOLD}Description:${RESET}"\
-          "\nThis script automates bumping the git software project's version automatically."\
-          "\nIt does several things that are typically required for releasing a Git repository, like git tagging, automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files."
-
-  echo -e "\n${S_NORM}${BOLD}Usage:${RESET}"\
-          "\n${SCRIPT_NAME} [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h] [--completions <shell>]" 1>&2;
+  # USAGE section pill
+  printf '\n%b USAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  printf '  %b%s%b [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]\n' \
+    "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
+  printf '  %b%s%b [--completions <shell>] [--about]\n' \
+    "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}" 1>&2;
 
   # Column width for the label (flag + arg) column. The longest label is
   # "-B, --branch-prefix <prefix>" = 28 chars; 32 gives a 4-space gutter.
@@ -263,7 +268,9 @@ usage() {
     echo -e "$1"
   }
 
-  echo -e "\n${S_NORM}${BOLD}Options:${RESET} (long forms accept ${S_NORM}--name value${S_LIGHT} or ${S_NORM}--name=value${S_LIGHT})"
+  printf '\n%b OPTIONS %b %b(long forms accept %b--name value%b or %b--name=value%b)%b\n' \
+    "${S_HDR_CYAN-}" "${S_HDR_END-}" \
+    "${S_DIM-}" "${S_NORM-}" "${S_DIM-}" "${S_NORM-}" "${S_DIM-}" "${RESET-}"
   print-opt-row "-v" "--version"       "<version>"   "Specify a manual SemVer version number (validated)."
   print-opt-row "-m" "--message"       "<message>"   "Custom annotated-tag release message."
   print-opt-row "-f" "--file"          "<file.json>" "Also bump \"version\" in this JSON file. Repeatable:"
@@ -277,12 +284,19 @@ usage() {
   print-opt-row "-c" "--no-changelog"  ""            "Disable updating CHANGELOG.md automatically."
   print-opt-row "-l" "--pause-changelog" ""          "Pause before commit so CHANGELOG.md can be edited."
   print-opt-row "-h" "--help"          ""            "Show this help message."
+  print-opt-row ""   "--about"         ""            "Print name, version, author, and homepage; then exit."
   print-opt-row ""   "--completions"   "<shell>"     "Emit completion script for ${S_NORM}bash${S_LIGHT}, ${S_NORM}zsh${S_LIGHT}, or ${S_NORM}fish${S_LIGHT}."
-  echo
 
-  echo -e "${S_NORM}${BOLD}Credits:${S_LIGHT}"\
-          "\n${SCRIPT_AUTH} ${RESET}"\
-          "\n${SCRIPT_HOME}\n"
+  # EXAMPLES section pill
+  printf '\n%b EXAMPLES %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  print-opt-row "" "${SCRIPT_NAME}"                  ""              "Interactive — reads commits, suggests bump, prompts."
+  print-opt-row "" "${SCRIPT_NAME} -v 2.0.0"         ""              "Non-interactive, explicit version."
+  print-opt-row "" "${SCRIPT_NAME} --dry-run"        ""              "Preview every side-effect without executing."
+  print-opt-row "" "${SCRIPT_NAME} -p origin"        ""              "Push the release branch + tag when done."
+  print-opt-row "" "${SCRIPT_NAME} -t release/"      ""              "Use a custom tag prefix (e.g. ${S_NORM}release/1.2.3${S_LIGHT})."
+  print-opt-row "" "${SCRIPT_NAME} -f composer.json" ""              "Also bump version in an extra JSON file."
+  print-opt-row "" "${SCRIPT_NAME} --about"          ""              "Show branded version info."
+  echo
 }
 
 # Emit a shell completion script to stdout. Supported: bash, zsh, fish.
@@ -406,6 +420,14 @@ normalize-long-opts() {
     if [ "$arg" = "--" ]; then
       NORMALIZED_ARGV+=("--" "$@")
       return 0
+    fi
+
+    # Special case: --about — print the branded version block and exit 0,
+    # so users can check what they have installed without needing a
+    # package.json or a git repo in the working directory.
+    if [ "$arg" = "--about" ]; then
+      version_block
+      exit 0
     fi
 
     # Special case: --completions [shell] — emit and exit immediately, so

@@ -17,8 +17,7 @@
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/*.bats",
     "tests:install:windows": "sh ./install_bats.sh",
-    "tests:run:windows": "sh ./test/bats/bin/bats ./test/*.bats",
-    "docs:build": "bashdoc --color --watch --location ./docs --template ./docs/tpl/index.hbs ./ver-bump.sh"
+    "tests:run:windows": "sh ./test/bats/bin/bats ./test/*.bats"
   },
   "keywords": [
     "bash versioning",

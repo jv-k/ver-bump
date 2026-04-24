@@ -425,8 +425,12 @@ install-completions() {
       log_info "Rebuild zsh's completion cache to pick it up:"
       log_trace "rm -f ~/.zcompdump*; exec zsh"
     else
-      # Show ~-relative path in the reminder so it copy-pastes cleanly.
-      local dir_pretty="${dir/#$HOME/~}"
+      local dir_pretty
+      if [[ "$dir" == "$HOME"* ]]; then
+        dir_pretty="~${dir#"$HOME"}"
+      else
+        dir_pretty="$dir"
+      fi
       log_info "Add this to ~/.zshrc BEFORE any 'source \$ZSH/oh-my-zsh.sh' line:"
       log_trace "fpath=(${dir_pretty} \$fpath)"
       log_info "Then rebuild the completion cache:"

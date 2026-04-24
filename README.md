@@ -43,6 +43,7 @@ It does several things that are typically required for releasing a Git repositor
   - [Config file (`.ver-bumprc`)](#config-file-ver-bumprc)
   - [Version suggestion](#version-suggestion)
   - [Dry-run](#dry-run)
+  - [Exit codes](#exit-codes)
 - [Shell completions](#shell-completions)
 - [Example](#example)
 - [Development](#development)
@@ -167,10 +168,11 @@ $ npm install -g ver-bump
 ### CLI
 
 ```sh
-$ ver-bump [-v|--version <v>] [-m|--message <msg>] [-f|--file <file.json>]... \
+$ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... \
            [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
-           [-c|--no-changelog] [-l|--pause-changelog] [-h|--help]
+           [-c|--no-changelog] [-l|--pause-changelog] [-h|--help] \
+           [--completions <shell>] [--install-completions[=<shell>]] [--about]
 ```
 
 ## Options
@@ -217,7 +219,8 @@ one you wouldn't execute. As a safeguard, `ver-bump` refuses to load a
 world-writable rc and exits with code 3; `chmod 644 .ver-bumprc` fixes it.
 
 ```text
--v, --version <version>       Manual SemVer version (validated against SemVer 2.0).
+-v, --version [<version>]     Without a value: print tool version and exit.
+                              With a value: set manual SemVer (validated against 2.0).
 -m, --message <message>       Custom annotated-tag release message.
 -f, --file <filename.json>    Also bump "version" in this JSON file. Repeatable:
                                 ver-bump -f src/plugin/package.json -f composer.json
@@ -231,6 +234,10 @@ world-writable rc and exits with code 3; `chmod 644 .ver-bumprc` fixes it.
 -c, --no-changelog            Disable updating CHANGELOG.md automatically.
 -l, --pause-changelog         Pause before commit so CHANGELOG.md can be hand-edited.
 -h, --help                    Show help message.
+    --about                   Print name, version, author, and homepage; then exit.
+    --completions <shell>     Emit completion script for bash, zsh, or fish to stdout.
+    --install-completions [=<shell>]
+                              Install completion script (auto-detects shell if omitted).
 ```
 
 ### Version suggestion
@@ -278,6 +285,17 @@ $ ver-bump --dry-run
 
 Combine with `--no-branch` / `--no-commit` / `--no-changelog` to narrow the
 preview down to just the steps you want to see.
+
+### Exit codes
+
+| Code | Meaning |
+| ---: | --- |
+| `0` | Success. |
+| `1` | Generic runtime error (failed commit, jq write error, etc.). |
+| `2` | Usage / argument-parse error (unknown flag, missing value). |
+| `3` | Precondition failure (missing `package.json`, missing `git`/`jq`, SemVer validation, insecure `.ver-bumprc`, branch/tag already exists). |
+| `4` | Hook failure (reserved for future use). |
+| `5` | User abort (declined a prompt, e.g. push confirmation). |
 
 ## Shell completions
 
@@ -375,6 +393,7 @@ pnpm dev -- -v 2.0.0                  # non-interactive, explicit version
 pnpm dev:dry                          # alias for pnpm dev -- --dry-run
 pnpm dev -- --keep                    # leaves the temp dir around for inspection
 SANDBOX_VERSION=4.0.0-dev.6 pnpm dev  # exercise the prerelease bumper
+SANDBOX_COMMITS='feat!: big change; fix: oops' pnpm dev  # custom seed commits
 ```
 
 Under the hood, [`dev/sandbox.sh`](dev/sandbox.sh) `mktemp -d`s a fresh dir,
@@ -382,6 +401,13 @@ writes a minimal `package.json`, seeds a git repo with conventional-commit
 messages and a starting tag, then invokes `ver-bump` inside it. The temp
 dir is wiped on exit (or `^C`) unless you pass `--keep`. All flags after
 `--` are forwarded to `ver-bump`.
+
+**Environment variables** for the sandbox:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `SANDBOX_VERSION` | `0.1.0` | Starting `"version"` in the seed `package.json`. |
+| `SANDBOX_COMMITS` | *(three built-in seeds)* | Semicolon-separated commit subjects to seed, e.g. `'feat!: big; fix: small'`. |
 
 You can invoke the script directly if you prefer — `./dev/sandbox.sh -v 2.0.0`
 needs no `--` separator.

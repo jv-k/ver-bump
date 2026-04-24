@@ -63,6 +63,7 @@ S_OK="${GREEN}"       # log_success    (✔ green)
 S_INFO="${CYAN}"      # log_info       (ℹ cyan)
 S_ATTN="${YELLOW}"    # log_warn       (! yellow)
 S_BULLET="${PURPLE}"  # version_block  (• magenta bullets)
+S_VAL="${GREEN}"      # inline values (versions, paths, remotes) in run output
 
 # Deprecated — retained as an alias to $GREEN until the last call site migrates
 # to a log_* helper. Tests forbid its use on narrative lines in lib/helpers.sh

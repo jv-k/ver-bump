@@ -121,21 +121,22 @@ check-dependencies() {
 # icon, colour, and reset. Every colour variable is gated by USE_COLOR in
 # lib/styles.sh, so piping / NO_COLOR / non-TTY strips ANSI automatically.
 
-# log_success <msg> — green ✔ + plain body
-log_success() { printf '  %b%s%b %s\n' "${S_OK-}" "${I_OK-}" "${RESET-}" "$1"; }
+# log_success <msg> — green ✔ + plain body. %b on body interprets inline ANSI
+# (e.g. ${S_OK}value${RESET}) without forcing every call site to printf.
+log_success() { printf '  %b%s%b %b\n' "${S_OK-}" "${I_OK-}" "${RESET-}" "$1"; }
 
-# log_warn <msg> — yellow ! + plain body
-log_warn() { printf '  %b%s%b %s\n' "${S_ATTN-}" "${I_WARN-}" "${RESET-}" "$1"; }
+# log_warn <msg> — yellow ! + body
+log_warn() { printf '  %b%s%b %b\n' "${S_ATTN-}" "${I_WARN-}" "${RESET-}" "$1"; }
 
-# log_error <msg> — red ✖ + plain body, to stderr
-log_error() { printf '  %b%s%b %s\n' "${S_ERROR-}" "${I_ERROR-}" "${RESET-}" "$1" >&2; }
+# log_error <msg> — red ✖ + body, to stderr
+log_error() { printf '  %b%s%b %b\n' "${S_ERROR-}" "${I_ERROR-}" "${RESET-}" "$1" >&2; }
 
-# log_info <msg> — cyan ℹ + plain body
-log_info() { printf '  %b%s%b %s\n' "${S_INFO-}" "${I_INFO-}" "${RESET-}" "$1"; }
+# log_info <msg> — cyan ℹ + body
+log_info() { printf '  %b%s%b %b\n' "${S_INFO-}" "${I_INFO-}" "${RESET-}" "$1"; }
 
 # log_trace <detail> — 4-space indent, dim ↳ + dim body (subordinate line)
 log_trace() {
-  printf '    %b%s %s%b\n' "${S_DIM-}" "${I_TRACE-}" "$1" "${RESET-}"
+  printf '    %b%s %b%b\n' "${S_DIM-}" "${I_TRACE-}" "$1" "${RESET-}"
 }
 
 # ── Section headers — inverted-video bold pills ────────────────────────────
@@ -217,16 +218,16 @@ usage() {
 
   # Branded header pill + author/homepage bullets + dim tagline.
   # Green inverse pill for name + version, blank line, then author/homepage bullets and dim tagline.
-  printf '\n  %b %s v%s %b\n\n' "${S_HDR_SUB-}" "${SCRIPT_NAME}" "${SCRIPT_VER}" "${S_HDR_END-}"
-  printf '  %b%s%b Author:   %s\n'   "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_AUTH}"
-  printf '  %b%s%b Homepage: %s\n\n' "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_HOME}"
+  printf '\n %b %s v%s %b\n\n' "${S_HDR_SUB-}" "${SCRIPT_NAME}" "${SCRIPT_VER}" "${S_HDR_END-}"
+  printf ' %b%s%b Author:   %s\n'   "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_AUTH}"
+  printf ' %b%s%b Homepage: %s\n\n' "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_HOME}"
   printf '  %bAn opinionated release tool for Git projects with a package.json — automates SemVer%b\n' \
     "${S_DIM-}" "${RESET-}"
   printf '  %bbump, CHANGELOG, tag, and push, driven by Conventional Commits.%b\n' \
     "${S_DIM-}" "${RESET-}"
 
   # USAGE section pill
-  printf '\n%b USAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  printf '\n%bUSAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   printf '  %b%s%b [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
   printf '  %b%s%b [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
@@ -287,7 +288,7 @@ usage() {
   }
 
   # OPTIONS section pill (the "long forms accept ..." note moved to the bottom).
-  printf '\n%b OPTIONS %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  printf '\n%bOPTIONS %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   print-opt-row "-v" "--version"       "<version>"   "Specify a manual SemVer version number (validated)."
   print-opt-row "-m" "--message"       "<message>"   "Custom annotated-tag release message."
   print-opt-row "-f" "--file"          "<file.json>" "Also bump \"version\" in this JSON file. Repeatable:"
@@ -306,7 +307,7 @@ usage() {
   print-opt-row ""   "--install-completions" "[=<shell>]" "Install completion script (auto-detects shell)."
 
   # EXAMPLES section pill
-  printf '\n%b EXAMPLES %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  printf '\n%bEXAMPLES %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   print-example-row "${SCRIPT_NAME}"                       "Interactive — reads commits, suggests bump, prompts."
   print-example-row "${SCRIPT_NAME} -v 2.0.0"              "Non-interactive, explicit version."
   print-example-row "${SCRIPT_NAME} --dry-run"             "Preview every side-effect without executing."
@@ -403,7 +404,7 @@ install-completions() {
     "Cannot write to: ${dest}" \
     "Check filesystem permissions or use a writable HOME."
 
-  log_success "Installed ${shell} completion → ${S_NORM}${dest}${RESET-}"
+  log_success "Installed ${shell} completion → ${S_VAL}${dest}${RESET-}"
 
   if [ "$shell" = zsh ]; then
     log_info "Ensure ~/.zfunc is on \$fpath. Add to ~/.zshrc if missing:"
@@ -649,25 +650,25 @@ process-arguments() {
       m )
         REL_NOTE=$OPTARG
         # Custom release note
-        echo -e "\n${S_LIGHT}Option set:${RESET} release note: ${S_NORM}'$REL_NOTE'${RESET}"
+        echo -e "\n${S_LIGHT}Option set:${RESET} release note: ${S_VAL}'$REL_NOTE'${RESET}"
       ;;
       f )
-        echo -e "\n${S_LIGHT}Option set:${RESET} JSON file via [-f]: <${S_NORM}${OPTARG}${RESET}>"
+        echo -e "\n${S_LIGHT}Option set:${RESET} JSON file via [-f]: <${S_VAL}${OPTARG}${RESET}>"
         # Store JSON filenames(s)
         JSON_FILES+=("$OPTARG")
       ;;
       p )
         FLAG_PUSH=true
         PUSH_DEST=${OPTARG} # Replace default with user input
-        echo -e "\n${S_LIGHT}Option set:${RESET} push to <${S_NORM}${PUSH_DEST}${RESET}> as the last step."
+        echo -e "\n${S_LIGHT}Option set:${RESET} push to <${S_VAL}${PUSH_DEST}${RESET}> as the last step."
       ;;
       t )
         TAG_PREFIX=$OPTARG
-        echo -e "\n${S_LIGHT}Option set:${RESET} tag prefix: <${S_NORM}${TAG_PREFIX}${RESET}>"
+        echo -e "\n${S_LIGHT}Option set:${RESET} tag prefix: <${S_VAL}${TAG_PREFIX}${RESET}>"
       ;;
       B )
         REL_PREFIX=$OPTARG
-        echo -e "\n${S_LIGHT}Option set:${RESET} branch prefix: <${S_NORM}${REL_PREFIX}${RESET}>"
+        echo -e "\n${S_LIGHT}Option set:${RESET} branch prefix: <${S_VAL}${REL_PREFIX}${RESET}>"
       ;;
       d )
         FLAG_DRYRUN=true
@@ -745,7 +746,7 @@ process-version() {
     V_PREV=$( jq -r '.version // empty' "$VER_FILE" 2>/dev/null )
 
     if [ -n "$V_PREV" ]; then
-      echo -e "\nCurrent version read from <${S_NORM}${VER_FILE}${RESET}>: ${S_NORM}$V_PREV${RESET}"
+      echo -e "\nCurrent version read from <${S_VAL}${VER_FILE}${RESET}>: ${S_VAL}$V_PREV${RESET}"
       set-v-suggest "$V_PREV" # check + compute next version from conventional commits (or patch +1)
     elif [ -z "$V_USR_SUPPLIED" ]; then
       fail 3 \
@@ -768,11 +769,11 @@ process-version() {
 
   # If a version number is supplied by the user with [-v <version number>] — use it!
   if [ -n "$V_USR_SUPPLIED" ]; then
-    echo -e "\nVersion supplied via [-v]: ${S_NORM}${V_USR_SUPPLIED}${RESET}"
+    echo -e "\nVersion supplied via [-v]: ${S_VAL}${V_USR_SUPPLIED}${RESET}"
     V_NEW="${V_USR_SUPPLIED}"
   else
     # Display a suggested version
-    echo -ne "\n${S_QUESTION}Enter a new version number or press <enter> to use [${S_NORM}$V_SUGGEST${S_QUESTION}]:${RESET} "
+    echo -ne "\n${S_QUESTION}Enter a new version number or press <enter> to use [${S_VAL}$V_SUGGEST${S_QUESTION}]:${RESET} "
     read -r V_USR_INPUT
 
     if [ "$V_USR_INPUT" = "" ]; then
@@ -872,7 +873,7 @@ set-v-suggest() {
     # workflows iterate on the same MAJOR.MINOR.PATCH.
     if [[ "$1" == *-* ]]; then
       V_SUGGEST=$(bump-prerelease "$1")
-      echo -e "${S_LIGHT}Detected prerelease — bumping trailing counter → ${S_NORM}$V_SUGGEST${RESET}"
+      echo -e "${S_LIGHT}Detected prerelease — bumping trailing counter → ${S_VAL}$V_SUGGEST${RESET}"
       return
     fi
 
@@ -884,11 +885,11 @@ set-v-suggest() {
     case "$BUMP" in
       major)
         V_MAJOR=$((V_MAJOR + 1)); V_MINOR=0; V_PATCH=0
-        echo -e "${S_LIGHT}Detected breaking change — suggesting ${S_NORM}major${RESET}${S_LIGHT} bump.${RESET}"
+        echo -e "${S_LIGHT}Detected breaking change — suggesting ${S_VAL}major${RESET}${S_LIGHT} bump.${RESET}"
       ;;
       minor)
         V_MINOR=$((V_MINOR + 1)); V_PATCH=0
-        echo -e "${S_LIGHT}Detected feat: commits — suggesting ${S_NORM}minor${RESET}${S_LIGHT} bump.${RESET}"
+        echo -e "${S_LIGHT}Detected feat: commits — suggesting ${S_VAL}minor${RESET}${S_LIGHT} bump.${RESET}"
       ;;
       *)
         V_PATCH=$((V_PATCH + 1))
@@ -916,7 +917,7 @@ set-v-suggest() {
     return
   fi
 
-  log_warn "${S_NORM}${1}${RESET} doesn't look like a SemVer-compatible version — couldn't bump automatically."
+  log_warn "${S_VAL}${1}${RESET} doesn't look like a SemVer-compatible version — couldn't bump automatically."
   # Keep the input as-is
   V_SUGGEST="$1"
 }
@@ -944,7 +945,7 @@ check-tag-exists() {
 
 do-packagefile-bump() {
   local NOTICE_MSG
-  NOTICE_MSG="<${S_NORM}package.json${RESET}>"
+  NOTICE_MSG="<${S_VAL}package.json${RESET}>"
 
   # Skip entirely if package.json is absent. With -v + -f, the user may be
   # bumping only auxiliary JSON files — process-version already allowed
@@ -955,13 +956,13 @@ do-packagefile-bump() {
   fi
 
   if [ "$V_NEW" = "$V_PREV" ]; then
-    log_warn "${NOTICE_MSG} already contains version ${S_NORM}${V_PREV}${RESET}."
+    log_warn "${NOTICE_MSG} already contains version ${S_VAL}${V_PREV}${RESET}."
     return
   fi
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_NORM}$V_NEW${RESET}' in package.json" >&2
-    [ -f package-lock.json ] && echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_NORM}$V_NEW${RESET}' in package-lock.json" >&2
+    echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in package.json" >&2
+    [ -f package-lock.json ] && echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in package-lock.json" >&2
   else
     # Bump package.json via jq (no npm dependency).
     # Note: $V is a jq variable (set via --arg), not a bash expansion — single
@@ -994,7 +995,7 @@ do-packagefile-bump() {
   if [ -f package-lock.json ]; then
     dryrun git add package-lock.json
     GIT_MSG+="updated package-lock.json, "
-    NOTICE_MSG+=" and <${S_NORM}package-lock.json${RESET}>"
+    NOTICE_MSG+=" and <${S_VAL}package-lock.json${RESET}>"
   fi
 
   log_success "Bumped version in ${NOTICE_MSG}."
@@ -1011,26 +1012,26 @@ bump-json-files() {
       FILE_V_PREV=$( jq -r '.version // empty' "$FILE" 2>/dev/null )
 
       if [ -z "$FILE_V_PREV" ]; then
-        log_error "no .version field in <${S_NORM}$FILE${RESET}> to replace."
+        log_error "no .version field in <${S_VAL}$FILE${RESET}> to replace."
       elif [ "$FILE_V_PREV" = "$V_NEW" ]; then
-        log_warn "<${S_NORM}$FILE${RESET}> already contains version ${S_NORM}$FILE_V_PREV${RESET}."
+        log_warn "<${S_VAL}$FILE${RESET}> already contains version ${S_VAL}$FILE_V_PREV${RESET}."
       elif [ "$FLAG_DRYRUN" = true ]; then
-        echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_NORM}$V_NEW${RESET}' in ${S_NORM}$FILE${RESET} (was ${S_NORM}$FILE_V_PREV${RESET})" >&2
+        echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in ${S_VAL}$FILE${RESET} (was ${S_VAL}$FILE_V_PREV${RESET})" >&2
         GIT_MSG+="updated $FILE, "
       else
         # shellcheck disable=SC2016
         if jq_inplace "$FILE" '.version = $V' --arg V "$V_NEW"; then
-          log_success "Updated <${S_NORM}$FILE${RESET}>: ${S_NORM}$FILE_V_PREV${RESET} ${I_ARROW} ${S_NORM}$V_NEW${RESET}"
+          log_success "Updated <${S_VAL}$FILE${RESET}>: ${S_VAL}$FILE_V_PREV${RESET} ${I_ARROW} ${S_VAL}$V_NEW${RESET}"
           # Add file change to commit message:
           GIT_MSG+="updated $FILE, "
         else
-          log_error "failed to update <${S_NORM}$FILE${RESET}> via jq."
+          log_error "failed to update <${S_VAL}$FILE${RESET}> via jq."
         fi
       fi
 
       JSON_PROCESSED+=("$FILE")
     else
-      log_warn "file <${S_NORM}$FILE${RESET}> not found."
+      log_warn "file <${S_VAL}$FILE${RESET}> not found."
     fi
   done
   # Stage files that were changed:
@@ -1042,15 +1043,15 @@ do-versionfile() {
   if [ -f VERSION ]; then
     GIT_MSG+="updated VERSION, "
     if [ "$FLAG_DRYRUN" = true ]; then
-      echo -e "${S_LIGHT}[dry-run]${RESET} would write '${S_NORM}$V_NEW${RESET}' to VERSION" >&2
+      echo -e "${S_LIGHT}[dry-run]${RESET} would write '${S_VAL}$V_NEW${RESET}' to VERSION" >&2
     else
       echo "$V_NEW" > VERSION # Overwrite file
     fi
     # Stage file for commit
     dryrun git add VERSION
 
-    log_success "Updated [${S_NORM}VERSION${RESET}] file."
-    log_warn "Deprecation: the <${S_NORM}VERSION${RESET}> file is deprecated since v0.2.0 — support will be removed in a future version."
+    log_success "Updated [${S_VAL}VERSION${RESET}] file."
+    log_warn "Deprecation: the <${S_VAL}VERSION${RESET}> file is deprecated since v0.2.0 — support will be removed in a future version."
   fi
 }
 
@@ -1105,7 +1106,7 @@ do-changelog() {
     # Append existing log
     cat CHANGELOG.md >> "$TMP"
   else
-    printf '\nNo existing [%bCHANGELOG.md%b] found — creating one.\n' "${S_NORM}" "${RESET}"
+    printf '\nNo existing [%bCHANGELOG.md%b] found — creating one.\n' "${S_VAL}" "${RESET}"
   fi
 
   if [ "$FLAG_DRYRUN" = true ]; then
@@ -1116,11 +1117,11 @@ do-changelog() {
     mv -f "$TMP" CHANGELOG.md
   fi
 
-  log_success "$( capitalise "${ACTION_MSG}" ) [${S_NORM}CHANGELOG.md${RESET}]."
+  log_success "$( capitalise "${ACTION_MSG}" ) [${S_VAL}CHANGELOG.md${RESET}]."
 
   # Optionally pause & allow user to open and edit the file:
   if [ "$FLAG_CHANGELOG_PAUSE" = true ] && [ "$FLAG_DRYRUN" != true ]; then
-    printf '\n%bMake adjustments to [%bCHANGELOG.md%b] if required now. Press <enter> to continue.%b' "${S_QUESTION}" "${S_NORM}" "${S_QUESTION}" "${RESET}"
+    printf '\n%bMake adjustments to [%bCHANGELOG.md%b] if required now. Press <enter> to continue.%b' "${S_QUESTION}" "${S_VAL}" "${S_QUESTION}" "${RESET}"
     read -r
   fi
 
@@ -1136,8 +1137,8 @@ do-branch() {
   echo -e "\nCreating release branch..."
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git branch ${S_NORM}${REL_PREFIX}${V_NEW}${RESET} && git checkout ${S_NORM}${REL_PREFIX}${V_NEW}${RESET}" >&2
-    log_success "Switched to (dry-run) branch '${S_NORM}${REL_PREFIX}${V_NEW}${RESET}'"
+    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git branch ${S_VAL}${REL_PREFIX}${V_NEW}${RESET} && git checkout ${S_VAL}${REL_PREFIX}${V_NEW}${RESET}" >&2
+    log_success "Switched to (dry-run) branch '${S_VAL}${REL_PREFIX}${V_NEW}${RESET}'"
     return
   fi
 
@@ -1162,7 +1163,7 @@ do-commit() {
   echo -e "\nCommitting..."
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git commit -m '${S_NORM}${COMMIT_MSG_PREFIX}${GIT_MSG}${RESET}'" >&2
+    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git commit -m '${S_VAL}${COMMIT_MSG_PREFIX}${GIT_MSG}${RESET}'" >&2
     log_success "(dry-run) commit prepared"
     return
   fi
@@ -1187,13 +1188,13 @@ do-tag() {
   tag_msg="${REL_NOTE:-Tag version ${V_NEW}.}"
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git tag -a ${S_NORM}${TAG_PREFIX}${V_NEW}${RESET} -m '${tag_msg}'" >&2
-    log_success "Tagged ${S_NORM}${TAG_PREFIX}${V_NEW}${RESET}"
+    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git tag -a ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET} -m '${tag_msg}'" >&2
+    log_success "Tagged ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET}"
     return
   fi
 
   git tag -a "${TAG_PREFIX}${V_NEW}" -m "${tag_msg}"
-  log_success "Tagged ${S_NORM}${TAG_PREFIX}${V_NEW}${RESET}"
+  log_success "Tagged ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET}"
 }
 
 # Pushes branch + tag to remote repo. Changes are staged by earlier functions
@@ -1205,13 +1206,13 @@ do-push() {
   if [ "$FLAG_PUSH" = true ]; then
     CONFIRM="Y"
   else
-    echo -ne "\n${S_QUESTION}Push branch + tags to <${S_NORM}${PUSH_DEST}${S_QUESTION}>? [${S_NORM}N/y${S_QUESTION}]:${RESET} "
+    echo -ne "\n${S_QUESTION}Push branch + tags to <${S_VAL}${PUSH_DEST}${S_QUESTION}>? [${S_NORM}N/y${S_QUESTION}]:${RESET} "
     read -r CONFIRM
   fi
 
   case "$CONFIRM" in
     [yY][eE][sS]|[yY] )
-      echo -e "\nPushing branch + tag to <${S_NORM}${PUSH_DEST}${RESET}>..."
+      echo -e "\nPushing branch + tag to <${S_VAL}${PUSH_DEST}${RESET}>..."
       if [ "$FLAG_NOBRANCH" = true ]; then
         REMOTE_REF=$(git rev-parse --abbrev-ref HEAD)
       else
@@ -1219,7 +1220,7 @@ do-push() {
       fi
 
       if [ "$FLAG_DRYRUN" = true ]; then
-        echo -e "${S_LIGHT}[dry-run]${RESET} would run: git push -u ${S_NORM}${PUSH_DEST}${RESET} ${S_NORM}${REMOTE_REF}${RESET} ${S_NORM}${TAG_PREFIX}${V_NEW}${RESET}" >&2
+        echo -e "${S_LIGHT}[dry-run]${RESET} would run: git push -u ${S_VAL}${PUSH_DEST}${RESET} ${S_VAL}${REMOTE_REF}${RESET} ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET}" >&2
         log_success "(dry-run) push prepared"
         return
       fi

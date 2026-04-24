@@ -18,11 +18,9 @@ load 'test_helper'
   assert_output --partial "--version"
 }
 
-@test "process-arguments: -v: fail when not supplying version" {
-  source ${profile_script}
-  run process-arguments -v
-  assert_failure 2
-  assert_output --partial "Option -v requires an argument."
+@test "process-arguments: -v: bare prints version pill and exits 0" {
+  run ${profile_script} -v
+  assert_success
 }
 
 @test "process-arguments: -v x.x.x: succeed when supplying version" {
@@ -107,9 +105,9 @@ load 'test_helper'
 
 @test "long options: rejects missing value for long option" {
   source ${profile_script}
-  run process-arguments --version
+  run process-arguments --push
   assert_failure
-  assert_output --partial "Option --version requires an argument"
+  assert_output --partial "Option --push requires an argument"
 }
 
 @test "long options: rejects value given to boolean long option" {
@@ -289,4 +287,17 @@ load 'test_helper'
   run process-arguments --version= -d
   assert_failure 2
   assert_output --partial "Option --version requires a non-empty value"
+}
+
+@test "help↔README flag parity: every --help long flag appears in README" {
+  local help_out flags flag
+  help_out=$(get_help_msg)
+
+  flags=$(printf '%s' "$help_out" | grep -oE -- '--[a-z][-a-z]+' | sort -u)
+
+  for flag in $flags; do
+    [[ "$flag" == "--name" ]] && continue
+    grep -qF -- "$flag" "${repo_dir}/README.md" \
+      || fail "Flag ${flag} appears in --help but not in README.md"
+  done
 }

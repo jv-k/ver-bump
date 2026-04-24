@@ -816,8 +816,36 @@ process-version() {
     V_NEW="${V_USR_SUPPLIED}"
   else
     # Display a suggested version
-    echo -ne "\n${S_QUESTION}Enter a new version number or press <enter> to use [${S_VAL}$V_SUGGEST${S_QUESTION}]:${RESET} "
-    read -r V_USR_INPUT
+    echo -ne "\n${S_QUESTION}Enter a new version number, <enter> for [${S_VAL}$V_SUGGEST${S_QUESTION}], or <esc> to quit:${RESET} "
+
+    # Two-stage read:
+    #   1. Capture a single keystroke silently. If ESC → abort instantly.
+    #      If Enter → accept default. Anything else → fall through.
+    #   2. Hand off to readline (`read -e -i "$_first"`) so the first char
+    #      is pre-filled and the whole line stays editable (backspace works).
+    # Requires bash 4+ for `read -i`.
+    local _first
+    IFS= read -rsn1 _first
+    if [ "$_first" = $'\e' ]; then
+      printf '\n\n%b aborted %b\n' "${S_HDR_RED-}" "${S_HDR_END-}"
+      exit 130
+    fi
+    if [ -z "$_first" ]; then
+      V_USR_INPUT=""
+    elif [ -t 0 ] && (( ${BASH_VERSINFO[0]:-0} >= 4 )); then
+      # Interactive on bash 4+: pre-fill readline so the first char stays
+      # editable (backspace works). `read -i` requires both readline (-e)
+      # and bash 4+; the script's #!/bin/bash on macOS resolves to bash
+      # 3.2, which doesn't have it.
+      read -e -r -i "$_first" V_USR_INPUT
+    else
+      # Bash 3.2 or piped stdin: readline unavailable — echo the first
+      # char and concatenate the rest. Trade-off: backspacing past that
+      # first char looks odd in the terminal but doesn't lose data.
+      printf '%s' "$_first"
+      read -r V_USR_INPUT
+      V_USR_INPUT="${_first}${V_USR_INPUT}"
+    fi
 
     if [ "$V_USR_INPUT" = "" ]; then
       # User accepted the suggested version

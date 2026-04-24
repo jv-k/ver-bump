@@ -289,7 +289,7 @@ usage() {
 
   # OPTIONS section pill (the "long forms accept ..." note moved to the bottom).
   printf '\n%bOPTIONS %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
-  print-opt-row "-v" "--version"       "<version>"   "Specify a manual SemVer version number (validated)."
+  print-opt-row "-v" "--version"       "[<version>]" "Without a value: print tool version and exit. With a value: set manual SemVer."
   print-opt-row "-m" "--message"       "<message>"   "Custom annotated-tag release message."
   print-opt-row "-f" "--file"          "<file.json>" "Also bump \"version\" in this JSON file. Repeatable:"
   print-opt-cont "ver-bump -f src/plugin/package.json -f composer.json"
@@ -479,7 +479,7 @@ _emit-zsh-completion() {
 
 _ver_bump() {
   _arguments -s -S \
-    '(-v --version)'{-v,--version}'[manual SemVer version]:version:' \
+    '(-v --version)'{-v,--version}'[print tool version (no arg) or set manual SemVer]::version:' \
     '(-m --message)'{-m,--message}'[custom annotated-tag message]:message:' \
     '(-f --file)'{-f,--file}'[bump version in extra JSON file]:file:_files -g "*.json"' \
     '(-p --push)'{-p,--push}'[push branch + tag to <remote>]:remote:' \
@@ -504,7 +504,7 @@ _emit-fish-completion() {
   cat <<'FISH_EOF'
 # ver-bump fish completion — save to ~/.config/fish/completions/ver-bump.fish
 for _cmd in ver-bump ver-bump.sh
-    complete -c $_cmd -s v -l version        -r -d 'Manual SemVer version'
+    complete -c $_cmd -s v -l version        -d 'Print tool version (no arg) or set manual SemVer'
     complete -c $_cmd -s m -l message        -r -d 'Custom annotated-tag message'
     complete -c $_cmd -s f -l file           -r -a '(__fish_complete_suffix .json)' -d 'Bump version in extra JSON file'
     complete -c $_cmd -s p -l push           -r -d 'Push branch + tag to <remote>'
@@ -545,6 +545,22 @@ normalize-long-opts() {
     if [ "$arg" = "--about" ]; then
       version_block
       exit 0
+    fi
+
+    # Special case: bare --version / -v (no following value) — print the
+    # branded version block and exit. With a value, fall through to the
+    # generic translation so it acts as the manual SemVer setter.
+    if [ "$arg" = "--version" ] || [ "$arg" = "-v" ]; then
+      if (( $# == 0 )) || [ "${1:0:1}" = "-" ]; then
+        local _ver
+        if command -v jq >/dev/null 2>&1; then
+          _ver=$(jq -r '.version // ""' "$MODULE_DIR/package.json")
+        else
+          _ver=$(grep -m1 '"version"' "$MODULE_DIR/package.json" | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
+        fi
+        printf '%b v%s %b\n' "${S_HDR_SUB-}" "${_ver}" "${S_HDR_END-}"
+        exit 0
+      fi
     fi
 
     # Special case: --install-completions[=shell] — detect the user's shell

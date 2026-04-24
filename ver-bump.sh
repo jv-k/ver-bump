@@ -1,14 +1,21 @@
 #!/bin/bash
-
 #  _ _  ___  ___       ___  _ _  __ __  ___
 # | | || __>| . \ ___ | . >| | ||  \  \| . \
 # | ' || _> |   /|___|| . \| ' ||     ||  _/
 # |__/ |___>|_\_\     |___/\___/|_|_|_||_|
 #
+# Author:
+#   John Valai <git@jvk.to>
+# Homepage: 
+#   https://github.com/jv-k/ver-bump
+#
 # Description:
-#   - A handy utility that takes care of releasing Git software projects.
-# Credits:
-#   - https://github.com/jv-k/ver-bump
+#   An opinionated release tool for Git projects with a `package.json` —
+#   primarily Node / JS / TS projects, but also usable for any SemVer repo
+#   via `-f <file>.json` for the bump target. It automates the mechanical
+#   parts of cutting a release (SemVer bump, CHANGELOG, release branch,
+#   tag, push), driven by Conventional Commits, and leaves the integration
+#   step (merge back to `develop` / `main`) to the human.
 #
 
 # shellcheck disable=SC1090,SC2034,SC1017
@@ -41,7 +48,7 @@ FLAG_DRYRUN=false
 
 JSON_FILES=()
 
-#### Initiate Script ###########################
+# ── Initiate Script ────────────────────────────────────────────────────
 
 main() {
   # Load .ver-bumprc (if any) and apply defaults BEFORE parsing CLI args.

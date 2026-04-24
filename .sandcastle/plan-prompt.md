@@ -58,6 +58,14 @@ Issue B is blocked by issue A if **any** of the following hold:
 - **Issues already in flight on a `sandcastle/*` branch** with commits
   ahead of `feat/v2.0`: skip; their merger run hasn't completed.
 
+  **Stale-branch rule.** Before treating a `sandcastle/issue-<N>-*`
+  branch as "in flight," confirm issue #N is still open. If issue #N
+  is closed (shipped via another PR, superseded, or manually closed),
+  ignore the branch entirely — do not count it as in-flight and do
+  not let it block other issues via the file-set collision rule.
+  Such branches are residue; the operator is expected to prune them,
+  but the planner must not wedge itself waiting.
+
 ## Branch naming
 
 For each selected issue, assign:

@@ -33,7 +33,7 @@ const MAX_ITERATIONS = 10;
 const MAX_PARALLEL = 4;
 
 const hooks = {
-  sandbox: { onSandboxReady: [{ command: "npm install" }] },
+  sandbox: { onSandboxReady: [{ command: "pnpm install --frozen-lockfile" }] },
 };
 const copyToWorktree = ["node_modules"];
 const agent = sandcastle.claudeCode("claude-opus-4-6");

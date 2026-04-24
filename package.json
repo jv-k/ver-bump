@@ -18,6 +18,7 @@
     "tests:run": "./test/bats/bin/bats ./test/*.bats",
     "tests:install:windows": "sh ./install_bats.sh",
     "tests:run:windows": "sh ./test/bats/bin/bats ./test/*.bats",
+    "lint": "shellcheck -x -e SC1017 ./ver-bump.sh ./lib/*.sh",
     "sandcastle": "npx tsx .sandcastle/main.mts"
   },
   "keywords": [

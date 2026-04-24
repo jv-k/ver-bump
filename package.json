@@ -17,7 +17,8 @@
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/*.bats",
     "tests:install:windows": "sh ./install_bats.sh",
-    "tests:run:windows": "sh ./test/bats/bin/bats ./test/*.bats"
+    "tests:run:windows": "sh ./test/bats/bin/bats ./test/*.bats",
+    "sandcastle": "npx tsx .sandcastle/main.mts"
   },
   "keywords": [
     "bash versioning",
@@ -30,5 +31,8 @@
   ],
   "devDependencies": {
     "cz-conventional-changelog": "^3.3.0"
+  },
+  "dependencies": {
+    "@ai-hero/sandcastle": "^0.5.1"
   }
 }

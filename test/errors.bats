@@ -74,7 +74,7 @@ load 'test_helper'
 
 @test "exit code: long opt missing value -> 2" {
   source ${profile_script}
-  run process-arguments --version
+  run process-arguments --push
   assert_failure 2
   assert_output --partial "requires an argument"
 }

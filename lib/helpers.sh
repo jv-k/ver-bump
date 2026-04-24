@@ -375,7 +375,10 @@ install-completions() {
       content=$(_emit-bash-completion)
       ;;
     zsh)
-      dir="${HOME}/.zfunc"
+      # User-scope XDG-style path. Consistent with the bash target
+      # ($XDG_DATA_HOME/bash-completion/completions/) and with common
+      # project-local conventions elsewhere.
+      dir="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions"
       dest="${dir}/_ver-bump"
       content=$(_emit-zsh-completion)
       ;;
@@ -407,8 +410,28 @@ install-completions() {
   log_success "Installed ${shell} completion → ${S_VAL}${dest}${RESET-}"
 
   if [ "$shell" = zsh ]; then
-    log_info "Ensure ~/.zfunc is on \$fpath. Add to ~/.zshrc if missing:"
-    log_trace "fpath+=(~/.zfunc) && autoload -U compinit && compinit"
+    # Probe the live zsh $fpath to see if the install dir is already on it.
+    # If yes, the user just needs to rebuild the compdump cache. If no, they
+    # need to prepend the dir to fpath in .zshrc — and crucially, BEFORE any
+    # `source $ZSH/oh-my-zsh.sh` line, otherwise omz's compinit runs first
+    # and the new entry is never scanned.
+    local on_fpath=0
+    if command -v zsh >/dev/null 2>&1; then
+      if zsh -c "print -rl -- \$fpath" 2>/dev/null | grep -qxF "$dir"; then
+        on_fpath=1
+      fi
+    fi
+    if [ "$on_fpath" = 1 ]; then
+      log_info "Rebuild zsh's completion cache to pick it up:"
+      log_trace "rm -f ~/.zcompdump*; exec zsh"
+    else
+      # Show ~-relative path in the reminder so it copy-pastes cleanly.
+      local dir_pretty="${dir/#$HOME/~}"
+      log_info "Add this to ~/.zshrc BEFORE any 'source \$ZSH/oh-my-zsh.sh' line:"
+      log_trace "fpath=(${dir_pretty} \$fpath)"
+      log_info "Then rebuild the completion cache:"
+      log_trace "rm -f ~/.zcompdump*; exec zsh"
+    fi
   fi
 }
 

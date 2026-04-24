@@ -39,11 +39,13 @@ teardown() {
   assert_success
 }
 
-@test "install-completions: --install-completions=zsh writes to ~/.zfunc/_ver-bump + fpath reminder" {
+@test "install-completions: --install-completions=zsh writes to XDG zsh site-functions path" {
   run ${profile_script} --install-completions=zsh
   assert_success
-  [ -f "${HOME}/.zfunc/_ver-bump" ]
-  assert_output --partial "fpath+=(~/.zfunc)"
+  [ -f "${HOME}/.local/share/zsh/site-functions/_ver-bump" ]
+  # Non-TTY bats runs won't have the target dir on fpath, so the installer
+  # prints the .zshrc reminder.
+  assert_output --partial "fpath=(~/.local/share/zsh/site-functions"
 }
 
 @test "install-completions: --install-completions=fish writes to XDG fish completions path" {
@@ -73,11 +75,11 @@ teardown() {
 }
 
 @test "install-completions: overwrites an existing file without prompting" {
-  mkdir -p "${HOME}/.zfunc"
-  printf 'stale content\n' > "${HOME}/.zfunc/_ver-bump"
+  mkdir -p "${HOME}/.local/share/zsh/site-functions"
+  printf 'stale content\n' > "${HOME}/.local/share/zsh/site-functions/_ver-bump"
   run ${profile_script} --install-completions=zsh
   assert_success
-  run cat "${HOME}/.zfunc/_ver-bump"
+  run cat "${HOME}/.local/share/zsh/site-functions/_ver-bump"
   refute_output --partial "stale content"
 }
 
@@ -85,7 +87,7 @@ teardown() {
   export SHELL=/usr/bin/zsh
   run ${profile_script} --install-completions
   assert_success
-  [ -f "${HOME}/.zfunc/_ver-bump" ]
+  [ -f "${HOME}/.local/share/zsh/site-functions/_ver-bump" ]
 }
 
 @test "install-completions: bare flag with unsupported \$SHELL exits 2 with hint" {

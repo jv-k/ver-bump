@@ -139,7 +139,7 @@ _clear_config_env() {
   # Force-set o+w; use 666 to bypass any umask stripping on macOS.
   chmod 666 "$rc"
   # Sanity-check the permission actually took (guards against weird FS).
-  [ "$(stat -f '%Lp' "$rc" 2>/dev/null || stat -c '%a' "$rc" 2>/dev/null)" = "666" ]
+  [ "$(stat -c '%a' "$rc" 2>/dev/null || stat -f '%Lp' "$rc" 2>/dev/null)" = "666" ]
 
   CLEANUP_CMDS+=("chmod 644 '$rc' 2>/dev/null || true")
 
@@ -159,7 +159,7 @@ _clear_config_env() {
   rc="$repo/.ver-bumprc"
   printf 'TAG_PREFIX=unsafe\n' > "$rc"
   chmod 664 "$rc"
-  [ "$(stat -f '%Lp' "$rc" 2>/dev/null || stat -c '%a' "$rc" 2>/dev/null)" = "664" ]
+  [ "$(stat -c '%a' "$rc" 2>/dev/null || stat -f '%Lp' "$rc" 2>/dev/null)" = "664" ]
 
   CLEANUP_CMDS+=("chmod 644 '$rc' 2>/dev/null || true")
 

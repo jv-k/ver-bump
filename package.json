@@ -35,9 +35,7 @@
     "versioning-workflow"
   ],
   "devDependencies": {
-    "cz-conventional-changelog": "^3.3.0"
-  },
-  "dependencies": {
+    "cz-conventional-changelog": "^3.3.0",
     "@ai-hero/sandcastle": "^0.5.1"
   }
 }

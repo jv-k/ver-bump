@@ -175,6 +175,10 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
 ```
 
+<p>
+  <img src="https://raw.githubusercontent.com/jv-k/ver-bump/main/img/screenshot.png?raw=true" alt="ver-bump --help">
+</p>
+
 ## Options
 
 Every option has a short form and a GNU-style long form. Long forms accept

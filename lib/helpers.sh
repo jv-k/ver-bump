@@ -302,6 +302,8 @@ usage() {
   print-opt-row "-c" "--no-changelog"  ""            "Disable updating CHANGELOG.md automatically."
   print-opt-row "-l" "--pause-changelog" ""          "Pause before commit so CHANGELOG.md can be edited."
   print-opt-row "-h" "--help"          ""            "Show this help message."
+  print-opt-row "-y" "--yes"           ""            "Skip interactive confirmation prompts."
+  print-opt-row ""   "--undo"          "[<version>]" "Locally delete release-X.Y.Z + tag vX.Y.Z (refuses if pushed/dirty)."
   print-opt-row ""   "--about"              ""            "Print name, version, author, and homepage; then exit."
   print-opt-row ""   "--completions"        "<shell>"     "Emit completion script for bash, zsh, or fish."
   print-opt-row ""   "--install-completions" "[=<shell>]" "Install completion script (auto-detects shell)."
@@ -459,15 +461,15 @@ _ver_bump() {
             return 0
             ;;
         # Options that take a free-form argument — no completion
-        -v|--version|-m|--message|-p|--push|-t|--tag-prefix|-B|--branch-prefix)
+        -v|--version|-m|--message|-p|--push|-t|--tag-prefix|-B|--branch-prefix|--undo)
             return 0
             ;;
     esac
 
     opts="--version --message --file --push --tag-prefix --branch-prefix \
           --dry-run --no-commit --no-branch --no-changelog --pause-changelog \
-          --help --completions --install-completions --about \
-          -v -m -f -p -t -B -d -n -b -c -l -h"
+          --yes --undo --help --completions --install-completions --about \
+          -v -m -f -p -t -B -d -n -b -c -l -y -h"
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 }
 complete -F _ver_bump ver-bump
@@ -495,6 +497,8 @@ _ver_bump() {
     '(-c --no-changelog)'{-c,--no-changelog}'[disable CHANGELOG.md update]' \
     '(-l --pause-changelog)'{-l,--pause-changelog}'[pause before commit]' \
     '(-h --help)'{-h,--help}'[show help]' \
+    '(-y --yes)'{-y,--yes}'[skip interactive confirmation prompts]' \
+    '--undo[locally delete release branch + tag for <version>]::version:' \
     '--completions[emit completion script]:shell:(bash zsh fish)' \
     '--install-completions[install completion script for detected / specified shell]::shell:(bash zsh fish)' \
     '--about[print branded version info and exit]'
@@ -520,6 +524,8 @@ for _cmd in ver-bump ver-bump.sh
     complete -c $_cmd -s c -l no-changelog   -d 'Disable CHANGELOG.md update'
     complete -c $_cmd -s l -l pause-changelog -d 'Pause before commit'
     complete -c $_cmd -s h -l help           -d 'Show help'
+    complete -c $_cmd -s y -l yes            -d 'Skip interactive confirmation prompts'
+    complete -c $_cmd      -l undo           -d 'Locally delete release branch + tag for <version>'
     complete -c $_cmd      -l completions    -x -a 'bash zsh fish' -d 'Emit completion script'
     complete -c $_cmd      -l install-completions -a 'bash zsh fish' -d 'Install completions for detected/specified shell'
     complete -c $_cmd      -l about          -d 'Print branded version info and exit'
@@ -592,6 +598,31 @@ normalize-long-opts() {
       exit $?
     fi
 
+    # Special case: --undo [version] — locally delete the release branch
+    # and tag for <version>. Honours --dry-run and --yes seen earlier or
+    # later in argv. Exits immediately.
+    if [ "$arg" = "--undo" ] || [[ "$arg" == "--undo="* ]]; then
+      local undo_ver undo_a
+      for undo_a in "$@" "${NORMALIZED_ARGV[@]}"; do
+        case "$undo_a" in
+          --dry-run|-d) FLAG_DRYRUN=true ;;
+          --yes|-y)     FLAG_YES=true ;;
+        esac
+      done
+      if [[ "$arg" == "--undo="* ]]; then
+        undo_ver="${arg#--undo=}"
+        [ -z "$undo_ver" ] && fail 2 \
+          "--undo= requires a version." \
+          "Pass MAJOR.MINOR.PATCH, e.g. --undo=1.2.0"
+      elif (( $# )) && [ "${1:0:1}" != "-" ]; then
+        undo_ver="$1"; shift
+      else
+        undo_ver=""
+      fi
+      do-undo "$undo_ver"
+      exit $?
+    fi
+
     # Special case: --completions [shell] — emit and exit immediately, so
     # users can run this without a package.json or a git repo present.
     if [ "$arg" = "--completions" ] || [[ "$arg" == "--completions="* ]]; then
@@ -633,6 +664,7 @@ normalize-long-opts() {
       no-changelog)    short="-c"; needs_arg=0 ;;
       pause-changelog) short="-l"; needs_arg=0 ;;
       help)            short="-h"; needs_arg=0 ;;
+      yes)             short="-y"; needs_arg=0 ;;
       *)
         fail 2 \
           "Invalid option: --${name}" \
@@ -674,7 +706,7 @@ process-arguments() {
   set -- ${NORMALIZED_ARGV[@]+"${NORMALIZED_ARGV[@]}"}
 
   # Get positional parameters
-  while getopts ":v:p:m:f:t:B:hbncdl" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
+  while getopts ":v:p:m:f:t:B:hbncdly" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
     case "$OPTIONS" in
       h )
         # Show help
@@ -732,6 +764,9 @@ process-arguments() {
       l )
         FLAG_CHANGELOG_PAUSE=true
         echo -e "\n${S_LIGHT}Option set:${RESET} pause to allow amending CHANGELOG.md."
+      ;;
+      y )
+        FLAG_YES=true
       ;;
       \? )
         fail 2 \
@@ -1310,4 +1345,165 @@ do-push() {
         "Re-run and answer 'y' when prompted, or pass -p/--push <remote> to skip the prompt."
     ;;
   esac
+}
+
+# do-undo [<version>] — locally undo the artefacts of a prior ver-bump run:
+# delete the release branch and tag for <version>. Refuses if the working
+# tree is dirty, if the tag/branch were pushed, or if the branch was merged.
+# Honours FLAG_DRYRUN (print plan only) and FLAG_YES (skip confirmation).
+#
+# Resolution order for <version>:
+#   1. explicit arg ("--undo 1.2.0")
+#   2. derived from current branch if it matches "${REL_PREFIX}X.Y.Z"
+#   3. fail with hint
+do-undo() {
+  local ver="$1" branch tag remote parent_branch reply
+  local -a remote_hits=()
+
+  command -v git >/dev/null 2>&1 || fail 3 \
+    "git is not installed." "Install git and retry."
+
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || fail 3 \
+    "Not inside a git repository." "Run --undo from inside the repo."
+
+  if [ -z "$ver" ]; then
+    local cur
+    cur=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)
+    if [[ -n "$cur" && "$cur" == "${REL_PREFIX}"* ]]; then
+      ver="${cur#"${REL_PREFIX}"}"
+    else
+      fail 2 \
+        "No version supplied and current branch '${cur:-<detached>}' isn't a '${REL_PREFIX}X.Y.Z' branch." \
+        "Pass the version explicitly: ver-bump --undo <version>"
+    fi
+  fi
+
+  is_semver "$ver" || fail 2 \
+    "'$ver' is not a valid SemVer 2.0 version." \
+    "Pass MAJOR.MINOR.PATCH, e.g. --undo 1.2.0"
+
+  branch="${REL_PREFIX}${ver}"
+  tag="${TAG_PREFIX}${ver}"
+
+  # Refuse on dirty tree — a reset/branch-delete could destroy the user's WIP.
+  if [ -n "$(git status --porcelain --untracked-files=no 2>/dev/null)" ]; then
+    fail 3 \
+      "Working tree has uncommitted changes." \
+      "Stash or commit unrelated work before running --undo (untracked files are ignored)."
+  fi
+
+  git rev-parse --verify --quiet "refs/tags/${tag}" >/dev/null || fail 3 \
+    "Tag '${tag}' does not exist locally — nothing to undo." \
+    "Check 'git tag -l ${TAG_PREFIX}*' for what's available."
+
+  git rev-parse --verify --quiet "refs/heads/${branch}" >/dev/null || fail 3 \
+    "Branch '${branch}' does not exist locally — nothing to undo." \
+    "Check 'git branch --list ${REL_PREFIX}*' for what's available."
+
+  # Pushed-state check across all remotes. If either the tag or the branch
+  # exists on any remote, refuse and print the manual cleanup commands.
+  while read -r remote; do
+    [ -z "$remote" ] && continue
+    if git ls-remote --tags "$remote" "refs/tags/${tag}" 2>/dev/null | grep -q "${tag}$"; then
+      remote_hits+=("$remote: tag ${tag}")
+    fi
+    if git ls-remote --heads "$remote" "refs/heads/${branch}" 2>/dev/null | grep -q "${branch}$"; then
+      remote_hits+=("$remote: branch ${branch}")
+    fi
+  done < <(git remote)
+
+  if (( ${#remote_hits[@]} > 0 )); then
+    log_warn "Refusing to undo — release artefacts are present on remote(s):"
+    local hit
+    for hit in "${remote_hits[@]}"; do
+      log_trace "$hit"
+    done
+    log_info "Undo manually if you really mean it:"
+    log_trace "git push origin :refs/tags/${tag}      # delete remote tag"
+    log_trace "git push origin --delete ${branch}    # delete remote branch"
+    log_trace "git tag -d ${tag} && git branch -D ${branch}"
+    exit 3
+  fi
+
+  # Refuse if the release branch's tip has already been merged into another
+  # branch. At that point an undo is the wrong tool; a revert commit is.
+  # `--contains` returns branches whose tip has <branch>'s tip as an
+  # ancestor — exactly the "already merged in" relationship we care about.
+  local merged_into=()
+  local b
+  while read -r b; do
+    [ -z "$b" ] && continue
+    b="${b## }"; b="${b#\* }"
+    [[ "$b" == "$branch" ]] && continue
+    [[ "$b" == "${REL_PREFIX}"* ]] && continue
+    merged_into+=("$b")
+  done < <(git branch --contains "$branch" 2>/dev/null)
+
+  if (( ${#merged_into[@]} > 0 )); then
+    fail 3 \
+      "Branch '${branch}' is already merged into: ${merged_into[*]}" \
+      "Use 'git revert' on the merge or bump commit instead — undo would lose history."
+  fi
+
+  # Pick a parent branch to switch to before deleting. Strategy:
+  #   1. reflog — the branch checked out immediately before 'release-X.Y.Z'
+  #   2. fallback — first non-release branch containing the bump's parent
+  parent_branch=$(
+    git reflog show --pretty='%gs' HEAD 2>/dev/null \
+      | awk -v b="$branch" '
+          /^checkout: moving from / {
+            from=$4; to=$6
+            if (to==b && from!=b) { print from; exit }
+          }'
+  )
+  if [ -z "$parent_branch" ] || ! git rev-parse --verify --quiet "refs/heads/${parent_branch}" >/dev/null; then
+    local parent_sha
+    parent_sha=$(git rev-parse "${branch}^" 2>/dev/null) || parent_sha=""
+    if [ -n "$parent_sha" ]; then
+      while read -r b; do
+        b="${b## }"; b="${b#\* }"
+        [[ -z "$b" || "$b" == "$branch" || "$b" == "${REL_PREFIX}"* ]] && continue
+        parent_branch="$b"; break
+      done < <(git branch --contains "$parent_sha" 2>/dev/null)
+    fi
+  fi
+  if [ -z "$parent_branch" ]; then
+    fail 3 \
+      "Could not determine which branch to switch to before deleting '${branch}'." \
+      "Checkout your intended branch first, then re-run --undo."
+  fi
+
+  section "Undo"
+  log_info "Plan:"
+  log_trace "git checkout ${parent_branch}"
+  log_trace "git branch -D ${branch}"
+  log_trace "git tag -d ${tag}"
+
+  if [ "${FLAG_DRYRUN:-false}" = true ]; then
+    printf '\n%b[dry-run]%b no changes made.\n' "${S_LIGHT-}" "${RESET-}"
+    return 0
+  fi
+
+  if [ "${FLAG_YES:-false}" != true ]; then
+    printf '\n%bProceed?%b [y/N] ' "${S_QUESTION-}" "${RESET-}"
+    read -r reply
+    case "${reply}" in
+      y|Y|yes|YES) ;;
+      *) fail 5 "undo declined" "Re-run with --yes to skip the prompt." ;;
+    esac
+  fi
+
+  git checkout "$parent_branch" >/dev/null 2>&1 || fail 1 \
+    "Failed to checkout '${parent_branch}'." \
+    "Resolve the issue manually, then re-run --undo."
+
+  git branch -D "$branch" >/dev/null 2>&1 || fail 1 \
+    "Failed to delete branch '${branch}'." \
+    "Delete it manually with: git branch -D ${branch}"
+
+  git tag -d "$tag" >/dev/null 2>&1 || fail 1 \
+    "Failed to delete tag '${tag}'." \
+    "Delete it manually with: git tag -d ${tag}"
+
+  log_success "Undid release ${S_VAL}${ver}${RESET-} — back on ${S_VAL}${parent_branch}${RESET-}"
 }

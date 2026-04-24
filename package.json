@@ -19,6 +19,10 @@
     "tests:install:windows": "sh ./install_bats.sh",
     "tests:run:windows": "sh ./test/bats/bin/bats ./test/*.bats",
     "lint": "shellcheck -x -e SC1017 ./ver-bump.sh ./lib/*.sh",
+    "screenshots": "./dev/screenshots.sh",
+    "screenshots:help": "./dev/screenshots.sh help",
+    "screenshots:demo": "./dev/screenshots.sh demo",
+    "screenshots:terminalizer": "./demo/generate.sh",
     "sandcastle": "npx tsx .sandcastle/main.mts"
   },
   "keywords": [

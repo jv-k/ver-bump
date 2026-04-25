@@ -4,7 +4,7 @@
 
 @.sandcastle/CODING_STANDARDS.md
 
-## Branches to merge into `feat/v2.0`
+## Branches to merge into `develop`
 
 {{BRANCHES}}
 
@@ -19,7 +19,7 @@
 # Task
 
 You are the **Merger**. Integrate the listed `sandcastle/*` branches
-into `feat/v2.0` in order, resolving any conflicts intelligently.
+into `develop` in order, resolving any conflicts intelligently.
 
 ## Pre-flight
 
@@ -36,7 +36,7 @@ and re-trigger.
 
 For each branch (in the order listed):
 
-1. `git checkout feat/v2.0` and confirm clean.
+1. `git checkout develop` and confirm clean.
 2. `git merge <branch> --no-edit`.
 3. If the merge succeeds: continue to verification.
 4. If conflicts arise:
@@ -56,7 +56,7 @@ For each branch (in the order listed):
    - `npm run tests:run` — full bats suite, expect 100%.
    - `shellcheck -x -e SC1017 ./ver-bump.sh ./lib/helpers.sh ./lib/styles.sh ./lib/icons.sh`
    - If either fails: investigate, fix, re-run. Do NOT proceed to the
-     next branch with a broken `feat/v2.0`.
+     next branch with a broken `develop`.
 6. If verification can't be made green for a branch, **abort the merge
    for that branch only** (`git reset --hard ORIG_HEAD`), leave a
    comment on its issue explaining why, and continue with the
@@ -65,7 +65,7 @@ For each branch (in the order listed):
 ## Final commit
 
 After all attempted branches are processed (merged or aborted), if any
-were merged, make **one** summary commit on `feat/v2.0`:
+were merged, make **one** summary commit on `develop`:
 
     chore(ralph-merge): integrate <N> sandcastle branch(es)
 

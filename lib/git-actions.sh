@@ -124,6 +124,77 @@ do-push() {
   esac
 }
 
+# Validate --release preconditions. No-op unless DO_RELEASE=true.
+#   - Requires -p / --push (otherwise the tag never reaches the remote and
+#     `gh release create` would point at a tag that doesn't exist there).
+#   - Requires `gh` on PATH. R-DEP-1/2 keep `gh` out of the default path,
+#     so this is the only place ver-bump cares about it.
+check-release-deps() {
+  [ "${DO_RELEASE:-false}" = true ] || return 0
+
+  if [ "${FLAG_PUSH:-false}" != true ]; then
+    fail 2 \
+      "--release requires -p / --push <remote> (the tag must be pushed before publishing)." \
+      "Add -p <remote>, e.g. ver-bump --release -p origin"
+  fi
+
+  if ! command -v gh >/dev/null 2>&1; then
+    fail 3 \
+      "--release requires the GitHub CLI (gh), but it isn't on PATH." \
+      "Install gh (https://cli.github.com) or drop --release."
+  fi
+}
+
+# Publish a GitHub release for the just-pushed tag.
+#   notes = stdout of $VER_BUMP_RELEASE_NOTES_CMD (default `npx jv-k/releasetool`).
+# Honours FLAG_DRYRUN by printing the resolved `gh release create` invocation
+# to stderr instead of executing it. Notes command runs in dry-run too so
+# the preview reflects real output (R-REL-5).
+# If the notes command exits non-zero, abort before calling `gh` (exit 1)
+# and surface its stderr — the tag push already happened (live path) and
+# is intentionally NOT rolled back.
+do-github-release() {
+  [ "${DO_RELEASE:-false}" = true ] || return 0
+  # Tag was skipped, so there's nothing to publish a release against.
+  [ "${FLAG_NOCOMMIT:-false}" = true ] && return 0
+
+  local tag notes_cmd notes notes_err notes_rc
+  tag="${TAG_PREFIX}${V_NEW}"
+  notes_cmd="${VER_BUMP_RELEASE_NOTES_CMD:-npx jv-k/releasetool}"
+
+  echo -e "\nPublishing GitHub release..."
+
+  # Run notes cmd; capture stdout (notes) and stderr separately so we can
+  # surface a useful error when it fails. `eval` so users can pass pipelines
+  # / arg lists via the env var (e.g. 'echo X | tr a-z A-Z').
+  notes_err=$(mktemp)
+  notes=$(eval "$notes_cmd" 2>"$notes_err"); notes_rc=$?
+  if [ "$notes_rc" -ne 0 ]; then
+    local err
+    err=$(cat "$notes_err")
+    rm -f "$notes_err"
+    fail 1 \
+      "release notes command failed (exit ${notes_rc}): ${notes_cmd}${err:+ — ${err}}" \
+      "Fix the notes command, or override with VER_BUMP_RELEASE_NOTES_CMD."
+  fi
+  rm -f "$notes_err"
+
+  if [ "${FLAG_DRYRUN:-false}" = true ]; then
+    echo -e "${S_LIGHT}[dry-run]${RESET} would run: gh release create ${S_VAL}${tag}${RESET} --notes '${notes}'" >&2
+    log_success "(dry-run) GitHub release prepared for ${S_VAL}${tag}${RESET}"
+    return
+  fi
+
+  local gh_msg gh_rc
+  gh_msg=$(gh release create "$tag" --notes "$notes" 2>&1); gh_rc=$?
+  if [ "$gh_rc" -ne 0 ]; then
+    fail 1 \
+      "gh release create failed: ${gh_msg}" \
+      "The tag was pushed; re-run 'gh release create ${tag}' manually once the underlying issue is fixed."
+  fi
+  log_success "Published GitHub release: ${gh_msg}"
+}
+
 # do-undo [<version>] — locally undo the artefacts of a prior ver-bump run:
 # delete the release branch and tag for <version>. Refuses if the working
 # tree is dirty, if the tag/branch were pushed, or if the branch was merged.

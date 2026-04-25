@@ -171,7 +171,8 @@ $ npm install -g ver-bump
 $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... \
            [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
-           [-c|--no-changelog] [-l|--pause-changelog] [-h|--help] \
+           [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-h|--help] \
+           [--undo [<version>]] [--release] \
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
 ```
 
@@ -237,7 +238,14 @@ world-writable rc and exits with code 3; `chmod 644 .ver-bumprc` fixes it.
 -b, --no-branch               Don't create an automatic release-<version> branch.
 -c, --no-changelog            Disable updating CHANGELOG.md automatically.
 -l, --pause-changelog         Pause before commit so CHANGELOG.md can be hand-edited.
+-y, --yes                     Skip interactive confirmation prompts.
 -h, --help                    Show help message.
+    --undo [<version>]        Locally delete the release branch + tag for <version>
+                              (refuses if pushed, dirty, or already merged).
+    --release                 After pushing, publish a GitHub release for the new tag.
+                              Requires -p / --push <remote> and the `gh` CLI. Notes are
+                              read from $VER_BUMP_RELEASE_NOTES_CMD (default
+                              `npx jv-k/releasetool`).
     --about                   Print name, version, author, and homepage; then exit.
     --completions <shell>     Emit completion script for bash, zsh, or fish to stdout.
     --install-completions [=<shell>]

@@ -23,8 +23,21 @@ true
 
 MODULE_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 
-source "$MODULE_DIR/lib/helpers.sh"
 source "$MODULE_DIR/lib/icons.sh"
+source "$MODULE_DIR/lib/errors.sh"
+source "$MODULE_DIR/lib/ui.sh"
+source "$MODULE_DIR/lib/validate.sh"
+source "$MODULE_DIR/lib/json.sh"
+
+source "$MODULE_DIR/lib/usage.sh"
+source "$MODULE_DIR/lib/completions.sh"
+source "$MODULE_DIR/lib/args.sh"
+
+source "$MODULE_DIR/lib/git-checks.sh"
+source "$MODULE_DIR/lib/version.sh"
+source "$MODULE_DIR/lib/changelog.sh"
+source "$MODULE_DIR/lib/git-actions.sh"
+
 source "$MODULE_DIR/lib/config.sh"
 
 NOW="$(date +%F)"

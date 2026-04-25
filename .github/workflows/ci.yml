@@ -49,17 +49,8 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         run: choco install shellcheck
 
-      - name: Test ./ver-bump.sh
-        run: shellcheck -x -e SC1017 ./ver-bump.sh
-
-      - name: Test ./lib/helpers.sh
-        run: shellcheck -x -e SC1017 ./lib/helpers.sh
-
-      - name: Test ./lib/styles.sh
-        run: shellcheck -x -e SC1017 ./lib/styles.sh
-
-      - name: Test ./lib/icons.sh
-        run: shellcheck -x -e SC1017 ./lib/icons.sh
+      - name: Test ./ver-bump.sh and ./lib/*.sh
+        run: shellcheck -x -e SC1017 ./ver-bump.sh ./lib/*.sh
 
   tests:
     name: Run test suite on ${{ matrix.os }}

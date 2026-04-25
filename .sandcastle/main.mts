@@ -11,7 +11,7 @@
 //                     Each implementer is followed by a reviewer that may
 //                     refine the diff and opens the PR.
 // Phase 3 (Merge):    a single merger agent integrates all branches that
-//                     produced commits back into `feat/v2.0`, resolving
+//                     produced commits back into `develop`, resolving
 //                     conflicts and verifying tests + shellcheck after each.
 //
 // The planner refuses to schedule any issue whose touched files overlap

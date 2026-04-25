@@ -18,33 +18,37 @@
 
 load 'test_helper'
 
-@test "UI: no S_NOTICE references in lib/helpers.sh or ver-bump.sh" {
+@test "UI: no S_NOTICE references in lib/*.sh (except styles.sh) or ver-bump.sh" {
   # S_NOTICE was the whole-line green narrative token. The refactor stripped
-  # it; ensure it doesn't creep back.
-  run grep -n 'S_NOTICE' "${repo_dir}/lib/helpers.sh" "${repo_dir}/ver-bump.sh"
+  # it; ensure it doesn't creep back. styles.sh still defines S_NOTICE as a
+  # deprecated alias to $GREEN — that's intentional and out of scope.
+  run bash -c "grep -rln --include='*.sh' 'S_NOTICE' '${repo_dir}/lib' '${repo_dir}/ver-bump.sh' | grep -v '/lib/styles.sh\$'"
   assert_failure
 }
 
 @test "UI: no raw GREEN references outside lib/styles.sh" {
   # GREEN is defined in styles.sh (fine) but must not be used directly in
   # narrative echoes anywhere else.
-  run grep -rn --include='*.sh' -l 'GREEN' \
-      "${repo_dir}/lib/helpers.sh" "${repo_dir}/ver-bump.sh" "${repo_dir}/lib/config.sh"
+  run bash -c "grep -rln --include='*.sh' 'GREEN' '${repo_dir}/lib' '${repo_dir}/ver-bump.sh' | grep -v '/lib/styles.sh\$'"
   assert_failure
 }
 
 @test "UI: 'Option set:' banners keep S_LIGHT dim prefix + reset" {
   # Option-set acknowledgements are secondary info; the prefix stays dim
   # ($S_LIGHT) and the narrative body is plain.
-  run grep -c 'S_LIGHT}Option set:${RESET}' "${repo_dir}/lib/helpers.sh"
+  run grep -rh --include='*.sh' -c 'S_LIGHT}Option set:${RESET}' "${repo_dir}/lib"
   assert_success
   # At least the 10 option handlers (-m, -f, -p, -t, -B, -d, -n, -b, -c, -l).
-  [ "${output}" -ge 10 ]
+  local total=0 line
+  while IFS= read -r line; do total=$((total + line)); done <<< "${output}"
+  [ "${total}" -ge 10 ]
 }
 
 @test "UI: dry-run lines keep [dry-run] dim marker" {
   # [dry-run] stays dim so it reads as a marker, not narrative.
-  run grep -c 'S_LIGHT}\[dry-run\]${RESET}' "${repo_dir}/lib/helpers.sh"
+  run grep -rh --include='*.sh' -c 'S_LIGHT}\[dry-run\]${RESET}' "${repo_dir}/lib"
   assert_success
-  [ "${output}" -ge 6 ]
+  local total=0 line
+  while IFS= read -r line; do total=$((total + line)); done <<< "${output}"
+  [ "${total}" -ge 6 ]
 }

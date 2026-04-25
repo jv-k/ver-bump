@@ -289,6 +289,86 @@ load 'test_helper'
   assert_output --partial "Option --version requires a non-empty value"
 }
 
+@test "process-arguments: --major sets BUMP_LEVEL" {
+  source ${profile_script}
+  process-arguments --major
+  assert_equal "${BUMP_LEVEL}" "major"
+}
+
+@test "process-arguments: --minor sets BUMP_LEVEL" {
+  source ${profile_script}
+  process-arguments --minor
+  assert_equal "${BUMP_LEVEL}" "minor"
+}
+
+@test "process-arguments: --patch sets BUMP_LEVEL" {
+  source ${profile_script}
+  process-arguments --patch
+  assert_equal "${BUMP_LEVEL}" "patch"
+}
+
+@test "process-arguments: --major + --minor exits 2" {
+  source ${profile_script}
+  run process-arguments --major --minor
+  assert_failure 2
+  assert_output --partial "Conflicting bump-level flags"
+  assert_output --partial "mutually exclusive"
+}
+
+@test "process-arguments: --minor + --patch exits 2" {
+  source ${profile_script}
+  run process-arguments --minor --patch
+  assert_failure 2
+  assert_output --partial "Conflicting bump-level flags"
+}
+
+@test "process-arguments: --major + --minor + --patch exits 2" {
+  source ${profile_script}
+  run process-arguments --major --minor --patch
+  assert_failure 2
+  assert_output --partial "Conflicting bump-level flags"
+}
+
+@test "process-arguments: --major rejects =value" {
+  source ${profile_script}
+  run process-arguments --major=2
+  assert_failure 2
+  assert_output --partial "Option --major doesn't take a value"
+}
+
+@test "process-arguments: --major + -v exits 2" {
+  source ${profile_script}
+  run process-arguments --major -v 1.2.3
+  assert_failure 2
+  assert_output --partial "Conflicting flags"
+  assert_output --partial "--major"
+}
+
+@test "process-arguments: -v + --major exits 2" {
+  source ${profile_script}
+  run process-arguments -v 1.2.3 --major
+  assert_failure 2
+  # -v was parsed first via getopts; --major then triggers... wait, actually
+  # normalize-long-opts runs first, so --major is consumed before getopts
+  # sees -v. Either ordering hits the conflict — message anchors on the
+  # bump-level half.
+  assert_output --partial "Conflicting flags"
+}
+
+@test "process-arguments: --patch + --version=1.2.3 exits 2" {
+  source ${profile_script}
+  run process-arguments --patch --version=1.2.3
+  assert_failure 2
+  assert_output --partial "Conflicting flags"
+}
+
+@test "process-arguments: --major works alongside --dry-run" {
+  source ${profile_script}
+  process-arguments --major --dry-run
+  assert_equal "${BUMP_LEVEL}" "major"
+  assert_equal "${FLAG_DRYRUN}" "true"
+}
+
 @test "help↔README flag parity: every --help long flag appears in README" {
   local help_out flags flag
   help_out=$(get_help_msg)

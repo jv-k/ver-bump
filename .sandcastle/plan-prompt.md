@@ -58,13 +58,22 @@ Issue B is blocked by issue A if **any** of the following hold:
 - **Issues already in flight on a `sandcastle/*` branch** with commits
   ahead of `feat/v2.0`: skip; their merger run hasn't completed.
 
-  **Stale-branch rule.** Before treating a `sandcastle/issue-<N>-*`
-  branch as "in flight," confirm issue #N is still open. If issue #N
-  is closed (shipped via another PR, superseded, or manually closed),
-  ignore the branch entirely — do not count it as in-flight and do
-  not let it block other issues via the file-set collision rule.
-  Such branches are residue; the operator is expected to prune them,
-  but the planner must not wedge itself waiting.
+  **Stale-branch rule.** For every `sandcastle/issue-<N>-*` branch
+  with commits ahead of `feat/v2.0`, run `gh issue view <N> --json
+  state --jq .state` to determine the issue's current state. Do
+  **not** infer state from the open-issues list above — that list is
+  filtered by the `ready-for-agent` label, so an open-but-unlabeled
+  issue would falsely appear "absent" and produce a false-negative
+  in-flight detection.
+
+  - State exactly `CLOSED` → branch is residue. Ignore it: do not
+    count as in-flight, do not let it block other issues via the
+    file-set collision rule. (The operator is expected to prune
+    such branches, but the planner must not wedge itself waiting.)
+  - Any other result (`OPEN`, error, network failure, unknown
+    issue number) → treat the branch as in-flight. Conservative
+    default: false positives cost an idle iteration, false negatives
+    cost a merge conflict.
 
 ## Branch naming
 

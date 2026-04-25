@@ -1,5 +1,8 @@
 node_modules/
 
+# vhs throwaway gifs (only the Screenshot frame / demo.gif is kept)
+img/tmp/
+
 # terminalizer
 demo/
 
@@ -7,3 +10,11 @@ demo/
 test/bats
 test/helpers
 test/test_helper/
+
+# sandcastle runtime (agent logs, per-branch worktrees, .env)
+.sandcastle/logs/
+.sandcastle/worktrees/
+.sandcastle/.env
+
+# Claude Code per-project local settings
+.claude/

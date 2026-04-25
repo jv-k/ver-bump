@@ -1,7 +1,7 @@
 {
   "name": "ver-bump",
   "version": "1.1.8",
-  "description": "This script automates bumping the git software project's version using automation. It does several things that are typically required for releasing a Git repository, like git tagging, automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files.",
+  "description": "An opinionated release tool for Git projects with a package.json (Node / JS / TS) — automates SemVer bumps, CHANGELOG, release branch, tag, and push, driven by Conventional Commits. Works on any repo that follows SemVer, via -f for extra JSON files.",
   "author": "John Valai <git@jvk.to>",
   "homepage": "https://github.com/jv-k/ver-bump",
   "repository": {
@@ -15,10 +15,15 @@
     "dev:dry": "./dev/sandbox.sh --dry-run",
     "release": "gh release create --notes \"$(npx jv-k/releasetool)\"",
     "tests:install": "./install_bats.sh",
-    "tests:run": "./test/bats/bin/bats ./test/ver-bump.bats",
+    "tests:run": "./test/bats/bin/bats ./test/*.bats",
     "tests:install:windows": "sh ./install_bats.sh",
-    "tests:run:windows": "sh ./test/bats/bin/bats ./test/ver-bump.bats",
-    "docs:build": "bashdoc --color --watch --location ./docs --template ./docs/tpl/index.hbs ./ver-bump.sh"
+    "tests:run:windows": "sh ./test/bats/bin/bats ./test/*.bats",
+    "lint": "shellcheck -x -e SC1017 ./ver-bump.sh ./lib/*.sh",
+    "screenshots": "./dev/screenshots.sh",
+    "screenshots:help": "./dev/screenshots.sh help",
+    "screenshots:demo": "./dev/screenshots.sh demo",
+    "screenshots:terminalizer": "./demo/generate.sh",
+    "sandcastle": "npx tsx .sandcastle/main.mts"
   },
   "keywords": [
     "bash versioning",
@@ -30,6 +35,7 @@
     "versioning-workflow"
   ],
   "devDependencies": {
-    "cz-conventional-changelog": "^3.3.0"
+    "cz-conventional-changelog": "^3.3.0",
+    "@ai-hero/sandcastle": "^0.5.1"
   }
 }

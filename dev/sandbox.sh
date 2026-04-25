@@ -30,10 +30,12 @@ if [ ! -x "$VER_BUMP" ]; then
 fi
 
 KEEP=0
+QUIET=0
 PASSTHROUGH=()
 while (( $# )); do
   case "$1" in
     -k|--keep) KEEP=1; shift ;;
+    -q|--quiet) QUIET=1; shift ;;
     -h|--help-sandbox)
       # Pass -h / --help through to ver-bump; print our own help only for
       # this long alias so we don't shadow ver-bump's usage output.
@@ -43,6 +45,14 @@ while (( $# )); do
     *) PASSTHROUGH+=("$1"); shift ;;
   esac
 done
+
+# When --quiet, swallow the sandbox's own status chatter so recordings only
+# show ver-bump output. Errors still go through because set -eo pipefail will
+# abort the script and the trap prints the --keep path if applicable.
+say() {
+  (( QUIET )) && return 0
+  printf '%s\n' "$*" >&2
+}
 
 SANDBOX_VERSION="${SANDBOX_VERSION:-0.1.0}"
 SANDBOX_DIR="$(mktemp -d -t ver-bump-sandbox.XXXXXX)"
@@ -59,7 +69,7 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-echo "sandbox: $SANDBOX_DIR" >&2
+say "sandbox: $SANDBOX_DIR"
 cd "$SANDBOX_DIR"
 
 # Minimal package.json — the single mandatory input ver-bump cares about
@@ -114,9 +124,14 @@ for msg in "${seeds[@]}"; do
   git commit --quiet --allow-empty -m "$msg"
 done
 
-echo "sandbox: seeded $(git rev-list --count HEAD) commits on $(git rev-parse --abbrev-ref HEAD)" >&2
-echo "sandbox: running ver-bump ${PASSTHROUGH[*]:-<no args>}" >&2
-echo "---" >&2
+say "sandbox: seeded $(git rev-list --count HEAD) commits on $(git rev-parse --abbrev-ref HEAD)"
+say "sandbox: running ver-bump ${PASSTHROUGH[*]:-<no args>}"
+say "---"
+
+# In --quiet mode, wipe the terminal just before handing off so recordings
+# (vhs etc.) see only ver-bump's output — the shell-echoed invocation and
+# any seed noise scrolls out of frame.
+(( QUIET )) && printf '\033[2J\033[H'
 
 # Run ver-bump. Any exit code from it propagates (set -e) — cleanup trap fires either way.
 "$VER_BUMP" ${PASSTHROUGH[@]+"${PASSTHROUGH[@]}"}

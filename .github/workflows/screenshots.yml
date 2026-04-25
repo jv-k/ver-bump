@@ -1,0 +1,125 @@
+name: Screenshots
+
+# Regenerates CLI visuals on every published release so the README stays in
+# sync with the released tool. Renders two candidates in parallel — vhs and
+# terminalizer — then a final job commits both back to main.
+#
+#   img/screenshot.png          — vhs, single PNG of `ver-bump --help`
+#   img/demo.gif                — vhs, sandbox-driven bump recording
+#   img/demo.terminalizer.gif   — terminalizer rendering of demo/ver-bump.yml
+#
+# Also available via manual dispatch.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  vhs:
+    name: Render via vhs (help + demo)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Install jq + JetBrains Mono font
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq fonts-jetbrains-mono
+          fc-cache -f
+
+      - name: Install vhs + render help.tape
+        uses: charmbracelet/vhs-action@v2
+        with:
+          path: dev/help.tape
+
+      - name: Render demo.tape
+        run: vhs dev/demo.tape
+
+      - name: Upload vhs artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vhs-screenshots
+          path: |
+            img/screenshot.png
+            img/demo.gif
+          retention-days: 7
+          if-no-files-found: error
+
+  terminalizer:
+    name: Render via terminalizer
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install terminalizer
+        run: npm install -g terminalizer
+
+      - name: Render demo/ver-bump.yml
+        run: ./demo/generate.sh
+
+      - name: Upload terminalizer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terminalizer-screenshot
+          path: img/demo.terminalizer.gif
+          retention-days: 7
+          if-no-files-found: error
+
+  commit:
+    name: Commit updated screenshots to main
+    needs: [vhs, terminalizer]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Download vhs artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: vhs-screenshots
+          path: img
+
+      - name: Download terminalizer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terminalizer-screenshot
+          path: img
+
+      - name: Commit updated screenshots
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          file_pattern: img/screenshot.png img/demo.gif img/demo.terminalizer.gif
+          commit_message: "docs(img): regenerate screenshots [skip ci]"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"

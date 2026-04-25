@@ -24,13 +24,13 @@ trailer; do not re-derive the number from commit messages.
 
 ## Branch overview
 
-Diff stat against the integration branch (`feat/v2.0`):
+Diff stat against the integration branch (`develop`):
 
-!`git diff --stat feat/v2.0...{{BRANCH}}`
+!`git diff --stat develop...{{BRANCH}}`
 
 Commits added by the implementer:
 
-!`git log feat/v2.0..{{BRANCH}} --oneline`
+!`git log develop..{{BRANCH}} --oneline`
 
 ## Reviewing the actual change
 
@@ -39,9 +39,9 @@ it would exceed the OS argv limit and crash the agent invocation
 (observed E2BIG on docs-only branch with `pnpm-lock.yaml` in the host
 tree). Read what you need on demand:
 
-- `git diff feat/v2.0...{{BRANCH}} -- <path>` to read a single file's diff.
+- `git diff develop...{{BRANCH}} -- <path>` to read a single file's diff.
 - `git show <sha>` to read one commit at a time.
-- `git diff feat/v2.0...{{BRANCH}} --name-only` to enumerate touched files.
+- `git diff develop...{{BRANCH}} --name-only` to enumerate touched files.
 
 Skip auto-generated lockfiles (`pnpm-lock.yaml`, `package-lock.json`)
 unless the issue is specifically about dependency changes.

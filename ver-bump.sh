@@ -73,6 +73,7 @@ main() {
   # Process and prepare
   process-arguments "$@"
   check-dependencies
+  check-release-deps
 
   section "Verify"
   check-commits-exist
@@ -89,6 +90,7 @@ main() {
   do-commit
   do-tag
   do-push
+  do-github-release
 
   section "Done"
   log_success "$( capitalise "$( get-commit-msg )" )"

@@ -112,6 +112,19 @@ normalize-long-opts() {
       exit $?
     fi
 
+    # --release is a long-only boolean with no short form. Set the global
+    # directly and skip the getopts pipeline (which only handles single-char
+    # short flags). --release=value is rejected — see the boolean-flag
+    # check at the bottom of this loop for the same treatment of -d/--dry-run.
+    if [ "$arg" = "--release" ]; then
+      DO_RELEASE=true
+      continue
+    elif [[ "$arg" == "--release="* ]]; then
+      fail 2 \
+        "Option --release doesn't take a value." \
+        "Drop the '=<value>' — --release is a boolean flag."
+    fi
+
     if [[ "$arg" == --*=* ]]; then
       name="${arg%%=*}"; name="${name#--}"
       val="${arg#*=}"

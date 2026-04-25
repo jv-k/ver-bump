@@ -56,6 +56,30 @@ bump-prerelease() {
   printf '%s' "${base}-${joined}${build}"
 }
 
+# Force a major / minor / patch bump on a SemVer string, dropping any
+# prerelease (-dev.N) and build (+sha) metadata.
+# Examples:
+#   force-bump "1.2.3"        major  -> 2.0.0
+#   force-bump "1.2.3"        minor  -> 1.3.0
+#   force-bump "1.2.3"        patch  -> 1.2.4
+#   force-bump "1.2.3-dev.5"  patch  -> 1.2.4   (prerelease dropped, patch bumped)
+#   force-bump "1.2.3-rc.1"   minor  -> 1.3.0
+#   force-bump "1.2.3+sha"    major  -> 2.0.0   (build metadata dropped)
+# Caller is responsible for passing a SemVer-valid $1; assumes is_semver "$1".
+force-bump() {
+  local version="$1" level="$2" stripped major minor patch
+  stripped="${version%%+*}"   # strip build metadata
+  stripped="${stripped%%-*}"  # strip prerelease
+  IFS='.' read -r major minor patch <<< "$stripped"
+  case "$level" in
+    major) major=$((major + 1)); minor=0; patch=0 ;;
+    minor) minor=$((minor + 1)); patch=0 ;;
+    patch) patch=$((patch + 1)) ;;
+    *) return 1 ;;
+  esac
+  printf '%s.%s.%s' "$major" "$minor" "$patch"
+}
+
 # Ensure required external tools are present before mutating the repo.
 check-dependencies() {
   local tool missing=()

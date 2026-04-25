@@ -149,7 +149,8 @@ _ver_bump() {
 
     opts="--version --message --file --push --tag-prefix --branch-prefix \
           --dry-run --no-commit --no-branch --no-changelog --pause-changelog \
-          --yes --undo --release --help --completions --install-completions --about \
+          --yes --undo --major --minor --patch --release --help --completions \
+          --install-completions --about \
           -v -m -f -p -t -B -d -n -b -c -l -y -h"
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 }
@@ -180,6 +181,9 @@ _ver_bump() {
     '(-h --help)'{-h,--help}'[show help]' \
     '(-y --yes)'{-y,--yes}'[skip interactive confirmation prompts]' \
     '--undo[locally delete release branch + tag for <version>]::version:' \
+    '(--major --minor --patch -v --version)--major[force a major bump from the current version]' \
+    '(--major --minor --patch -v --version)--minor[force a minor bump from the current version]' \
+    '(--major --minor --patch -v --version)--patch[force a patch bump from the current version]' \
     '--release[publish a GitHub release for the new tag via gh]' \
     '--completions[emit completion script]:shell:(bash zsh fish)' \
     '--install-completions[install completion script for detected / specified shell]::shell:(bash zsh fish)' \
@@ -208,6 +212,9 @@ for _cmd in ver-bump ver-bump.sh
     complete -c $_cmd -s h -l help           -d 'Show help'
     complete -c $_cmd -s y -l yes            -d 'Skip interactive confirmation prompts'
     complete -c $_cmd      -l undo           -d 'Locally delete release branch + tag for <version>'
+    complete -c $_cmd      -l major          -d 'Force a major bump from the current version'
+    complete -c $_cmd      -l minor          -d 'Force a minor bump from the current version'
+    complete -c $_cmd      -l patch          -d 'Force a patch bump from the current version'
     complete -c $_cmd      -l release        -d 'Publish a GitHub release for the new tag via gh'
     complete -c $_cmd      -l completions    -x -a 'bash zsh fish' -d 'Emit completion script'
     complete -c $_cmd      -l install-completions -a 'bash zsh fish' -d 'Install completions for detected/specified shell'

@@ -46,7 +46,7 @@ usage() {
   printf '\n%bUSAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   printf '  %b%s%b [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
-  printf '  %b%s%b [--release] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
+  printf '  %b%s%b [--major | --minor | --patch] [--release] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}" 1>&2;
 
   # Column width for label + 2-space gutter. Longest label is
@@ -120,6 +120,9 @@ usage() {
   print-opt-row "-h" "--help"          ""            "Show this help message."
   print-opt-row "-y" "--yes"           ""            "Skip interactive confirmation prompts."
   print-opt-row ""   "--undo"          "[<version>]" "Locally delete release-X.Y.Z + tag vX.Y.Z (refuses if pushed/dirty)."
+  print-opt-row ""   "--major"              ""            "Force a major bump from the current version (mutually exclusive)."
+  print-opt-row ""   "--minor"              ""            "Force a minor bump from the current version (mutually exclusive)."
+  print-opt-row ""   "--patch"              ""            "Force a patch bump from the current version (mutually exclusive)."
   print-opt-row ""   "--release"            ""            "Publish a GitHub release for the new tag (requires -p; uses 'gh')."
   print-opt-row ""   "--about"              ""            "Print name, version, author, and homepage; then exit."
   print-opt-row ""   "--completions"        "<shell>"     "Emit completion script for bash, zsh, or fish."

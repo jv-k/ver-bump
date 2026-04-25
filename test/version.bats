@@ -118,3 +118,87 @@ load 'test_helper'
   assert_equal "${V_PREV}" "${V_TEST}"
   assert_equal "${V_NEW}" "35.12.6"
 }
+
+# force-bump — explicit-level bumping for --major / --minor / --patch.
+
+@test "force-bump: bumps stable major/minor/patch" {
+  source ${profile_script}
+  assert_equal "$(force-bump '1.2.3' major)" "2.0.0"
+  assert_equal "$(force-bump '1.2.3' minor)" "1.3.0"
+  assert_equal "$(force-bump '1.2.3' patch)" "1.2.4"
+}
+
+@test "force-bump: drops prerelease and bumps stable component" {
+  source ${profile_script}
+  assert_equal "$(force-bump '1.2.3-dev.5' major)" "2.0.0"
+  assert_equal "$(force-bump '1.2.3-dev.5' minor)" "1.3.0"
+  assert_equal "$(force-bump '1.2.3-dev.5' patch)" "1.2.4"
+  assert_equal "$(force-bump '1.0.0-alpha'  major)" "2.0.0"
+  assert_equal "$(force-bump '4.0.0-rc.1'   minor)" "4.1.0"
+}
+
+@test "force-bump: drops build metadata" {
+  source ${profile_script}
+  assert_equal "$(force-bump '1.2.3+build.42'        major)" "2.0.0"
+  assert_equal "$(force-bump '1.2.3-rc.1+sha.abc'    patch)" "1.2.4"
+}
+
+@test "force-bump: rejects unknown level" {
+  source ${profile_script}
+  run force-bump "1.2.3" frobnicate
+  assert_failure
+}
+
+@test "process-version: --major bumps from stable" {
+  source ${profile_script}
+  V_TEST="1.2.3"
+  create_ver_file
+  BUMP_LEVEL="major"
+  process-version
+  assert_equal "${V_NEW}" "2.0.0"
+}
+
+@test "process-version: --minor bumps from stable" {
+  source ${profile_script}
+  V_TEST="1.2.3"
+  create_ver_file
+  BUMP_LEVEL="minor"
+  process-version
+  assert_equal "${V_NEW}" "1.3.0"
+}
+
+@test "process-version: --patch bumps from stable" {
+  source ${profile_script}
+  V_TEST="1.2.3"
+  create_ver_file
+  BUMP_LEVEL="patch"
+  process-version
+  assert_equal "${V_NEW}" "1.2.4"
+}
+
+@test "process-version: --patch from prerelease drops pre and bumps patch" {
+  source ${profile_script}
+  V_TEST="1.2.3-dev.5"
+  create_ver_file
+  BUMP_LEVEL="patch"
+  process-version
+  assert_equal "${V_NEW}" "1.2.4"
+}
+
+@test "process-version: --minor from prerelease drops pre and bumps minor" {
+  source ${profile_script}
+  V_TEST="4.0.0-rc.1"
+  create_ver_file
+  BUMP_LEVEL="minor"
+  process-version
+  assert_equal "${V_NEW}" "4.1.0"
+}
+
+@test "process-version: --major from prerelease drops pre and bumps major" {
+  source ${profile_script}
+  V_TEST="1.2.3-dev.5"
+  create_ver_file
+  BUMP_LEVEL="major"
+  process-version
+  assert_equal "${V_NEW}" "2.0.0"
+}

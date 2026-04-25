@@ -52,6 +52,17 @@ process-version() {
   if [ -n "$V_USR_SUPPLIED" ]; then
     echo -e "\nVersion supplied via [-v]: ${S_VAL}${V_USR_SUPPLIED}${RESET}"
     V_NEW="${V_USR_SUPPLIED}"
+  elif [ -n "${BUMP_LEVEL-}" ]; then
+    # Forced bump via --major / --minor / --patch. Needs a SemVer V_PREV
+    # to bump from; argument-parse-time conflict checks already prevent
+    # combining this with -v.
+    if [ -z "$V_PREV" ] || ! is_semver "$V_PREV"; then
+      fail 3 \
+        "Cannot apply --${BUMP_LEVEL}: current version '${V_PREV}' is not a valid SemVer 2.0 version." \
+        "Ensure ${VER_FILE} contains a SemVer \"version\" field, or pass an explicit -v <version>."
+    fi
+    V_NEW=$(force-bump "$V_PREV" "$BUMP_LEVEL")
+    echo -e "\n${S_LIGHT}Forced ${S_VAL}${BUMP_LEVEL}${RESET}${S_LIGHT} bump: ${S_VAL}${V_PREV}${RESET}${S_LIGHT} ${I_ARROW-→} ${S_VAL}${V_NEW}${RESET}"
   else
     # Display a suggested version
     echo -ne "\n${S_QUESTION}Enter a new version number, <enter> for [${S_VAL}$V_SUGGEST${S_QUESTION}], or <esc> to quit:${RESET} "

@@ -172,7 +172,7 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
            [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
            [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-h|--help] \
-           [--undo [<version>]] [--release] \
+           [--undo [<version>]] [--major | --minor | --patch] [--release] \
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
 ```
 
@@ -242,6 +242,12 @@ world-writable rc and exits with code 3; `chmod 644 .ver-bumprc` fixes it.
 -h, --help                    Show help message.
     --undo [<version>]        Locally delete the release branch + tag for <version>
                               (refuses if pushed, dirty, or already merged).
+    --major                   Force a major bump from the current version.
+                              Mutually exclusive with --minor / --patch and -v.
+                              From a prerelease (X.Y.Z-dev.N), drops the prerelease
+                              before bumping the stable component.
+    --minor                   Force a minor bump (see --major for semantics).
+    --patch                   Force a patch bump (see --major for semantics).
     --release                 After pushing, publish a GitHub release for the new tag.
                               Requires -p / --push <remote> and the `gh` CLI. Notes are
                               read from $VER_BUMP_RELEASE_NOTES_CMD (default
@@ -276,6 +282,12 @@ Build metadata after `+` is preserved:
 You can always override the suggestion at the interactive prompt, or pass
 `-v <version>` to skip the prompt entirely. Values passed to `-v` are
 validated against SemVer 2.0, so typos like `ver-bump -v banana` fail fast.
+
+For a non-interactive forced bump that doesn't require typing the full
+version, use `--major` / `--minor` / `--patch`. They bump the current
+version's matching component, drop any prerelease/build metadata
+(`1.2.3-dev.5 --patch` → `1.2.4`), and are mutually exclusive with each
+other and with `-v`. Combining more than one exits with code `2`.
 
 ### Dry-run
 

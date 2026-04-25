@@ -125,6 +125,28 @@ normalize-long-opts() {
         "Drop the '=<value>' — --release is a boolean flag."
     fi
 
+    # --major / --minor / --patch — long-only boolean bump-level switches.
+    # Mutually exclusive with each other; the -v / --version conflict is
+    # caught later when getopts processes -v (BUMP_LEVEL is already set
+    # by the time normalize-long-opts has emitted -v into NORMALIZED_ARGV).
+    case "$arg" in
+      --major|--minor|--patch)
+        local lvl="${arg#--}"
+        if [ -n "${BUMP_LEVEL-}" ]; then
+          fail 2 \
+            "Conflicting bump-level flags: --${BUMP_LEVEL} and ${arg} are mutually exclusive." \
+            "Pass only one of --major, --minor, --patch."
+        fi
+        BUMP_LEVEL="$lvl"
+        continue
+      ;;
+      --major=*|--minor=*|--patch=*)
+        fail 2 \
+          "Option ${arg%%=*} doesn't take a value." \
+          "Drop the '=<value>' — ${arg%%=*} is a boolean flag."
+      ;;
+    esac
+
     if [[ "$arg" == --*=* ]]; then
       name="${arg%%=*}"; name="${name#--}"
       val="${arg#*=}"
@@ -206,6 +228,11 @@ process-arguments() {
           fail 2 \
             "Version '$OPTARG' is not a valid SemVer 2.0 version (expected MAJOR.MINOR.PATCH[-prerelease][+build])." \
             "Pass a SemVer 2.0 version, e.g. -v 1.2.3 or -v 1.2.3-rc.1+build.42."
+        fi
+        if [ -n "${BUMP_LEVEL-}" ]; then
+          fail 2 \
+            "Conflicting flags: -v / --version and --${BUMP_LEVEL} are mutually exclusive." \
+            "Pass either an explicit version (-v X.Y.Z) or a bump level (--${BUMP_LEVEL}), not both."
         fi
         V_USR_SUPPLIED=$OPTARG
       ;;

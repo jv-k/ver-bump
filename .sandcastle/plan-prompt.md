@@ -12,7 +12,7 @@
 
 !`gh issue list --state open --label ready-for-agent --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'`
 
-## Host working-tree state (paths with uncommitted changes on `feat/v2.0`)
+## Host working-tree state (paths with uncommitted changes on `develop`)
 
 These paths are dirty on the host and MUST NOT overlap with any issue you
 schedule this iteration. If a candidate issue would touch any of these
@@ -56,7 +56,7 @@ Issue B is blocked by issue A if **any** of the following hold:
 - **Issues missing acceptance criteria** in their body: defer (the
   implementer needs concrete done-conditions).
 - **Issues already in flight on a `sandcastle/*` branch** with commits
-  ahead of `feat/v2.0`: skip; their merger run hasn't completed.
+  ahead of `develop`: skip; their merger run hasn't completed.
 
 ## Branch naming
 

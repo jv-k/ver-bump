@@ -1,18 +1,18 @@
 name: Screenshots
 
-# Regenerates CLI visuals on every published release so the README stays in
-# sync with the released tool. Renders two candidates in parallel — vhs and
-# terminalizer — then a final job commits both back to main.
+# Regenerates CLI visuals (manual dispatch). Static panels render via
+# charmbracelet/freeze — deterministic PNGs of REAL --help / --dry-run /
+# completions output (ver-bump honours CLICOLOR_FORCE, so no PTY trick is
+# needed). ONE animated demo renders via vhs. terminalizer is removed: it
+# duplicated the vhs demo and rendered from a git-ignored demo/ dir that does
+# not exist on a fresh checkout (the job failed on every release).
 #
-#   img/screenshot.png          — vhs, single PNG of `ver-bump --help`
-#   img/demo.gif                — vhs, sandbox-driven bump recording
-#   img/demo.terminalizer.gif   — terminalizer rendering of demo/ver-bump.yml
-#
-# Also available via manual dispatch.
+#   img/help.png         — freeze, `ver-bump --help`
+#   img/dry-run.png      — freeze, sandbox `--dry-run` bump
+#   img/completions.png  — freeze, `--completions zsh`
+#   img/demo.gif         — vhs, sandbox-driven bump recording (optimized)
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
 
 concurrency:
@@ -20,106 +20,118 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  vhs:
-    name: Render via vhs (help + demo)
+  freeze:
+    name: Render static panels via freeze
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout main
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: main
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Install jq + JetBrains Mono font
+      - name: Install jq + freeze + JetBrains Mono (.ttf) + pngquant
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y jq fonts-jetbrains-mono
+          sudo apt-get install -y jq fonts-jetbrains-mono pngquant
           fc-cache -f
+          FZ=https://github.com/charmbracelet/freeze/releases/download/v0.2.2/freeze_0.2.2_Linux_x86_64.tar.gz
+          curl -fsSL "$FZ" | sudo tar -xz -C /usr/local/bin --strip-components=1 --wildcards '*/freeze'
+          freeze --version
 
-      - name: Install vhs + render help.tape
-        uses: charmbracelet/vhs-action@v2
+      - name: Render freeze panels
+        env:
+          FONT_FILE: /usr/share/fonts/truetype/jetbrains-mono/JetBrainsMono-Regular.ttf
+        run: ./dev/capture-freeze.sh all
+
+      - name: Optimize PNGs (lossless-ish, keeps the repo lean)
+        run: pngquant --force --skip-if-larger --ext .png -- img/help.png img/dry-run.png img/completions.png || true
+
+      - name: Upload freeze artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          path: dev/help.tape
-
-      - name: Render demo.tape
-        run: vhs dev/demo.tape
-
-      - name: Upload vhs artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: vhs-screenshots
+          name: freeze-panels
           path: |
-            img/screenshot.png
-            img/demo.gif
+            img/help.png
+            img/dry-run.png
+            img/completions.png
           retention-days: 7
           if-no-files-found: error
 
-  terminalizer:
-    name: Render via terminalizer
+  vhs:
+    name: Render animated demo via vhs
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout main
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: main
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Install jq + JetBrains Mono + gifsicle
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq fonts-jetbrains-mono gifsicle
+          fc-cache -f
+
+      - name: Render demo.tape
+        uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
         with:
-          node-version: 20
+          path: dev/demo.tape
 
-      - name: Install terminalizer
-        run: npm install -g terminalizer
+      - name: Optimize demo.gif (keep history lean)
+        run: |
+          before=$(wc -c < img/demo.gif)
+          gifsicle -O3 --lossy=80 --colors 128 img/demo.gif -o img/demo.gif
+          echo "demo.gif: ${before} -> $(wc -c < img/demo.gif) bytes"
 
-      - name: Render demo/ver-bump.yml
-        run: ./demo/generate.sh
-
-      - name: Upload terminalizer artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload vhs artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: terminalizer-screenshot
-          path: img/demo.terminalizer.gif
+          name: vhs-demo
+          path: img/demo.gif
           retention-days: 7
           if-no-files-found: error
 
   commit:
     name: Commit updated screenshots to main
-    needs: [vhs, terminalizer]
+    needs: [freeze, vhs]
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: write
     steps:
       - name: Checkout main
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: main
           fetch-depth: 1
           persist-credentials: true
 
-      - name: Download vhs artifacts
-        uses: actions/download-artifact@v4
+      - name: Download freeze panels
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: vhs-screenshots
+          name: freeze-panels
           path: img
 
-      - name: Download terminalizer artifact
-        uses: actions/download-artifact@v4
+      - name: Download vhs demo
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: terminalizer-screenshot
+          name: vhs-demo
           path: img
 
       - name: Commit updated screenshots
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5.2.0
         with:
           branch: main
-          file_pattern: img/screenshot.png img/demo.gif img/demo.terminalizer.gif
+          file_pattern: img/help.png img/dry-run.png img/completions.png img/demo.gif
           commit_message: "docs(img): regenerate screenshots [skip ci]"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"

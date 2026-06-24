@@ -2,9 +2,19 @@
 
 # shellcheck disable=SC2034
 
-# Colour gate.
-# Disable ANSI when NO_COLOR is set OR stdout is not a TTY (pipe, file, CI).
-if [ -z "${NO_COLOR:-}" ] && [ -t 1 ]; then
+# Colour gate. Precedence:
+#   1. NO_COLOR set (any value)            -> off   (https://no-color.org)
+#   2. CLICOLOR_FORCE / FORCE_COLOR truthy -> on    (force colour without a TTY,
+#                                                    e.g. piping into `less -R`,
+#                                                    screenshot capture, or CI)
+#   3. stdout is a TTY                      -> on
+#   4. otherwise (pipe, file, CI)          -> off
+if [ -n "${NO_COLOR:-}" ]; then
+  USE_COLOR=0
+elif { [ -n "${CLICOLOR_FORCE:-}" ] && [ "${CLICOLOR_FORCE}" != 0 ]; } \
+  || { [ -n "${FORCE_COLOR:-}" ] && [ "${FORCE_COLOR}" != 0 ]; }; then
+  USE_COLOR=1
+elif [ -t 1 ]; then
   USE_COLOR=1
 else
   USE_COLOR=0

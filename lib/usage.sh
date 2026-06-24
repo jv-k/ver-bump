@@ -47,7 +47,7 @@ usage() {
   printf '  %b%s%b [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
   printf '  %b%s%b [--major | --minor | --patch] [--release] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
-    "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}" 1>&2;
+    "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
 
   # Column width for label + 2-space gutter. Longest label is
   # "  --install-completions [=<shell>]" = 34 chars. OPT_COL 40 gives a

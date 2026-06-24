@@ -76,11 +76,26 @@ normalize-long-opts() {
     # and tag for <version>. Honours --dry-run and --yes seen earlier or
     # later in argv. Exits immediately.
     if [ "$arg" = "--undo" ] || [[ "$arg" == "--undo="* ]]; then
-      local undo_ver undo_a
+      local undo_ver undo_a undo_capture=""
+      # do-undo runs and exits from here, before the getopts loop ever sees
+      # -t/-B. Pre-scan the rest of argv for the flags it needs. -t/-B take a
+      # value, so honour "-t v" / "--tag-prefix v" and "--tag-prefix=v" forms.
       for undo_a in "$@" "${NORMALIZED_ARGV[@]}"; do
+        if [ -n "$undo_capture" ]; then
+          case "$undo_capture" in
+            t) TAG_PREFIX="$undo_a" ;;
+            B) REL_PREFIX="$undo_a" ;;
+          esac
+          undo_capture=""
+          continue
+        fi
         case "$undo_a" in
-          --dry-run|-d) FLAG_DRYRUN=true ;;
-          --yes|-y)     FLAG_YES=true ;;
+          --dry-run|-d)       FLAG_DRYRUN=true ;;
+          --yes|-y)           FLAG_YES=true ;;
+          -t|--tag-prefix)    undo_capture=t ;;
+          -B|--branch-prefix) undo_capture=B ;;
+          --tag-prefix=*)     TAG_PREFIX="${undo_a#*=}" ;;
+          --branch-prefix=*)  REL_PREFIX="${undo_a#*=}" ;;
         esac
       done
       if [[ "$arg" == "--undo="* ]]; then

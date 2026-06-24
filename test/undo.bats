@@ -121,3 +121,35 @@ teardown() {
   run git tag -l v1.2.0
   assert_output "v1.2.0"
 }
+
+# ── Pass-2 review regression tests ──────────────────────────────────────
+
+@test "undo: honours -t / -B prefix overrides from the CLI" {
+  # Replace the default-prefix artefacts from setup with custom-prefix ones.
+  git checkout -q feat/x
+  git branch -D release-1.2.0
+  git tag -d v1.2.0
+  git checkout -q -b rel/1.2.0
+  git commit -q --allow-empty -m "chore: bumped 1.0.0 -> 1.2.0"
+  git tag -a ver-1.2.0 -m "ver-1.2.0"
+  git checkout -q feat/x
+
+  run ${profile_script} --undo 1.2.0 -t ver- -B rel/ --yes --dry-run
+  assert_success
+  assert_output --partial "git branch -D rel/1.2.0"
+  assert_output --partial "git tag -d ver-1.2.0"
+}
+
+@test "undo: not fooled by a release branch live in another worktree" {
+  git checkout -q feat/x
+  # release-1.2.0 checked out in a linked worktree makes 'git branch' emit
+  # '+ release-1.2.0'; without the '+ ' strip this trips a false "already
+  # merged" refusal. Nest under $TMP so the file teardown cleans it up.
+  git worktree add -q "$TMP/wt" release-1.2.0
+
+  run ${profile_script} --undo 1.2.0 --yes --dry-run
+  assert_success
+  refute_output --partial "already merged"
+  assert_output --partial "git branch -D release-1.2.0"
+  assert_output --partial "git tag -d v1.2.0"
+}

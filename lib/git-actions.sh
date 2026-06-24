@@ -315,7 +315,11 @@ do-undo() {
   local b
   while read -r b; do
     [ -z "$b" ] && continue
-    b="${b## }"; b="${b#\* }"
+    # Strip git's branch-line markers: '* ' (current), '+ ' (checked out in a
+    # linked worktree), and any leading indent. Without the '+ ' strip, a
+    # release branch live in another worktree looks like a foreign branch and
+    # trips a false "already merged" refusal.
+    b="${b## }"; b="${b#\* }"; b="${b#+ }"
     [[ "$b" == "$branch" ]] && continue
     [[ "$b" == "${REL_PREFIX}"* ]] && continue
     merged_into+=("$b")
@@ -343,7 +347,7 @@ do-undo() {
     parent_sha=$(git rev-parse "${branch}^" 2>/dev/null) || parent_sha=""
     if [ -n "$parent_sha" ]; then
       while read -r b; do
-        b="${b## }"; b="${b#\* }"
+        b="${b## }"; b="${b#\* }"; b="${b#+ }"
         [[ -z "$b" || "$b" == "$branch" || "$b" == "${REL_PREFIX}"* ]] && continue
         parent_branch="$b"; break
       done < <(git branch --contains "$parent_sha" 2>/dev/null)

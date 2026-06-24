@@ -101,3 +101,12 @@ teardown() {
     assert_output --partial "--install-completions=<"
   fi
 }
+
+@test "install-completions: space form honours the named shell over \$SHELL" {
+  export SHELL=/usr/bin/fish
+  run ${profile_script} --install-completions bash --dry-run
+  assert_success
+  assert_output --partial "would write"
+  assert_output --partial "bash-completion/completions/ver-bump"
+  refute_output --partial "fish/completions/ver-bump.fish"
+}

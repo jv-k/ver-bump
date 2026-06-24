@@ -131,7 +131,8 @@ jobs:
   publish-github:
     name: Publish to GitHub registry
     needs: tests
-    if: github.event.action == 'published'
+    # Stable releases only — prereleases just validate the npmjs provenance path.
+    if: github.event.action == 'published' && github.event.release.prerelease == false
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

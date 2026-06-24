@@ -116,7 +116,15 @@ jobs:
           echo "tarball bytes: $size"
           test "$size" -lt 524288 || { echo '::error::tarball >512KB — files allowlist regressed'; exit 1; }
 
-      - run: npm publish --provenance --access public
+      - name: Publish (prereleases -> 'next', stable -> 'latest')
+        run: |
+          ver="$(node -p "require('./package.json').version")"
+          case "$ver" in
+            *-*) tag=next ;;     # SemVer prerelease (e.g. 2.0.0-rc.1) must NOT take 'latest'
+            *)   tag=latest ;;
+          esac
+          echo "publishing $ver to dist-tag: $tag"
+          npm publish --provenance --access public --tag "$tag"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

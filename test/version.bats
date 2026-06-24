@@ -202,3 +202,16 @@ load 'test_helper'
   process-version
   assert_equal "${V_NEW}" "2.0.0"
 }
+
+@test "process-version: rejects an invalid forced bump level" {
+  source ${profile_script}
+  local repo
+  repo="$(scratch_repo)"
+  cd "$repo"
+  V_TEST="1.2.3"
+  create_ver_file
+  BUMP_LEVEL="frobnicate"
+  run process-version
+  assert_failure 3
+  assert_output --partial "Cannot compute"
+}

@@ -381,3 +381,27 @@ load 'test_helper'
       || fail "Flag ${flag} appears in --help but not in README.md"
   done
 }
+
+# ── Pass-2 review regression tests: DO_RELEASE / BUMP_LEVEL env-leak ─────
+
+@test "process-arguments: resets a stale BUMP_LEVEL from the environment" {
+  source ${profile_script}
+  BUMP_LEVEL=major
+  process-arguments -d
+  assert_equal "${BUMP_LEVEL}" ""
+}
+
+@test "process-arguments: resets a stale DO_RELEASE from the environment" {
+  source ${profile_script}
+  DO_RELEASE=true
+  process-arguments -d
+  assert_equal "${DO_RELEASE}" "false"
+}
+
+@test "process-arguments: a stale env BUMP_LEVEL doesn't block an explicit -v" {
+  source ${profile_script}
+  BUMP_LEVEL=major
+  process-arguments -v 9.9.9
+  assert_equal "${V_USR_SUPPLIED}" "9.9.9"
+  assert_equal "${BUMP_LEVEL}" ""
+}

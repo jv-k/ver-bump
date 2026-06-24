@@ -215,3 +215,23 @@ load 'test_helper'
   assert_failure 3
   assert_output --partial "Cannot compute"
 }
+
+@test "process-version: forced bump suppresses the conventional-commit suggestion" {
+  source ${profile_script}
+  local repo
+  repo="$(scratch_repo)"
+  cd "$repo"
+  V_TEST="1.2.3"
+  create_ver_file
+  # A feat: commit after the v1.2.3 tag would make set-v-suggest print
+  # "suggesting minor bump" — which a forced --major must NOT print.
+  git tag -a v1.2.3 -m "v1.2.3"
+  git commit -q --allow-empty -m "feat: something"
+  BUMP_LEVEL="major"
+
+  run process-version
+  assert_success
+  strip_ansi_output
+  assert_output --partial "Forced major bump: 1.2.3"
+  refute_output --partial "suggesting"
+}

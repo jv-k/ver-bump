@@ -28,7 +28,12 @@ process-version() {
 
     if [ -n "$V_PREV" ]; then
       echo -e "\nCurrent version read from <${S_VAL}${VER_FILE}${RESET}>: ${S_VAL}$V_PREV${RESET}"
-      set-v-suggest "$V_PREV" # check + compute next version from conventional commits (or patch +1)
+      # Only compute a suggestion when we'll actually prompt for it. With -v or
+      # --major/--minor/--patch the suggestion is discarded; running it anyway
+      # printed a contradictory "suggesting <level> bump" line and an extra git log.
+      if [ -z "$V_USR_SUPPLIED" ] && [ -z "${BUMP_LEVEL-}" ]; then
+        set-v-suggest "$V_PREV" # check + compute next version from conventional commits (or patch +1)
+      fi
     elif [ -z "$V_USR_SUPPLIED" ]; then
       fail 3 \
         "<${VER_FILE}> doesn't contain a 'version' field." \

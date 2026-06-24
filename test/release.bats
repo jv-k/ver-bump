@@ -250,3 +250,32 @@ SH
   assert_output --partial "LIVE-NOTES"
   assert_output --partial "Published GitHub release"
 }
+
+# ── Pass-2 review regression tests: prerelease handling ─────────────────
+
+@test "release: prerelease version adds --prerelease (dry-run preview)" {
+  local repo
+  repo="$(scratch_repo)"
+  cd "$repo"
+  printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
+
+  VER_BUMP_RELEASE_NOTES_CMD='printf %s NOTES' \
+    run ${profile_script} --release -d -b -c -p origin -v 1.2.3-rc.1
+  assert_success
+  strip_ansi_output
+  assert_output --partial "gh release create v1.2.3-rc.1"
+  assert_output --partial "--prerelease"
+}
+
+@test "release: stable version omits --prerelease (dry-run preview)" {
+  local repo
+  repo="$(scratch_repo)"
+  cd "$repo"
+  printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
+
+  VER_BUMP_RELEASE_NOTES_CMD='printf %s NOTES' \
+    run ${profile_script} --release -d -b -c -p origin -v 1.2.3
+  assert_success
+  strip_ansi_output
+  refute_output --partial "--prerelease"
+}

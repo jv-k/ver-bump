@@ -2,6 +2,7 @@ name: CI
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 on:
   push:
@@ -24,6 +25,7 @@ jobs:
   shellcheck:
     name: Run Shellcheck on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
 
     strategy:
       matrix:
@@ -31,7 +33,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Update packages & install shellcheck
         if: ${{ matrix.os == 'macos-latest' }}
@@ -56,6 +58,7 @@ jobs:
     name: Run test suite on ${{ matrix.os }}
     needs: shellcheck
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -63,7 +66,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup git
         run: |
@@ -102,37 +105,47 @@ jobs:
         run: |
           npm run tests:run:windows
 
-  build:
-    name: Install NPM dependencies
+  publish-npm:
+    name: Publish to NPM registry
     needs: tests
     if: github.event.action == 'published'
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm install
-
-  publish-npm:
-    name: Publish to NPM registry
-    needs: build
-    if: github.event.action == 'published'
-    runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write   # required for npm provenance (OIDC)
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0   # full history + tags so the prepublish version guard can run
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
-      - run: npm publish
+
+      - name: Verify package.json version matches the release tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::release tag ($tag) != package.json version ($pkg)"
+            exit 1
+          fi
+
+      - name: Pack and smoke-test the tarball
+        run: |
+          npm pack
+          size=$(wc -c < ver-bump-*.tgz)
+          echo "tarball bytes: $size"
+          test "$size" -lt 524288 || { echo '::error::tarball >512KB — files allowlist regressed'; exit 1; }
+
+      - run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-github:
     name: Publish to GitHub registry
-    needs: build
+    needs: tests
     if: github.event.action == 'published'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -140,8 +153,8 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           registry-url: "https://npm.pkg.github.com"
       - name: Scope package name as required by GHPR

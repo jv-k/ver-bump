@@ -80,6 +80,7 @@ main() {
   process-version
   check-branch-notexist
   check-tag-exists
+  check-pr-deps
 
   section "Release"
   do-packagefile-bump
@@ -90,6 +91,7 @@ main() {
   do-commit
   do-tag
   do-push
+  do-pr
   do-github-release
 
   section "Done"

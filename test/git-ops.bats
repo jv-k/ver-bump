@@ -14,7 +14,7 @@ load 'test_helper'
   source ${profile_script}
   cd "$(scratch_repo)"
 
-  local V_NEW="123.456.7"
+  local FLAG_BRANCH=true V_NEW="123.456.7"
   git branch "${REL_PREFIX}${V_NEW}"
 
   run check-branch-notexist
@@ -25,7 +25,7 @@ load 'test_helper'
   source ${profile_script}
   cd "$(scratch_repo)"
 
-  local V_NEW="123.456.78338834"
+  local FLAG_BRANCH=true V_NEW="123.456.78338834"
 
   run check-branch-notexist
   assert_success
@@ -35,10 +35,28 @@ load 'test_helper'
   source ${profile_script}
   cd "$(scratch_repo)"
 
-  local V_NEW="123.456.7"
+  local FLAG_BRANCH=true V_NEW="123.456.7"
 
   run do-branch
   assert_success
+
+  run git rev-parse --abbrev-ref HEAD
+  assert_output "${REL_PREFIX}123.456.7"
+}
+
+@test "do-branch: is a no-op in tag-in-place mode (FLAG_BRANCH unset)" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  local V_NEW="123.456.7" start
+  start="$(git rev-parse --abbrev-ref HEAD)"
+
+  run do-branch
+  assert_success
+
+  # No release branch created; still on the original branch.
+  run git rev-parse --abbrev-ref HEAD
+  assert_output "${start}"
 }
 
 @test "do-tag: create a tag" {

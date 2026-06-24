@@ -1,3 +1,10 @@
+## Unreleased — 2.0 (breaking)
+- **BREAKING:** tag-in-place is now the default workflow. ver-bump 1.x always cut a `release-<version>` branch; 2.0 commits + tags the current branch in place. Pass `--branch` to keep the old behaviour.
+- feat: `--pr` opens a release pull request via the `gh` CLI (branch + push + PR). Base resolves to `--base <branch>`, else `PR_BASE`, else the invocation branch, else the remote default branch.
+- feat: `--branch` opts into the `release-<version>` branch workflow; `--base <branch>` sets the `--pr` PR base.
+- feat(config): `.ver-bumprc` gains `FLAG_BRANCH` and `PR_BASE` keys.
+- deprecate: `-b` / `--no-branch` is now a no-op (kept for back-compat) and prints a deprecation notice.
+
 ## 1.1.8 (August 23, 2023)
 - chore: updated package.json, updated package-lock.json, updated CHANGELOG.md, bumped 1.1.7 -> 1.1.8
 - bug: fixed change that caused CI #94

@@ -150,6 +150,49 @@ normalize-long-opts() {
         "Drop the '=<value>' — --release is a boolean flag."
     fi
 
+    # --pr — long-only boolean: open a release PR via `gh`. A PR needs its head
+    # branch on the remote, so --pr implies a release branch (--branch) and a
+    # push (-p origin by default; override the remote with -p). --pr=value rejected.
+    if [ "$arg" = "--pr" ]; then
+      DO_PR=true
+      FLAG_BRANCH=true
+      FLAG_PUSH=true
+      continue
+    elif [[ "$arg" == "--pr="* ]]; then
+      fail 2 \
+        "Option --pr doesn't take a value." \
+        "Drop the '=<value>' — --pr is a boolean flag (use --base <branch> to set the PR target)."
+    fi
+
+    # --branch — long-only boolean: opt into cutting a release-<v> branch (the
+    # pre-2.0 default). Without it (or --pr), ver-bump tags the current branch.
+    if [ "$arg" = "--branch" ]; then
+      FLAG_BRANCH=true
+      continue
+    elif [[ "$arg" == "--branch="* ]]; then
+      fail 2 \
+        "Option --branch doesn't take a value." \
+        "Drop the '=<value>' — --branch is a boolean flag (did you mean --branch-prefix=?)."
+    fi
+
+    # --base <branch> / --base=<branch> — explicit base branch for --pr. Long-only
+    # value flag (no short form), captured here like --undo so it needs no getopts slot.
+    if [ "$arg" = "--base" ] || [[ "$arg" == "--base="* ]]; then
+      if [[ "$arg" == "--base="* ]]; then
+        PR_BASE="${arg#--base=}"
+        [ -z "$PR_BASE" ] && fail 2 \
+          "--base= requires a branch name." \
+          "Pass a base branch: --base <branch> or --base=<branch>."
+      elif (( $# )) && [ "${1:0:1}" != "-" ]; then
+        PR_BASE="$1"; shift
+      else
+        fail 2 \
+          "Option --base requires a branch name." \
+          "Pass a base branch: --base <branch> or --base=<branch>."
+      fi
+      continue
+    fi
+
     # --major / --minor / --patch — long-only boolean bump-level switches.
     # Mutually exclusive with each other; the -v / --version conflict is
     # caught later when getopts processes -v (BUMP_LEVEL is already set
@@ -241,6 +284,7 @@ process-arguments() {
   # .ver-bumprc assignment (load-config sources the rc as raw shell) — can't
   # silently force a bump or publish a release with no flag on the command line.
   DO_RELEASE=false
+  DO_PR=false
   BUMP_LEVEL=
 
   normalize-long-opts "$@"
@@ -300,8 +344,9 @@ process-arguments() {
         echo -e "\n${S_LIGHT}Option set:${RESET} disable commit (and tag + push) after bumping files."
       ;;
       b )
-        FLAG_NOBRANCH=true
-        echo -e "\n${S_LIGHT}Option set:${RESET} disable creating a new release-x.x.x branch."
+        # Deprecated as of 2.0: tag-in-place is the default, so -b/--no-branch is
+        # a no-op. Kept so existing scripts/CI don't hard-fail. Use --branch to opt in.
+        echo -e "\n${S_LIGHT}Note:${RESET} -b/--no-branch is deprecated — tag-in-place is the default now; use --branch to cut a release branch." >&2
       ;;
       c )
         FLAG_NOCHANGELOG=true

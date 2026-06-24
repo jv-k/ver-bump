@@ -1,6 +1,6 @@
 # ver-bump
 
-An opinionated release tool for Git projects with a `package.json` (Node / JS / TS, or any repo that follows SemVer via `-f <file>.json`). Automates SemVer bumps, CHANGELOG updates, release branching, tagging, and pushing — driven by Conventional Commits. Single-file bash at runtime; `git` + `jq` only.
+An opinionated release tool for Git projects with a `package.json` (Node / JS / TS, or any repo that follows SemVer via `-f <file>.json`). Automates SemVer bumps, CHANGELOG updates, tagging, and pushing — driven by Conventional Commits. Tags in place by default, or cut a release branch (`--branch`) and open a pull request (`--pr`). Single-file bash at runtime; `git` + `jq` only.
 
 <p>
   <img src="https://raw.githubusercontent.com/jv-k/ver-bump/main/img/demo.gif?raw=true" alt="Animated demo: ver-bump reads commits, suggests a SemVer bump, updates package.json + CHANGELOG, creates a release branch, tags, and pushes.">
@@ -12,13 +12,13 @@ An opinionated release tool for Git projects with a `package.json` (Node / JS / 
 
 It does several things that are typically required for releasing a Git repository:
 
-- Create a release branch from your current branch (should be a feature or develop branch, following the [Git branch-based workflow](https://nvie.com/posts/a-successful-git-branching-model/), and [tags](https://git-scm.com/book/en/v2/Git-Basics-Tagging) the release
+- Three release [workflows](#workflows): **tag-in-place** (default — commit + [tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging) the current branch), **release branch** (`--branch`, following the [Git branch-based workflow](https://nvie.com/posts/a-successful-git-branching-model/)), or **release PR** (`--pr` — branch, push, and open a pull request via `gh`)
 - Enforces [Semantic Versioning](https://semver.org/) specification — inputs are validated against SemVer 2.0 (including `-prerelease` and `+build` metadata)
 - Smart bump suggestion: reads [Conventional Commits](https://www.conventionalcommits.org/) between the previous tag and `HEAD` to propose **major**/**minor**/**patch**; bumps the trailing counter on prereleases like `4.0.0-dev.6 → 4.0.0-dev.7`
 - Avoid potential mistakes associated with manual releases, such as forgetting a step
 - Create and update a changelog file automatically
 - Pushes release to a remote
-- Leaves merging the release branch to the development branch to the user
+- Opens a release pull request for you with `--pr` (or leaves the merge to you in plain `--branch` mode)
 - **Dry-run mode** (`-d` / `--dry-run`) prints every side-effect — file write, git add, commit, tag, push — without executing any of them, so you can preview a release end-to-end
 - Shell completion scripts for **bash**, **zsh**, and **fish** built in (`ver-bump --completions <shell>`)
 - Pure-bash runtime with only `git` + `jq` as dependencies — no Node/npm required at run time
@@ -182,6 +182,26 @@ ver-bump --dry-run   # preview a release end-to-end — prints every step, chang
 ver-bump             # cut it for real: reads commits, suggests a bump, prompts before pushing
 ```
 
+## Workflows
+
+ver-bump supports three release workflows. Pick one per-run with a flag, or set
+a default in `.ver-bumprc`.
+
+| Workflow | How | What it does |
+| --- | --- | --- |
+| **Tag-in-place** *(default)* | `ver-bump` | Bumps files, writes CHANGELOG, commits, and tags **the current branch**. No branch is created. |
+| **Release branch** | `ver-bump --branch` | Cuts a `release-<version>` branch (the [Git branch-based workflow](https://nvie.com/posts/a-successful-git-branching-model/)), commits + tags there, and leaves the merge back to you. |
+| **Release PR** | `ver-bump --pr` | Like `--branch`, then pushes and opens a pull request via the [`gh`](https://cli.github.com) CLI. Implies a push to `origin` (override with `-p <remote>`). |
+
+The `--pr` base branch resolves in this order: `--base <branch>` › `PR_BASE`
+from `.ver-bumprc` › the branch you ran ver-bump from › the remote's default
+branch.
+
+> **Migrating from 1.x:** the default changed. ver-bump 1.x always cut a
+> `release-<version>` branch; 2.0 **tags the current branch in place** by
+> default. Pass `--branch` to keep the old behaviour. The old `-b` /
+> `--no-branch` flag is now a no-op (kept so existing scripts don't break).
+
 ## Usage
 
 ### Pre-requisites
@@ -197,6 +217,7 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
            [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
            [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-h|--help] \
+           [--branch] [--pr] [--base <branch>] \
            [--undo [<version>]] [--major | --minor | --patch] [--release] \
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
 ```
@@ -224,7 +245,8 @@ Supported keys (each maps 1:1 to an existing global):
 | `REL_PREFIX` | `-B` / `--branch-prefix` | `release-` |
 | `PUSH_DEST` | `-p` / `--push` | `origin` |
 | `COMMIT_MSG_PREFIX` | *(no flag)* | `"chore: "` |
-| `FLAG_NOBRANCH` | `-b` / `--no-branch` | *unset* |
+| `FLAG_BRANCH` | `--branch` | *unset* (tag in place) |
+| `PR_BASE` | `--base` | *(auto-detect)* |
 | `FLAG_NOCHANGELOG` | `-c` / `--no-changelog` | *unset* |
 | `FLAG_CHANGELOG_PAUSE` | `-l` / `--pause-changelog` | *unset* |
 
@@ -260,7 +282,7 @@ world-writable rc and exits with code 3; `chmod 644 .ver-bumprc` fixes it.
 -d, --dry-run                 Print every side-effect (file write, git add, commit,
                               tag, push) without executing any of them.
 -n, --no-commit               Disable commit (also skips tag + push).
--b, --no-branch               Don't create an automatic release-<version> branch.
+-b, --no-branch               (deprecated) No-op — tag-in-place is the default now.
 -c, --no-changelog            Disable updating CHANGELOG.md automatically.
 -l, --pause-changelog         Pause before commit so CHANGELOG.md can be hand-edited.
 -y, --yes                     Skip interactive confirmation prompts.
@@ -273,6 +295,13 @@ world-writable rc and exits with code 3; `chmod 644 .ver-bumprc` fixes it.
                               before bumping the stable component.
     --minor                   Force a minor bump (see --major for semantics).
     --patch                   Force a patch bump (see --major for semantics).
+    --branch                  Cut a release-<version> branch (the pre-2.0 default).
+                              Otherwise ver-bump tags the current branch in place.
+    --pr                      Create the release branch, push it, then open a pull
+                              request via the `gh` CLI. Implies a push to origin
+                              (override the remote with -p). Base resolves to --base,
+                              else the branch you ran ver-bump from.
+    --base <branch>           Base branch for the --pr pull request.
     --release                 After pushing, publish a GitHub release for the new tag.
                               Requires -p / --push <remote> and the `gh` CLI. Notes are
                               read from $VER_BUMP_RELEASE_NOTES_CMD (default

@@ -21,7 +21,7 @@ load 'test_helper'
   CLEANUP_CMDS+=("rm -rf ${remote}")
   git init -q --bare "${remote}"
 
-  run ${profile_script} -v 1.3.0 -p "${remote}" -y
+  run ${profile_script} -v 1.3.0 -p "${remote}" -y --branch
   assert_success
 
   # 1. release branch created AND checked out

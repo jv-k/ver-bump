@@ -21,8 +21,7 @@
     "node": ">=18"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "scripts": {
     "dev": "./dev/sandbox.sh",
@@ -37,7 +36,7 @@
     "screenshots:help": "./dev/capture-freeze.sh help",
     "screenshots:demo": "./dev/screenshots.sh demo",
     "sandcastle": "npx tsx .sandcastle/main.mts",
-    "prepublishOnly": "./dev/prepublish-version-guard.sh"
+    "prepublishOnly": "bash dev/prepublish-version-guard.sh"
   },
   "keywords": [
     "bash versioning",

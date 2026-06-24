@@ -186,9 +186,13 @@ do-github-release() {
     return 0
   fi
 
-  local tag notes_cmd notes notes_err notes_rc
+  local tag notes_cmd notes notes_err notes_rc pre_flag=""
   tag="${TAG_PREFIX}${V_NEW}"
   notes_cmd="${VER_BUMP_RELEASE_NOTES_CMD:-npx jv-k/releasetool}"
+  # Mark SemVer prereleases (e.g. 1.2.3-rc.1) as GitHub prereleases; gh does not
+  # infer this from the tag name. Strip build metadata first so a '-' inside
+  # +build-7 can't be mistaken for a prerelease segment.
+  [[ "${V_NEW%%+*}" == *-* ]] && pre_flag="--prerelease"
 
   echo -e "\nPublishing GitHub release..."
 
@@ -208,13 +212,15 @@ do-github-release() {
   rm -f "$notes_err"
 
   if [ "${FLAG_DRYRUN:-false}" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would run: gh release create ${S_VAL}${tag}${RESET} --notes '${notes}'" >&2
+    echo -e "${S_LIGHT}[dry-run]${RESET} would run: gh release create ${S_VAL}${tag}${RESET} ${pre_flag:+${pre_flag} }--notes '${notes}'" >&2
     log_success "(dry-run) GitHub release prepared for ${S_VAL}${tag}${RESET}"
     return
   fi
 
   local gh_msg gh_rc
-  gh_msg=$(gh release create "$tag" --notes "$notes" 2>&1); gh_rc=$?
+  local -a gh_args=("$tag" --notes "$notes")
+  [ -n "$pre_flag" ] && gh_args+=("$pre_flag")
+  gh_msg=$(gh release create "${gh_args[@]}" 2>&1); gh_rc=$?
   if [ "$gh_rc" -ne 0 ]; then
     fail 1 \
       "gh release create failed: ${gh_msg}" \

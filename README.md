@@ -36,6 +36,7 @@ It does several things that are typically required for releasing a Git repositor
 - [Release Steps: In detail 🔎](#release-steps-in-detail-)
 - [Requirements](#requirements)
 - [Installation](#installation)
+- [Quickstart](#quickstart)
 - [Usage](#usage)
   - [Pre-requisites](#pre-requisites)
   - [CLI](#cli)

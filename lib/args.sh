@@ -63,6 +63,9 @@ normalize-long-opts() {
         [ -z "$ic_shell" ] && fail 2 \
           "--install-completions= requires a shell name." \
           "Supported: bash, zsh, fish."
+      elif (( $# )) && [ "${1:0:1}" != "-" ]; then
+        # Space form: --install-completions bash (mirrors --completions / --undo).
+        ic_shell="$1"; shift
       else
         ic_shell=$(detect-shell) || fail 2 \
           "Could not auto-detect your shell from \$SHELL." \

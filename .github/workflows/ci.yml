@@ -23,33 +23,21 @@ permissions:
 
 jobs:
   shellcheck:
-    name: Run Shellcheck on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Run Shellcheck
+    # Lint once on Linux: shellcheck is a static analyser, so running it across
+    # three OSes only adds version skew (the Windows choco build lagged and
+    # tripped on CRLF). The test suite still runs on the full matrix below.
+    runs-on: ubuntu-latest
     timeout-minutes: 10
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - name: Update packages & install shellcheck
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          brew update
-          brew install shellcheck
-
-      - name: Update packages & install shellcheck
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+      - name: Install shellcheck
         run: |
           sudo apt-get update -y
-          sudo apt-get install shellcheck
-
-      - name: Update packages & install shellcheck
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: choco install shellcheck
+          sudo apt-get install -y shellcheck
 
       - name: Test ./ver-bump.sh and ./lib/*.sh
         run: shellcheck -x -e SC1017 ./ver-bump.sh ./lib/*.sh

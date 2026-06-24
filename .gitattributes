@@ -1,0 +1,12 @@
+# Shell scripts and bats tests MUST stay LF on every platform. A Windows
+# checkout with core.autocrlf=true would append CR to heredoc end-tokens and
+# line continuations, which makes shellcheck (and bash) fail to parse them
+# (SC1044 "couldn't find end token", cascading SC1073/SC2183) — that was the
+# Windows CI shellcheck failure. eol=lf pins the working-tree ending.
+*.sh    text eol=lf
+*.bash  text eol=lf
+*.bats  text eol=lf
+
+# Vendored test dependency: keep GitHub's language stats focused on our code.
+test/bats/**            linguist-vendored
+test/test_helper/**     linguist-vendored

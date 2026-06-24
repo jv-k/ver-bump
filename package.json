@@ -10,6 +10,20 @@
   },
   "license": "MIT",
   "bin": "./ver-bump.sh",
+  "files": [
+    "ver-bump.sh",
+    "lib/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "dev": "./dev/sandbox.sh",
     "dev:dry": "./dev/sandbox.sh --dry-run",
@@ -19,11 +33,11 @@
     "tests:install:windows": "sh ./install_bats.sh",
     "tests:run:windows": "sh ./test/bats/bin/bats ./test/*.bats",
     "lint": "shellcheck -x -e SC1017 ./ver-bump.sh ./lib/*.sh",
-    "screenshots": "./dev/screenshots.sh",
-    "screenshots:help": "./dev/screenshots.sh help",
+    "screenshots": "./dev/capture-freeze.sh",
+    "screenshots:help": "./dev/capture-freeze.sh help",
     "screenshots:demo": "./dev/screenshots.sh demo",
-    "screenshots:terminalizer": "./demo/generate.sh",
-    "sandcastle": "npx tsx .sandcastle/main.mts"
+    "sandcastle": "npx tsx .sandcastle/main.mts",
+    "prepublishOnly": "./dev/prepublish-version-guard.sh"
   },
   "keywords": [
     "bash versioning",

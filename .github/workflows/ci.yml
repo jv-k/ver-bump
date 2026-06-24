@@ -49,8 +49,12 @@ jobs:
     timeout-minutes: 15
 
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # ver-bump targets Linux + macOS (and WSL/Git-bash). The bats harness
+        # can't run natively on Windows: bats-core rejects the drive-letter
+        # path (D:/...) as non-absolute in `load`. Windows users run it via WSL.
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout repo
@@ -64,34 +68,19 @@ jobs:
 
       - name: Update packages
         if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          brew update
+        run: brew update
 
       - name: Update packages
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          sudo apt-get update -y
+        run: sudo apt-get update -y
 
       - name: Install Bats and Helpers
-        if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
         run: |
           chmod +x ./install_bats.sh
           npm run tests:install
 
-      - name: Install Bats and Helpers
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          npm run tests:install:windows
-
       - name: Run Bats test suite
-        if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
-        run: |
-          npm run tests:run
-
-      - name: Run Bats test suite
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          npm run tests:run:windows
+        run: npm run tests:run
 
   publish-npm:
     name: Publish to NPM registry

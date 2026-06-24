@@ -14,11 +14,11 @@ check-commits-exist() {
 
 #
 check-branch-notexist() {
-  [ "$FLAG_NOBRANCH" = true ] && return
+  [ "$FLAG_BRANCH" = true ] || return 0
   if git rev-parse --verify "${REL_PREFIX}${V_NEW}" &> /dev/null; then
     fail 3 \
       "Branch <${REL_PREFIX}${V_NEW}> already exists." \
-      "Delete the existing branch (git branch -D ${REL_PREFIX}${V_NEW}), pick a different version, or pass -b/--no-branch to skip branch creation."
+      "Delete the existing branch (git branch -D ${REL_PREFIX}${V_NEW}), pick a different version, or drop --branch/--pr to tag in place instead."
   fi
 }
 

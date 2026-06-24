@@ -149,6 +149,7 @@ load 'test_helper'
   source ${profile_script}
   cd "$(scratch_repo)"
   V_NEW="1.2.3"
+  FLAG_BRANCH=true
   git branch "${REL_PREFIX}${V_NEW}"
   run check-branch-notexist
   assert_failure 3

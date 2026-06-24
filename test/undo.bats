@@ -48,6 +48,47 @@ teardown() {
   assert_success
 }
 
+# Recreate a tag-in-place release (the 2.0 default): the bump commit + tag live
+# on the current branch, with NO release-<v> branch. Folds the setup's release
+# branch into feat/x, then drops it.
+_make_tag_in_place() {
+  git checkout -q feat/x
+  git reset -q --hard v1.2.0
+  git branch -D release-1.2.0
+}
+
+@test "undo: tag-in-place (no release branch) deletes the tag, keeps the commit" {
+  _make_tag_in_place
+
+  run ${profile_script} --undo 1.2.0 --yes
+  assert_success
+  strip_ansi_output
+  assert_output --partial "deleted tag v1.2.0"
+
+  # Tag gone…
+  run git tag -l v1.2.0
+  assert_output ""
+  # …but the bump commit stays on the current branch, and we didn't switch away.
+  run git log -1 --pretty=%s
+  assert_output --partial "bumped 1.0.0 -> 1.2.0"
+  run git symbolic-ref --short HEAD
+  assert_output "feat/x"
+}
+
+@test "undo: tag-in-place --dry-run shows a tag-only plan and changes nothing" {
+  _make_tag_in_place
+
+  run ${profile_script} --undo 1.2.0 --dry-run
+  assert_success
+  strip_ansi_output
+  assert_output --partial "git tag -d v1.2.0"
+  refute_output --partial "git branch -D"
+  assert_output --partial "version-bump commit stays"
+  # Tag untouched.
+  run git tag -l v1.2.0
+  assert_output "v1.2.0"
+}
+
 @test "undo: --yes deletes branch + tag and switches to parent" {
   run ${profile_script} --undo --yes
   assert_success

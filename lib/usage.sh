@@ -46,7 +46,7 @@ usage() {
   printf '\n%bUSAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   printf '  %b%s%b [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
-  printf '  %b%s%b [--major | --minor | --patch] [--release] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
+  printf '  %b%s%b [--branch] [--pr] [--base <branch>] [--major | --minor | --patch] [--release] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
 
   # Column width for label + 2-space gutter. Longest label is
@@ -114,7 +114,7 @@ usage() {
   print-opt-row "-B" "--branch-prefix" "<prefix>"    "Override branch prefix (default: release-)."
   print-opt-row "-d" "--dry-run"       ""            "Dry-run: print every side-effect without executing."
   print-opt-row "-n" "--no-commit"     ""            "Disable commit (and tag + push) after bumping files."
-  print-opt-row "-b" "--no-branch"     ""            "Disable creating a new release-x.x.x branch."
+  print-opt-row "-b" "--no-branch"     ""            "(deprecated) Tag-in-place is the default now; this is a no-op."
   print-opt-row "-c" "--no-changelog"  ""            "Disable updating CHANGELOG.md automatically."
   print-opt-row "-l" "--pause-changelog" ""          "Pause before commit so CHANGELOG.md can be edited."
   print-opt-row "-h" "--help"          ""            "Show this help message."
@@ -123,6 +123,9 @@ usage() {
   print-opt-row ""   "--major"              ""            "Force a major bump from the current version (mutually exclusive)."
   print-opt-row ""   "--minor"              ""            "Force a minor bump from the current version (mutually exclusive)."
   print-opt-row ""   "--patch"              ""            "Force a patch bump from the current version (mutually exclusive)."
+  print-opt-row ""   "--branch"             ""            "Cut a release-x.x.x branch (pre-2.0 default); otherwise tag in place."
+  print-opt-row ""   "--pr"                 ""            "Branch + push + open a release PR via 'gh' (implies push to origin)."
+  print-opt-row ""   "--base"               "<branch>"    "Base branch for --pr (default: the branch you ran ver-bump from)."
   print-opt-row ""   "--release"            ""            "Publish a GitHub release for the new tag (requires -p; uses 'gh')."
   print-opt-row ""   "--about"              ""            "Print name, version, author, and homepage; then exit."
   print-opt-row ""   "--completions"        "<shell>"     "Emit completion script for bash, zsh, or fish."
@@ -134,6 +137,7 @@ usage() {
   print-example-row "${SCRIPT_NAME} -v 2.0.0"              "Non-interactive, explicit version."
   print-example-row "${SCRIPT_NAME} --dry-run"             "Preview every side-effect without executing."
   print-example-row "${SCRIPT_NAME} -p origin"             "Push the release branch + tag when done."
+  print-example-row "${SCRIPT_NAME} --pr"                  "Branch, push, and open a release PR (needs gh)."
   print-example-row "${SCRIPT_NAME} -t release/"           "Use a custom tag prefix (e.g. release/1.2.3)."
   print-example-row "${SCRIPT_NAME} -f composer.json"      "Also bump version in an extra JSON file."
   print-example-row "${SCRIPT_NAME} --about"               "Show branded version info."

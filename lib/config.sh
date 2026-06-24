@@ -14,7 +14,8 @@ true
 #
 # Supported keys (1:1 with existing globals):
 #   TAG_PREFIX  REL_PREFIX  PUSH_DEST  COMMIT_MSG_PREFIX
-#   FLAG_NOBRANCH  FLAG_NOCHANGELOG  FLAG_CHANGELOG_PAUSE
+#   FLAG_BRANCH  PR_BASE  FLAG_NOCHANGELOG  FLAG_CHANGELOG_PAUSE
+#   FLAG_NOBRANCH (deprecated, no-op — tag-in-place is the default as of 2.0)
 #
 # Safety: shell-sourced files are code. The rc must be owned by the current
 # user and not group- or world-writable. Any violation is refused with exit
@@ -22,6 +23,7 @@ true
 
 # Config-able keys, in a plain indexed array so bash 3.2 is happy.
 _CONFIG_KEYS=(TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX \
+              FLAG_BRANCH PR_BASE \
               FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE)
 
 # Walk up from $PWD. Echoes the first .ver-bumprc found; returns 1 if none.

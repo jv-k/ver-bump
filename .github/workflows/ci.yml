@@ -90,7 +90,7 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
-      id-token: write   # required for npm provenance (OIDC)
+      id-token: write   # OIDC: npm Trusted Publishing (no NPM_TOKEN) + provenance
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -99,6 +99,9 @@ jobs:
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
+
+      - name: Use an npm with OIDC trusted publishing (>= 11.5.1)
+        run: npm install -g npm@latest
 
       - name: Verify package.json version matches the release tag
         run: |
@@ -116,17 +119,19 @@ jobs:
           echo "tarball bytes: $size"
           test "$size" -lt 524288 || { echo '::error::tarball >512KB — files allowlist regressed'; exit 1; }
 
-      - name: Publish (prereleases -> 'next', stable -> 'latest')
+      # Tokenless publish via OIDC Trusted Publishing. Requires a one-time setup
+      # on npmjs.com: ver-bump > Settings > Trusted Publishers > add this repo's
+      # ci.yml workflow. Provenance is generated automatically under OIDC, so no
+      # --provenance flag and no NPM_TOKEN are needed.
+      - name: Publish via OIDC (prereleases -> 'next', stable -> 'latest')
         run: |
           ver="$(node -p "require('./package.json').version")"
           case "$ver" in
             *-*) tag=next ;;     # SemVer prerelease (e.g. 2.0.0-rc.1) must NOT take 'latest'
             *)   tag=latest ;;
           esac
-          echo "publishing $ver to dist-tag: $tag"
-          npm publish --provenance --access public --tag "$tag"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          echo "publishing $ver to dist-tag: $tag (OIDC trusted publishing, provenance auto)"
+          npm publish --access public --tag "$tag"
 
   publish-github:
     name: Publish to GitHub registry

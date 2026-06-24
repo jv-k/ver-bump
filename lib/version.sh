@@ -61,7 +61,14 @@ process-version() {
         "Cannot apply --${BUMP_LEVEL}: current version '${V_PREV}' is not a valid SemVer 2.0 version." \
         "Ensure ${VER_FILE} contains a SemVer \"version\" field, or pass an explicit -v <version>."
     fi
-    V_NEW=$(force-bump "$V_PREV" "$BUMP_LEVEL")
+    # force-bump returns 1 (empty output) on an unknown level. With the reset in
+    # process-arguments BUMP_LEVEL is always major/minor/patch here, but guard
+    # anyway so a bad value can never propagate an empty V_NEW into the tag/commit.
+    if ! V_NEW=$(force-bump "$V_PREV" "$BUMP_LEVEL") || [ -z "$V_NEW" ]; then
+      fail 3 \
+        "Cannot compute a '${BUMP_LEVEL}' bump from '${V_PREV}'." \
+        "Use --major, --minor, or --patch, or pass an explicit -v <version>."
+    fi
     echo -e "\n${S_LIGHT}Forced ${S_VAL}${BUMP_LEVEL}${RESET}${S_LIGHT} bump: ${S_VAL}${V_PREV}${RESET}${S_LIGHT} ${I_ARROW-→} ${S_VAL}${V_NEW}${RESET}"
   else
     # Display a suggested version

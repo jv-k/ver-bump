@@ -211,6 +211,13 @@ normalize-long-opts() {
 process-arguments() {
   local OPTIONS OPTIND OPTARG
 
+  # DO_RELEASE and BUMP_LEVEL are CLI-only switches with no env / .ver-bumprc
+  # contract. Reset them before parsing so an inherited exported var — or a
+  # .ver-bumprc assignment (load-config sources the rc as raw shell) — can't
+  # silently force a bump or publish a release with no flag on the command line.
+  DO_RELEASE=false
+  BUMP_LEVEL=
+
   normalize-long-opts "$@"
   set -- ${NORMALIZED_ARGV[@]+"${NORMALIZED_ARGV[@]}"}
 

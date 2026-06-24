@@ -76,7 +76,14 @@ do-tag() {
     return
   fi
 
-  git tag -a "${TAG_PREFIX}${V_NEW}" -m "${tag_msg}"
+  # A failed `git tag` (e.g. bad object, signing failure, or a tag that
+  # slipped past check-tag-exists) must abort — otherwise we'd report a false
+  # "Tagged" success and push a branch whose tag was never created.
+  if ! git tag -a "${TAG_PREFIX}${V_NEW}" -m "${tag_msg}"; then
+    fail 1 \
+      "Failed to create git tag ${TAG_PREFIX}${V_NEW} (see git output above)." \
+      "If a previous run left a partial release, check 'git tag -l ${TAG_PREFIX}${V_NEW}' and your release branch, then retry."
+  fi
   log_success "Tagged ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET}"
 }
 

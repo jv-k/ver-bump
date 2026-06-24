@@ -144,3 +144,109 @@ SH
   assert_success
   assert_output --partial "-l release"
 }
+
+# ── Pass-2 review regression tests: release-pipeline safety ─────────────
+
+@test "release: --release with -n / --no-commit exits 2" {
+  local repo
+  repo="$(scratch_repo)"
+  cd "$repo"
+  printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
+
+  run ${profile_script} --release -p origin -n -v 1.0.1
+  assert_failure 2
+  strip_ansi_output
+  assert_output --partial "incompatible with -n"
+}
+
+@test "release: gh present but unauthenticated exits 3" {
+  source ${profile_script}
+  local shim
+  shim=$(mktemp -d)
+  CLEANUP_CMDS+=("rm -rf ${shim}")
+  cat > "${shim}/gh" <<'SH'
+#!/bin/sh
+[ "$1" = "auth" ] && exit 1
+exit 0
+SH
+  chmod +x "${shim}/gh"
+
+  DO_RELEASE=true FLAG_PUSH=true FLAG_DRYRUN=false PATH="${shim}:$PATH" \
+    run check-release-deps
+  assert_failure 3
+  assert_output --partial "authenticated"
+}
+
+@test "release: --dry-run skips the gh auth check" {
+  source ${profile_script}
+  local shim
+  shim=$(mktemp -d)
+  CLEANUP_CMDS+=("rm -rf ${shim}")
+  cat > "${shim}/gh" <<'SH'
+#!/bin/sh
+[ "$1" = "auth" ] && exit 1
+exit 0
+SH
+  chmod +x "${shim}/gh"
+
+  DO_RELEASE=true FLAG_PUSH=true FLAG_DRYRUN=true PATH="${shim}:$PATH" \
+    run check-release-deps
+  assert_success
+}
+
+@test "release: a failed push skips the GitHub release" {
+  local repo
+  repo="$(scratch_repo)"
+  cd "$repo"
+  printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
+  git add package.json && git commit -qm "feat: seed"
+
+  local shim
+  shim=$(mktemp -d)
+  CLEANUP_CMDS+=("rm -rf ${shim}")
+  cat > "${shim}/gh" <<'SH'
+#!/bin/sh
+[ "$1" = "auth" ] && exit 0
+echo "GH-RELEASE-CALLED $*"
+exit 0
+SH
+  chmod +x "${shim}/gh"
+
+  # 'origin' is not configured, so the push fails. Live run (no -d).
+  PATH="${shim}:$PATH" VER_BUMP_RELEASE_NOTES_CMD='echo NOTES' \
+    run ${profile_script} --release -p origin -b -c -v 1.2.5
+  strip_ansi_output
+  assert_output --partial "Push failed"
+  assert_output --partial "Skipping GitHub release"
+  refute_output --partial "GH-RELEASE-CALLED"
+}
+
+@test "release: live path runs gh release create with tag + notes" {
+  local repo remote
+  repo="$(scratch_repo)"
+  cd "$repo"
+  printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
+  git add package.json && git commit -qm "feat: seed"
+
+  remote=$(mktemp -d)
+  CLEANUP_CMDS+=("rm -rf ${remote}")
+  git init -q --bare "${remote}"
+
+  local shim
+  shim=$(mktemp -d)
+  CLEANUP_CMDS+=("rm -rf ${shim}")
+  cat > "${shim}/gh" <<'SH'
+#!/bin/sh
+[ "$1" = "auth" ] && exit 0
+echo "GH-CALL: $*"
+exit 0
+SH
+  chmod +x "${shim}/gh"
+
+  PATH="${shim}:$PATH" VER_BUMP_RELEASE_NOTES_CMD='printf %s LIVE-NOTES' \
+    run ${profile_script} --release -p "${remote}" -b -c -v 1.2.5
+  strip_ansi_output
+  assert_output --partial "GH-CALL: release create v1.2.5"
+  assert_output --partial "LIVE-NOTES"
+  assert_output --partial "Published GitHub release"
+}

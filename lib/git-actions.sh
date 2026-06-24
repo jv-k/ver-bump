@@ -110,6 +110,10 @@ do-push() {
 
       PUSH_MSG=$( git push -u "${PUSH_DEST}" "${REMOTE_REF}" "${TAG_PREFIX}${V_NEW}" 2>&1 ); PUSH_RC=$?
       if [ "$PUSH_RC" -ne 0 ]; then
+        # Record the failure so do-github-release won't publish a release for a
+        # tag that never reached the remote (gh would otherwise auto-create the
+        # tag at the wrong commit). Push stays best-effort (non-fatal) here.
+        PUSH_OK=false
         log_warn "Push failed"
         log_trace "$PUSH_MSG"
       else
@@ -132,6 +136,12 @@ do-push() {
 check-release-deps() {
   [ "${DO_RELEASE:-false}" = true ] || return 0
 
+  if [ "${FLAG_NOCOMMIT:-false}" = true ]; then
+    fail 2 \
+      "--release is incompatible with -n / --no-commit (no commit, tag, or push is made to release)." \
+      "Drop -n / --no-commit, or drop --release."
+  fi
+
   if [ "${FLAG_PUSH:-false}" != true ]; then
     fail 2 \
       "--release requires -p / --push <remote> (the tag must be pushed before publishing)." \
@@ -142,6 +152,16 @@ check-release-deps() {
     fail 3 \
       "--release requires the GitHub CLI (gh), but it isn't on PATH." \
       "Install gh (https://cli.github.com) or drop --release."
+  fi
+
+  # gh on PATH isn't enough: an unauthenticated gh sails through commit/tag/push
+  # (git push uses its own credentials) and only fails at `gh release create`,
+  # after the tag is already on the remote. Fail fast here instead. Skipped under
+  # --dry-run — a preview shouldn't require live credentials.
+  if [ "${FLAG_DRYRUN:-false}" != true ] && ! gh auth status >/dev/null 2>&1; then
+    fail 3 \
+      "--release requires an authenticated GitHub CLI, but 'gh auth status' failed." \
+      "Run 'gh auth login' (or set GH_TOKEN) and retry."
   fi
 }
 
@@ -157,6 +177,14 @@ do-github-release() {
   [ "${DO_RELEASE:-false}" = true ] || return 0
   # Tag was skipped, so there's nothing to publish a release against.
   [ "${FLAG_NOCOMMIT:-false}" = true ] && return 0
+  # The push must have actually reached the remote. If it failed, do-push set
+  # PUSH_OK=false; publishing now would make `gh release create` auto-create the
+  # tag at the remote default-branch HEAD — a release at the wrong commit.
+  if [ "${PUSH_OK:-true}" != true ]; then
+    log_warn "Skipping GitHub release — the push did not succeed, so the tag isn't on the remote."
+    log_trace "Fix the push, then run: gh release create ${TAG_PREFIX}${V_NEW}"
+    return 0
+  fi
 
   local tag notes_cmd notes notes_err notes_rc
   tag="${TAG_PREFIX}${V_NEW}"

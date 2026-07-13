@@ -5,13 +5,16 @@ isolated throwaway repo (PRD G5, US-6).
 
 | ID | Requirement | Status |
 | --- | --- | --- |
-| R-DEV-1 | `pnpm dev` / `./dev/sandbox.sh` creates an isolated throwaway git repo, runs `ver-bump` inside it, cleans up on exit incl. Ctrl-C. | ⚠️ shipped, **untested** |
-| R-DEV-2 | Sandbox cleanup must never fire against the host repo. | ⚠️ shipped, **untested** |
-| R-DEV-3 | `SANDBOX_VERSION` / `SANDBOX_COMMITS` customise start state; `--keep`/`-k` preserves the temp dir. | ⚠️ shipped, **untested** |
+| R-DEV-1 | `pnpm dev` / `./dev/sandbox.sh` creates an isolated throwaway git repo, runs `ver-bump` inside it, cleans up on exit incl. Ctrl-C. | ✅ `test/sandbox.bats` |
+| R-DEV-2 | Sandbox cleanup must never fire against the host repo. | ✅ `test/sandbox.bats` |
+| R-DEV-3 | `SANDBOX_VERSION` / `SANDBOX_COMMITS` customise start state; `--keep`/`-k` preserves the temp dir. | ✅ `test/sandbox.bats` |
 
-**Known gap (AC-1 violation):** `test/dev-tests.bats` was deleted during the
-test-suite reorganisation and no current test references `dev/sandbox.sh`.
-R-DEV-1..3 are the only PRD requirements with zero bats coverage.
+Coverage notes: cleanup is exercised on normal exit, on ver-bump failure
+(exit code propagation), and on SIGTERM delivered mid-run to the sandbox and
+its foreground `ver-bump` child — the closest deterministic analogue to
+Ctrl-C from a non-interactive test (a real Ctrl-C signals the whole
+foreground process group; bash defers traps until the foreground child
+exits, so both processes are signalled explicitly).
 
 Also in `dev/` (unspecced tooling, no requirements): `screenshots.sh` +
 `capture-freeze.sh` (deterministic README panels), `prepublish-version-guard.sh`,

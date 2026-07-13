@@ -81,12 +81,41 @@ load 'test_helper'
 
 @test "long options: boolean flags set corresponding globals" {
   source ${profile_script}
-  process-arguments --dry-run --no-commit --no-branch --no-changelog --pause-changelog
+  process-arguments --dry-run --no-commit --no-changelog --pause-changelog
   assert_equal "${FLAG_DRYRUN}" "true"
   assert_equal "${FLAG_NOCOMMIT}" "true"
-  assert_equal "${FLAG_NOBRANCH}" "true"
   assert_equal "${FLAG_NOCHANGELOG}" "true"
   assert_equal "${FLAG_CHANGELOG_PAUSE}" "true"
+}
+
+@test "long options: --branch sets FLAG_BRANCH" {
+  source ${profile_script}
+  process-arguments --branch
+  assert_equal "${FLAG_BRANCH}" "true"
+}
+
+@test "long options: --pr implies branch + push and sets DO_PR" {
+  source ${profile_script}
+  process-arguments --pr
+  assert_equal "${DO_PR}" "true"
+  assert_equal "${FLAG_BRANCH}" "true"
+  assert_equal "${FLAG_PUSH}" "true"
+}
+
+@test "long options: --base sets PR_BASE (space and = forms)" {
+  source ${profile_script}
+  process-arguments --base develop
+  assert_equal "${PR_BASE}" "develop"
+  process-arguments --base=release/x
+  assert_equal "${PR_BASE}" "release/x"
+}
+
+@test "long options: --pr=value and --base without value are rejected" {
+  source ${profile_script}
+  run process-arguments --pr=foo
+  assert_failure 2
+  run process-arguments --base
+  assert_failure 2
 }
 
 @test "long options: --push <remote> sets push flag + dest" {
@@ -235,14 +264,15 @@ load 'test_helper'
   assert_output --partial "disable commit (and tag + push) after bumping files."
 }
 
-@test "process-arguments: -b: set flag to disable creating a release branch" {
+@test "process-arguments: -b / --no-branch is a deprecated no-op" {
   source ${profile_script}
   process-arguments -b
-  assert_equal "${FLAG_NOBRANCH}" "true"
+  # Tag-in-place is the default as of 2.0, so -b no longer cuts a branch.
+  assert_equal "${FLAG_BRANCH:-false}" "false"
 
   run process-arguments -b
   strip_ansi_output
-  assert_output --partial "disable creating a new release-x.x.x branch."
+  assert_output --partial "deprecated"
 }
 
 @test "process-arguments: -c: set flag to disable creating/updating CHANGELOG.md" {

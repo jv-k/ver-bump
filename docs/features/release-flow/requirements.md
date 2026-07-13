@@ -1,23 +1,26 @@
 # Release flow (git actions)
 
-The core mechanical sequence: bump files → changelog → release branch →
-commit → annotated tag → push. Integration back to `develop`/`main` stays
-human (PRD §1).
-
-Backfilled requirements (behaviour carried from 1.x, hardened in 2.0):
+The core mechanical sequence: bump files → changelog → commit → tag →
+push, with three selectable workflows since PR #49 (ADR-12):
+**tag-in-place** (default), **release branch** (`--branch`), and
+**release PR** (`--pr`).
 
 | ID | Requirement | Status |
 | --- | --- | --- |
-| R-FLOW-1 | A `release-<version>` branch is created (prefix overridable via `-B`); `-b` skips it. | ✅ shipped — `test/git-ops.bats`, `test/prefixes.bats` |
-| R-FLOW-2 | The bump commit includes every bumped file; `-n` disables commit *and* tag *and* push. | ✅ shipped |
-| R-FLOW-3 | An annotated tag `<prefix><version>` is created (`-t` overrides prefix; `-m` sets the message). | ✅ shipped |
-| R-FLOW-4 | `git tag` failure aborts the run with an error — never reports false success. | ✅ shipped (`5a9035a`) |
-| R-FLOW-5 | Push happens only with `-p <remote>` and after interactive confirmation (`-y` auto-accepts; decline exits `5`). | ✅ shipped |
-| R-FLOW-6 | Dirty-tree and zero-commit repos are rejected as preconditions (exit `3`) before any mutation. | ✅ shipped — `lib/git-checks.sh` |
+| R-FLOW-1 | Default is **tag-in-place**: commit + annotated tag on the current branch; no branch is created. `--branch` (or `FLAG_BRANCH=true` in `.ver-bumprc`) cuts a `release-<version>` branch instead (prefix overridable via `-B`). `-b`/`--no-branch` is a deprecated no-op. | ✅ shipped (PR #49) — `test/git-ops.bats` |
+| R-FLOW-2 | `--pr` implies `--branch` and a push to `origin` (override with `-p`), then opens a pull request via `gh` (`check-pr-deps` preflight — conditional dependency like `--release`). Base resolves `--base` › `PR_BASE` › invocation branch › remote HEAD. | ✅ shipped (PR #49) — `test/pr.bats` |
+| R-FLOW-3 | The bump commit includes every bumped file; `-n` disables commit *and* tag *and* push. | ✅ shipped |
+| R-FLOW-4 | An annotated tag `<prefix><version>` is created (`-t` overrides prefix; `-m` sets the message). | ✅ shipped |
+| R-FLOW-5 | `git tag` failure aborts the run with an error — never reports false success. | ✅ shipped (`5a9035a`) |
+| R-FLOW-6 | Push happens only with `-p <remote>` (or implied by `--pr`) and after interactive confirmation (`-y` auto-accepts; decline exits `5`). | ✅ shipped |
+| R-FLOW-7 | Dirty-tree and zero-commit repos are rejected as preconditions (exit `3`) before any mutation. | ✅ shipped — `lib/git-checks.sh` |
 
-Modules: `lib/git-actions.sh`, `lib/git-checks.sh`. Tests:
-`test/git-ops.bats` (6), `test/prefixes.bats` (4), `test/e2e-live.bats` (2).
+Migration note (PRD B-5): 1.x always cut a release branch; 2.0 tags in
+place by default — pass `--branch` for the old behaviour.
+
+Modules: `lib/git-actions.sh`, `lib/git-checks.sh`, `lib/args.sh`.
+Tests: `test/git-ops.bats`, `test/pr.bats`, `test/prefixes.bats`,
+`test/e2e-live.bats`.
 
 Related: [github-release](../github-release/requirements.md) (post-push),
-[undo](../undo/requirements.md) (local revert). A tag-in-place default +
-`--pr` release-PR workflow is proposed in PR #49 (unmerged) — see ADR-12.
+[undo](../undo/requirements.md) (local revert, incl. tag-in-place).

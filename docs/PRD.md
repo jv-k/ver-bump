@@ -217,7 +217,7 @@ Each requirement has an ID so tests and PRs can reference it.
 | ID | Requirement |
 | --- | --- |
 | **R-CFG-1** | `.ver-bumprc` is discovered by walking up from `$PWD` to `/`. First match wins; absence is not an error. |
-| **R-CFG-2** | Supported keys: `TAG_PREFIX`, `REL_PREFIX`, `PUSH_DEST`, `COMMIT_MSG_PREFIX`, `FLAG_NOBRANCH`, `FLAG_NOCHANGELOG`, `FLAG_CHANGELOG_PAUSE`, `FLAG_YES`. Unknown keys are ignored with a warning on stderr. |
+| **R-CFG-2** | Supported keys: `TAG_PREFIX`, `REL_PREFIX`, `PUSH_DEST`, `COMMIT_MSG_PREFIX`, `FLAG_NOBRANCH`, `FLAG_NOCHANGELOG`, `FLAG_CHANGELOG_PAUSE`. Only these participate in the precedence contract (R-CFG-3); other assignments in the file execute as plain shell (R-CFG-5) but are unsupported and carry no precedence or compatibility guarantee. |
 | **R-CFG-3** | Precedence end-to-end: CLI > environment > `.ver-bumprc` > built-in default. |
 | **R-CFG-4** | `.ver-bumprc` is refused (exit `3`) if world-writable, group-writable, or not owned by the invoking user. |
 | **R-CFG-5** | `.ver-bumprc` is shell-sourced, not parsed. Failures in sourcing exit `3` with the shell error as context. |
@@ -228,7 +228,7 @@ Each requirement has an ID so tests and PRs can reference it.
 | ID | Requirement |
 | --- | --- |
 | **R-YES-1** | `-y` / `--yes` auto-accepts the suggested (or `-v`-supplied) version at the version prompt and the push confirmation — no `read` blocks the run (resolves Q-1: shipped in 2.0, not deferred). |
-| **R-YES-2** | `FLAG_YES` is settable via `.ver-bumprc` (R-CFG-2) and honoured by `--undo`'s confirmation as well. |
+| **R-YES-2** | `--yes` is honoured by `--undo`'s confirmation as well, regardless of flag order. `FLAG_YES` is **not** a supported `.ver-bumprc` key (auto-confirmation must be an explicit per-invocation choice). |
 
 ### 5.12 Explicit bump switches
 

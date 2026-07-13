@@ -2,11 +2,16 @@
 
 | | |
 | --- | --- |
-| **Status** | Draft |
+| **Status** | Reconciled — matches code on `develop` |
 | **Target release** | `2.0.0` |
 | **Owner** | John Valai ([@jv-k](https://github.com/jv-k)) |
-| **Last updated** | 2026-04-22 |
+| **Last updated** | 2026-07-13 |
 | **Supersedes** | `1.1.8` |
+
+> Living, per-feature requirements (with test mapping and open gaps) are
+> maintained in [`docs/features/`](./features/). This PRD is the release-level
+> contract for `2.0.0`; architectural decisions are recorded in
+> [`docs/ADR.md`](./ADR.md).
 
 ---
 
@@ -26,13 +31,19 @@ conventional-commit bump suggestion, dry-run mode, GNU-style long options,
 shell completions (and a one-shot `--install-completions` installer with
 shell auto-detection), a branded `--about` block, a structured log
 vocabulary + inverse-video section headers, and a stable exit-code contract.
+It also gains a `.ver-bumprc` config file with strict precedence and
+permission checks (§5.10), a `-y`/`--yes` non-interactive mode (§5.11),
+explicit `--major`/`--minor`/`--patch` bump switches (§5.12), a local
+`--undo` for reverting a release before it is pushed (§5.13), and opt-in
+GitHub-release publishing via `--release` (§5.8).
 A `dev/` sandbox harness lands alongside so changes can be exercised
 end-to-end without polluting a real repo.
 
 The release is intentionally **non-additive in behaviour**: every existing
-short flag keeps its semantics; what changed is that the tool now does the
-thing the original README *said* it did, rather than whatever the 2021
-implementation happened to execute.
+short flag keeps its semantics (one deliberate exception: bare `-v` with no
+value now prints the tool version — see B-4 in §8.1); what changed is that
+the tool now does the thing the original README *said* it did, rather than
+whatever the 2021 implementation happened to execute.
 
 ---
 
@@ -86,8 +97,7 @@ real script (not just dry-run) without touching their working repo.
 
 - **Not a CHANGELOG rewriter.** The existing `git log` dump is preserved as-is. A grouped, conventional-commit-aware changelog is scope for a later release.
 - **Not a monorepo release manager.** One tool, one `package.json`, one bump. `-f` remains a secondary knob.
-- **Not integrated with GitHub releases / npm publish.** Users wire those in via their own CI.
-- **Not a config-file-driven tool.** All knobs are CLI flags or environment variables. A `.ver-bumprc` is out of scope.
+- **Not an npm publisher.** Registry publishing stays in the user's CI. (GitHub-release creation *did* land in 2.0, behind the opt-in `--release` flag — see §5.8; it is off by default and adds no default-path dependencies.)
 - **No plugin/hook system** in this release (exit code `4` is reserved for it as a forward-compat signal).
 
 ---
@@ -141,6 +151,8 @@ Each requirement has an ID so tests and PRs can reference it.
 | **R-OPT-4** | `--` stops option processing; remaining argv is forwarded verbatim. |
 | **R-OPT-5** | `--completions <bash\|zsh\|fish>` emits a shell completion script to stdout and exits `0`. It does not require a `package.json`, a git repo, or any mutation. Unknown shell exits `1`. |
 | **R-OPT-6** | `-t <prefix>` / `--tag-prefix` overrides the tag prefix (default `v`). `-B <prefix>` / `--branch-prefix` overrides the branch prefix (default `release-`). The chosen prefix is used consistently by every step that reads or writes tags / branches. |
+| **R-OPT-7** | The repo's own `package-lock.json` is bumped built-in when present; `-f`/`--file` is for *additional* JSON files only (resolves Q-3). |
+| **R-OPT-8** | `--about` prints a branded info block and exits `0` without requiring a `package.json` or git repo. Bare `-v`/`--version` (no value) prints the tool's own version — a plain, parseable `ver-bump <ver>` token when colour is off — and exits `0`. |
 
 ### 5.5 Dry-run
 
@@ -149,6 +161,7 @@ Each requirement has an ID so tests and PRs can reference it.
 | **R-DRY-1** | With `-d` / `--dry-run`, no files are written, no `git add`/`commit`/`tag`/`push`/`branch`/`checkout` is executed. |
 | **R-DRY-2** | Every side-effect that would have occurred is printed to stderr with a `[dry-run]` prefix, in the order it would have been executed. |
 | **R-DRY-3** | Running `--dry-run` against this repo's own checkout must not modify the working tree (regression guard). |
+| **R-DRY-4** | Dry-run intercepts the push: with `-p <remote>` and `--dry-run`, no network call is made and the user is never prompted to push (resolves Q-2). |
 
 ### 5.6 Exit codes
 
@@ -177,6 +190,8 @@ Each requirement has an ID so tests and PRs can reference it.
 | **R-COMP-3** | After `-f`/`--file`, completion must restrict to `*.json`. |
 | **R-COMP-4** | After `--completions`, completion must offer `bash zsh fish`. |
 | **R-COMP-5** | Completions must be registered for both `ver-bump` and `ver-bump.sh` command names. |
+| **R-COMP-6** | `--install-completions [shell]` auto-detects the user's shell from `$SHELL` when no argument is given (exit `2` if detection fails), and installs the matching script to a user-scope location (zsh: `~/.local/share/zsh/site-functions`, with an oh-my-zsh-aware setup hint). |
+| **R-COMP-7** | `--install-completions` honours `--dry-run` regardless of flag order on the command line. |
 
 ### 5.8 GitHub release publishing
 
@@ -196,6 +211,41 @@ Each requirement has an ID so tests and PRs can reference it.
 | **R-DEV-1** | `pnpm dev` / `./dev/sandbox.sh` creates an isolated throwaway git repo, runs `ver-bump` inside it, and cleans up on exit (including Ctrl-C). |
 | **R-DEV-2** | The sandbox's cleanup must never fire against the host repo. |
 | **R-DEV-3** | Environment variables `SANDBOX_VERSION` and `SANDBOX_COMMITS` customise the starting version and seed commits respectively. `--keep` / `-k` preserves the temp dir for inspection. |
+
+### 5.10 Config file
+
+| ID | Requirement |
+| --- | --- |
+| **R-CFG-1** | `.ver-bumprc` is discovered by walking up from `$PWD` to `/`. First match wins; absence is not an error. |
+| **R-CFG-2** | Supported keys: `TAG_PREFIX`, `REL_PREFIX`, `PUSH_DEST`, `COMMIT_MSG_PREFIX`, `FLAG_NOBRANCH`, `FLAG_NOCHANGELOG`, `FLAG_CHANGELOG_PAUSE`, `FLAG_YES`. Unknown keys are ignored with a warning on stderr. |
+| **R-CFG-3** | Precedence end-to-end: CLI > environment > `.ver-bumprc` > built-in default. |
+| **R-CFG-4** | `.ver-bumprc` is refused (exit `3`) if world-writable, group-writable, or not owned by the invoking user. |
+| **R-CFG-5** | `.ver-bumprc` is shell-sourced, not parsed. Failures in sourcing exit `3` with the shell error as context. |
+| **R-CFG-6** | CLI-only switches with no env / rc contract (`DO_RELEASE`, `BUMP_LEVEL`) are reset before parsing so an inherited env var or rc assignment can never force a bump level or publish a release without the flag on the command line. |
+
+### 5.11 Non-interactive mode
+
+| ID | Requirement |
+| --- | --- |
+| **R-YES-1** | `-y` / `--yes` auto-accepts the suggested (or `-v`-supplied) version at the version prompt and the push confirmation — no `read` blocks the run (resolves Q-1: shipped in 2.0, not deferred). |
+| **R-YES-2** | `FLAG_YES` is settable via `.ver-bumprc` (R-CFG-2) and honoured by `--undo`'s confirmation as well. |
+
+### 5.12 Explicit bump switches
+
+| ID | Requirement |
+| --- | --- |
+| **R-FORCE-1** | `--major` / `--minor` / `--patch` force the bump level, bypassing the conventional-commit suggestion. Long-only, boolean. |
+| **R-FORCE-2** | The three switches are mutually exclusive with each other (exit `2` naming both flags) and conflict with `-v <version>` (exit `2`). |
+| **R-FORCE-3** | A forced or explicit (`-v`) version skips the bump-suggestion machinery entirely — no suggestion is computed or printed. |
+
+### 5.13 Local undo
+
+| ID | Requirement |
+| --- | --- |
+| **R-UNDO-1** | `--undo [version]` locally deletes the release branch and tag for `<version>` (defaulting to the current `package.json` version) and reverts the bump commit when it is `HEAD`. It never touches any remote. |
+| **R-UNDO-2** | `--undo` honours `--dry-run`, `--yes`, `--tag-prefix`, and `--branch-prefix` regardless of their position in argv. |
+| **R-UNDO-3** | `--undo` prompts for confirmation before deleting (bypassed by `-y`). |
+| **R-UNDO-4** | Aborting or refusing preconditions in `--undo` exits with contract codes (§5.6), not bare `exit 1`. |
 
 ---
 
@@ -231,6 +281,7 @@ Each requirement has an ID so tests and PRs can reference it.
 - **B-1 — `-v` rejects non-SemVer.** Existing calls like `-v banana` will fail with exit `2`. This was never guaranteed; old behaviour tagged a corrupt version. **Migration**: fix the input.
 - **B-2 — Exit codes change.** `1.1.x` used `exit 1` for nearly every error. `2.0.0` uses `2`/`3`/`5` for usage, precondition, and user-abort failures. **Migration**: CI wrappers that branched on exit code `0` vs. non-zero are unaffected; wrappers that branched on specific non-zero codes must update.
 - **B-3 — `npm` no longer invoked.** `npm version`'s lifecycle scripts (`preversion`, `version`, `postversion`) will no longer fire as a side-effect of running `ver-bump`. **Migration**: if you relied on them, invoke them explicitly or move the logic into a separate step.
+- **B-4 — bare `-v` / `--version` prints the tool version.** In `1.1.x`, `-v` without a value was an argument-parse error. In `2.0.0` it prints `ver-bump <ver>` and exits `0` (matching every modern CLI). With a value, `-v <semver>` keeps its `1.1.x` meaning. **Migration**: none expected — no working `1.1.x` invocation relied on the error.
 
 ### 8.2 Non-breaking
 
@@ -240,7 +291,7 @@ Each requirement has an ID so tests and PRs can reference it.
 
 ### 8.3 Deprecations carried forward
 
-- The `VERSION` file remains deprecated (already signalled since `0.2.0`). Will be removed in `3.0.0`.
+- The `VERSION` file is written-through for backward compatibility when present, but is never consulted as a version source (deprecated since `0.2.0`). Will be removed in `3.0.0`.
 
 ---
 
@@ -258,12 +309,12 @@ Each requirement has an ID so tests and PRs can reference it.
 
 ## 10. Testing strategy
 
-- **Unit level** — `test/ver-bump.bats` covers every requirement in §5. Minimum **60 tests** at release; currently at 54 before this PRD is merged.
-- **Contract level** — exit-code table is asserted per branch in `fail()` unit tests.
-- **Regression** — running the test suite must not mutate the host repo. `git status --porcelain` before and after must match (add a `trap` in the test harness to enforce this).
-- **Emitted artefacts** — every completion script is syntax-checked by invoking `bash -n` / `zsh -n` on the emitted output.
-- **Sandbox** — `pnpm dev` is the primary tool for exploratory E2E testing.
-- **CI matrix** — shellcheck on `ubuntu-latest`, `macos-latest`, `windows-latest` (existing). Add bats on Ubuntu + macOS.
+- **Unit level** — one `.bats` file per feature under `test/` (`args.bats`, `version.bats`, `release.bats`, `undo.bats`, …) covers every requirement in §5. Currently **206 tests** across 20 files.
+- **Contract level** — exit-code table is asserted per branch in `fail()` unit tests (`test/errors.bats`).
+- **Regression** — running the test suite must not mutate the host repo: anything touching git state runs inside a `scratch_repo` throwaway (`test/test_helper.bash`).
+- **Emitted artefacts** — every completion script is syntax-checked (`bash -n` / `zsh -n` / `fish --no-execute`) in `test/completions-syntax.bats`.
+- **Sandbox** — `pnpm dev` is the primary tool for exploratory E2E testing; `test/e2e-live.bats` covers a live end-to-end bump.
+- **CI matrix** — bats on Ubuntu + macOS (fail-fast off); shellcheck + lint run once on Linux (Windows dropped from the matrix — CRLF made shellcheck results meaningless there).
 
 ---
 
@@ -280,9 +331,11 @@ Each requirement has an ID so tests and PRs can reference it.
 
 ## 12. Open questions
 
-1. **Q-1** Do we want a `--yes` / `-y` flag to auto-accept the bump suggestion and bypass the interactive prompt entirely, for use in CI where `-v` is awkward to compute? *(Proposed: defer to 2.1.)*
-2. **Q-2** Should `--dry-run` imply `--no-push` even when `-p <remote>` is passed, to prevent accidental network calls? *(Current behaviour: dry-run intercepts the push call; user is never prompted for it. Acceptable.)*
-3. **Q-3** Should `-f <file>` default to also bumping the repo's `package-lock.json` if present, given that `do-packagefile-bump` already does? *(Current behaviour: yes, built-in. `-f` is for additional files.)*
+All resolved for 2.0:
+
+1. **Q-1** `-y` / `--yes` — **Resolved: shipped in 2.0** (not deferred). See §5.11 R-YES.
+2. **Q-2** Dry-run vs push — **Resolved: keep current behaviour.** Dry-run intercepts the push call; codified as R-DRY-4.
+3. **Q-3** `-f` vs built-in `package-lock.json` bump — **Resolved: keep current behaviour**; codified as R-OPT-7.
 
 ---
 
@@ -290,9 +343,10 @@ Each requirement has an ID so tests and PRs can reference it.
 
 - **Grouped CHANGELOG** from Conventional Commits (the other major friction point vs. modern tools).
 - **Hook system** (exit code `4` is reserved): `pre-bump`, `post-tag`, `post-push`.
-- **`--major` / `--minor` / `--patch`** explicit override switches.
-- **Config file** (`.ver-bumprc` or `ver-bump` section in `package.json`) for defaults.
-- **Non-npm install paths** (Homebrew formula, `basher`).
+- **Non-npm install paths** — Homebrew formula (deferred from 2.0; issue [#24](https://github.com/jv-k/ver-bump/issues/24)), `basher` ([#39](https://github.com/jv-k/ver-bump/issues/39)).
+- **GitHub Packages publishing docs** ([#40](https://github.com/jv-k/ver-bump/issues/40)).
+
+*(Moved out of this list because they shipped in 2.0: `--major`/`--minor`/`--patch` → §5.12; config file → §5.10.)*
 
 ---
 
@@ -302,7 +356,7 @@ Exactly the flags shipping in `2.0.0`:
 
 | Short | Long | Takes arg | Purpose |
 | :---: | --- | :---: | --- |
-| `-v` | `--version` | ✓ | Manual SemVer (validated) |
+| `-v` | `--version` | ✓ | Manual SemVer (validated); **bare** `-v`/`--version` prints the tool version (B-4) |
 | `-m` | `--message` | ✓ | Annotated-tag message |
 | `-f` | `--file` | ✓ | Extra JSON file to bump (repeatable) |
 | `-p` | `--push` | ✓ | Push remote |
@@ -313,7 +367,12 @@ Exactly the flags shipping in `2.0.0`:
 | `-b` | `--no-branch` | | Disable release branch creation |
 | `-c` | `--no-changelog` | | Disable CHANGELOG.md update |
 | `-l` | `--pause-changelog` | | Pause before commit |
+| `-y` | `--yes` | | Auto-accept version suggestion + push confirmation (§5.11) |
 | `-h` | `--help` | | Help output |
-| — | `--completions` | ✓ | Emit completion script |
+| — | `--about` | | Branded info block; exit 0 (§5.4 R-OPT-8) |
+| — | `--major` / `--minor` / `--patch` | | Force bump level; mutually exclusive (§5.12) |
+| — | `--undo` | optional | Locally revert release `<version>` — branch, tag, bump commit (§5.13) |
+| — | `--completions` | ✓ | Emit completion script to stdout |
+| — | `--install-completions` | optional | Install completion script; auto-detects shell (§5.7 R-COMP-6) |
 | — | `--release` | | Publish GitHub release for the new tag (requires `-p`) |
 | — | `--` | | Stop option processing |

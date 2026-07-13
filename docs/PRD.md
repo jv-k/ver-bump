@@ -20,9 +20,10 @@
 `ver-bump` is **an opinionated release tool for Git projects with a
 `package.json`** — primarily Node / JS / TS, but also usable for any SemVer
 repo via `-f <file>.json` for the bump target. It automates the mechanical
-parts of cutting a release (SemVer bump, CHANGELOG, release branch, tag,
-push), driven by Conventional Commits, and leaves the integration step
-(merge back to `develop` / `main`) to the human.
+parts of cutting a release (SemVer bump, CHANGELOG, commit, tag, push),
+driven by Conventional Commits, across three selectable workflows:
+**tag-in-place** (default), **release branch** (`--branch`), or **release
+PR** (`--pr` — opens the pull request via `gh`). See §5.14.
 
 `2.0.0` is a correctness, ergonomics, and trust release: a long-standing
 `-p` flag bug is fixed, the tool drops its hidden `npm` runtime dependency,
@@ -34,16 +35,19 @@ vocabulary + inverse-video section headers, and a stable exit-code contract.
 It also gains a `.ver-bumprc` config file with strict precedence and
 permission checks (§5.10), a `-y`/`--yes` non-interactive mode (§5.11),
 explicit `--major`/`--minor`/`--patch` bump switches (§5.12), a local
-`--undo` for reverting a release before it is pushed (§5.13), and opt-in
-GitHub-release publishing via `--release` (§5.8).
+`--undo` for reverting a release before it is pushed (§5.13), opt-in
+GitHub-release publishing via `--release` (§5.8), and the three release
+workflows above (§5.14).
 A `dev/` sandbox harness lands alongside so changes can be exercised
 end-to-end without polluting a real repo.
 
-The release is intentionally **non-additive in behaviour**: every existing
-short flag keeps its semantics (one deliberate exception: bare `-v` with no
-value now prints the tool version — see B-4 in §8.1); what changed is that
-the tool now does the thing the original README *said* it did, rather than
-whatever the 2021 implementation happened to execute.
+The release is **mostly non-additive in behaviour**: every existing short
+flag keeps its argument contract, with two deliberate exceptions — bare
+`-v` now prints the tool version (B-4), and the default workflow changed
+from release-branch to tag-in-place (B-5; `-b`/`--no-branch` becomes a
+no-op). Everything else is the tool finally doing what the original README
+*said* it did, rather than whatever the 2021 implementation happened to
+execute.
 
 ---
 
@@ -217,7 +221,7 @@ Each requirement has an ID so tests and PRs can reference it.
 | ID | Requirement |
 | --- | --- |
 | **R-CFG-1** | `.ver-bumprc` is discovered by walking up from `$PWD` to `/`. First match wins; absence is not an error. |
-| **R-CFG-2** | Supported keys: `TAG_PREFIX`, `REL_PREFIX`, `PUSH_DEST`, `COMMIT_MSG_PREFIX`, `FLAG_NOBRANCH`, `FLAG_NOCHANGELOG`, `FLAG_CHANGELOG_PAUSE`. Only these participate in the precedence contract (R-CFG-3); other assignments in the file execute as plain shell (R-CFG-5) but are unsupported and carry no precedence or compatibility guarantee. |
+| **R-CFG-2** | Supported keys: `TAG_PREFIX`, `REL_PREFIX`, `PUSH_DEST`, `COMMIT_MSG_PREFIX`, `FLAG_BRANCH`, `PR_BASE`, `FLAG_NOCHANGELOG`, `FLAG_CHANGELOG_PAUSE`, plus deprecated `FLAG_NOBRANCH` (back-compat; superseded by `FLAG_BRANCH`). Only these participate in the precedence contract (R-CFG-3); other assignments in the file execute as plain shell (R-CFG-5) but are unsupported and carry no precedence or compatibility guarantee. |
 | **R-CFG-3** | Precedence end-to-end: CLI > environment > `.ver-bumprc` > built-in default. |
 | **R-CFG-4** | `.ver-bumprc` is refused (exit `3`) if world-writable, group-writable, or not owned by the invoking user. |
 | **R-CFG-5** | `.ver-bumprc` is shell-sourced, not parsed. Failures in sourcing exit `3` with the shell error as context. |
@@ -246,6 +250,14 @@ Each requirement has an ID so tests and PRs can reference it.
 | **R-UNDO-2** | `--undo` honours `--dry-run`, `--yes`, `--tag-prefix`, and `--branch-prefix` regardless of their position in argv. |
 | **R-UNDO-3** | `--undo` prompts for confirmation before deleting (bypassed by `-y`). |
 | **R-UNDO-4** | Aborting or refusing preconditions in `--undo` exits with contract codes (§5.6), not bare `exit 1`. |
+| **R-UNDO-5** | Tag-in-place releases (§5.14) are handled: the tag is deleted and the bump commit kept. |
+
+### 5.14 Release workflows
+
+| ID | Requirement |
+| --- | --- |
+| **R-FLOW-1** | Default is **tag-in-place**: commit + annotated tag on the current branch; no branch is created. `--branch` (or `FLAG_BRANCH=true` in `.ver-bumprc`) cuts a `release-<version>` branch instead. `-b`/`--no-branch` is retained as a deprecated no-op. |
+| **R-FLOW-2** | `--pr` implies `--branch` and a push to `origin` (override with `-p`), then opens a pull request via `gh` (conditional dependency, preflighted like `--release`). The base branch resolves `--base <branch>` › `PR_BASE` (env/`.ver-bumprc`) › the invocation branch › the remote's default branch. |
 
 ---
 
@@ -282,6 +294,7 @@ Each requirement has an ID so tests and PRs can reference it.
 - **B-2 — Exit codes change.** `1.1.x` used `exit 1` for nearly every error. `2.0.0` uses `2`/`3`/`5` for usage, precondition, and user-abort failures. **Migration**: CI wrappers that branched on exit code `0` vs. non-zero are unaffected; wrappers that branched on specific non-zero codes must update.
 - **B-3 — `npm` no longer invoked.** `npm version`'s lifecycle scripts (`preversion`, `version`, `postversion`) will no longer fire as a side-effect of running `ver-bump`. **Migration**: if you relied on them, invoke them explicitly or move the logic into a separate step.
 - **B-4 — bare `-v` / `--version` prints the tool version.** In `1.1.x`, `-v` without a value was an argument-parse error. In `2.0.0` it prints `ver-bump <ver>` and exits `0` (matching every modern CLI). With a value, `-v <semver>` keeps its `1.1.x` meaning. **Migration**: none expected — no working `1.1.x` invocation relied on the error.
+- **B-5 — tag-in-place is the new default workflow.** `1.1.x` always cut a `release-<version>` branch; `2.0.0` commits and tags the current branch in place (§5.14, ADR-12). `-b`/`--no-branch` becomes a no-op. **Migration**: pass `--branch` per run, or set `FLAG_BRANCH=true` in `.ver-bumprc` to keep the old behaviour as a team default.
 
 ### 8.2 Non-breaking
 
@@ -309,7 +322,7 @@ Each requirement has an ID so tests and PRs can reference it.
 
 ## 10. Testing strategy
 
-- **Unit level** — one `.bats` file per feature under `test/` (`args.bats`, `version.bats`, `release.bats`, `undo.bats`, …) covers every requirement in §5. Currently **206 tests** across 20 files.
+- **Unit level** — one `.bats` file per feature under `test/` (`args.bats`, `version.bats`, `release.bats`, `pr.bats`, `undo.bats`, …) covers every requirement in §5. Currently **227 tests** across 21 files.
 - **Contract level** — exit-code table is asserted per branch in `fail()` unit tests (`test/errors.bats`).
 - **Regression** — running the test suite must not mutate the host repo: anything touching git state runs inside a `scratch_repo` throwaway (`test/test_helper.bash`).
 - **Emitted artefacts** — every completion script is syntax-checked (`bash -n` / `zsh -n` / `fish --no-execute`) in `test/completions-syntax.bats`.
@@ -364,13 +377,16 @@ Exactly the flags shipping in `2.0.0`:
 | `-B` | `--branch-prefix` | ✓ | Branch prefix override |
 | `-d` | `--dry-run` | | Preview-only mode |
 | `-n` | `--no-commit` | | Disable commit (and tag + push) |
-| `-b` | `--no-branch` | | Disable release branch creation |
+| `-b` | `--no-branch` | | *(deprecated)* No-op — tag-in-place is the default (B-5) |
 | `-c` | `--no-changelog` | | Disable CHANGELOG.md update |
 | `-l` | `--pause-changelog` | | Pause before commit |
 | `-y` | `--yes` | | Auto-accept version suggestion + push confirmation (§5.11) |
 | `-h` | `--help` | | Help output |
 | — | `--about` | | Branded info block; exit 0 (§5.4 R-OPT-8) |
 | — | `--major` / `--minor` / `--patch` | | Force bump level; mutually exclusive (§5.12) |
+| — | `--branch` | | Cut a `release-<version>` branch (pre-2.0 default) instead of tagging in place (§5.14) |
+| — | `--pr` | | Branch + push + open a release PR via `gh`; implies push to `origin` (§5.14) |
+| — | `--base` | ✓ | Base branch for `--pr` (default: resolution chain in R-FLOW-2) |
 | — | `--undo` | optional | Locally revert release `<version>` — branch, tag, bump commit (§5.13) |
 | — | `--completions` | ✓ | Emit completion script to stdout |
 | — | `--install-completions` | optional | Install completion script; auto-detects shell (§5.7 R-COMP-6) |

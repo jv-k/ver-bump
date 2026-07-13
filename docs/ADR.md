@@ -214,20 +214,31 @@ notes generation is user-swappable; a failed notes command aborts before
 
 ---
 
-## ADR-12 — Tag-in-place default + `--pr` release-PR workflow
+## ADR-12 — Tag-in-place default + `--branch` / `--pr` selectable workflows
 
-**Status:** **Proposed** — PR #49 (unmerged, one commit on
-`feat/release-pr-workflow`)
+**Status:** Accepted — PR #49, merged 2026-07-13
 
 **Context:** The release-branch flow predates PR-centric hosting; for most
-repos the branch adds ceremony without review value.
+repos the forced `release-<version>` branch added ceremony without review
+value, while PR-centric teams wanted the opposite: a branch *plus* an
+opened pull request (release-please/changesets ergonomics).
 
-**Decision (proposed):** Default becomes tag-in-place on the current
-branch; `--pr` opts into cutting a release branch and opening a PR via
-`gh`. Not merged for 2.0.0 yet — decide before or immediately after the rc.
+**Decision:** The gitflow release branch is demoted from forced default to
+one of three selectable workflows: **tag-in-place** (default — commit +
+tag the current branch), **release branch** (`--branch`, the pre-2.0
+default), and **release PR** (`--pr` — implies `--branch` and a push to
+`origin`, then opens a PR via `gh`, mirroring the `--release` pattern:
+`check-pr-deps` preflight, conditional dependency). `FLAG_NOBRANCH` is
+inverted to positive `FLAG_BRANCH`; `-b`/`--no-branch` stays as a
+deprecated no-op for script back-compat. The `--pr` base resolves
+`--base` › `PR_BASE` (env/`.ver-bumprc`) › invocation branch › remote
+HEAD. `--undo` learns tag-in-place releases (deletes the tag, keeps the
+bump commit).
 
-**Consequences (if accepted):** Changes the default mutation sequence in
-`release-flow`; R-FLOW-1 would need rewriting and `-b` semantics revisit.
+**Consequences:** **Breaking** — bare `ver-bump` no longer cuts a branch
+(PRD B-5); teams keep the old default via `--branch` or `FLAG_BRANCH=true`
+in `.ver-bumprc`. `.ver-bumprc` gains `FLAG_BRANCH` + `PR_BASE`;
+`FLAG_NOBRANCH` remains recognised for compatibility.
 
 ---
 

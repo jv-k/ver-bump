@@ -484,7 +484,7 @@ do-undo() {
   fi
 
   if [ "${FLAG_DRYRUN:-false}" = true ]; then
-    printf '\n%b[dry-run]%b no changes made.\n' "${S_LIGHT-}" "${RESET-}"
+    printf '\n%b[dry-run]%b no changes made.\n' "${S_LIGHT-}" "${RESET-}" >&2
     return 0
   fi
 

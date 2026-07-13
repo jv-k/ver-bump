@@ -37,6 +37,7 @@ load 'test_helper'
   source ${profile_script}
   cd "$(scratch_repo)"
 
+  FLAG_BRANCH=true
   REL_PREFIX="hotfix-"
   V_NEW="9.9.9"
 

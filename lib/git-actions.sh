@@ -13,7 +13,7 @@ dryrun() {
 }
 
 do-branch() {
-  [ "$FLAG_NOBRANCH" = true ] && return
+  [ "$FLAG_BRANCH" = true ] || return 0
 
   local BRANCH_MSG
 
@@ -32,7 +32,7 @@ do-branch() {
   else
     fail 1 \
       "Failed to create release branch: ${BRANCH_MSG}" \
-      "Resolve the git branch error above, or pass -b/--no-branch to skip branch creation."
+      "Resolve the git branch error above, or drop --branch/--pr to tag in place instead."
   fi
 }
 
@@ -103,10 +103,10 @@ do-push() {
   case "$CONFIRM" in
     [yY][eE][sS]|[yY] )
       echo -e "\nPushing branch + tag to <${S_VAL}${PUSH_DEST}${RESET}>..."
-      if [ "$FLAG_NOBRANCH" = true ]; then
-        REMOTE_REF=$(git rev-parse --abbrev-ref HEAD)
-      else
+      if [ "$FLAG_BRANCH" = true ]; then
         REMOTE_REF="${REL_PREFIX}${V_NEW}"
+      else
+        REMOTE_REF=$(git rev-parse --abbrev-ref HEAD)
       fi
 
       if [ "$FLAG_DRYRUN" = true ]; then
@@ -169,6 +169,57 @@ check-release-deps() {
     fail 3 \
       "--release requires an authenticated GitHub CLI, but 'gh auth status' failed." \
       "Run 'gh auth login' (or set GH_TOKEN) and retry."
+  fi
+}
+
+# Validate --pr preconditions and resolve the PR base branch. No-op unless
+# DO_PR=true. Mirrors check-release-deps (needs a commit + an authenticated gh).
+# Must run AFTER process-version (needs V_NEW) but BEFORE do-branch, while HEAD
+# is still the invocation branch — so the auto-detected base is the branch the
+# release was cut from. Resolution order: --base / PR_BASE (env/.ver-bumprc) >
+# invocation branch > remote default (<remote>/HEAD).
+check-pr-deps() {
+  [ "${DO_PR:-false}" = true ] || return 0
+
+  if [ "${FLAG_NOCOMMIT:-false}" = true ]; then
+    fail 2 \
+      "--pr is incompatible with -n / --no-commit (a PR needs a commit to propose)." \
+      "Drop -n / --no-commit, or drop --pr."
+  fi
+
+  if ! command -v gh >/dev/null 2>&1; then
+    fail 3 \
+      "--pr requires the GitHub CLI (gh), but it isn't on PATH." \
+      "Install gh (https://cli.github.com) or drop --pr."
+  fi
+
+  # As with --release: gh on PATH isn't enough — an unauthenticated gh only
+  # fails at `gh pr create`, after the branch is already pushed. Fail fast.
+  # Skipped under --dry-run (a preview shouldn't require live credentials).
+  if [ "${FLAG_DRYRUN:-false}" != true ] && ! gh auth status >/dev/null 2>&1; then
+    fail 3 \
+      "--pr requires an authenticated GitHub CLI, but 'gh auth status' failed." \
+      "Run 'gh auth login' (or set GH_TOKEN) and retry."
+  fi
+
+  if [ -z "${PR_BASE:-}" ]; then
+    PR_BASE=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)
+  fi
+  if [ -z "${PR_BASE:-}" ]; then
+    PR_BASE=$(git symbolic-ref --quiet --short "refs/remotes/${PUSH_DEST}/HEAD" 2>/dev/null || true)
+    PR_BASE="${PR_BASE#"${PUSH_DEST}/"}"
+  fi
+  if [ -z "${PR_BASE:-}" ]; then
+    fail 3 \
+      "--pr could not determine a base branch (detached HEAD and no ${PUSH_DEST}/HEAD)." \
+      "Pass one explicitly: --base <branch>."
+  fi
+
+  # The PR head is the release branch; a PR into itself is invalid.
+  if [ "$PR_BASE" = "${REL_PREFIX}${V_NEW}" ]; then
+    fail 2 \
+      "--pr base branch '${PR_BASE}' is the same as the release branch head." \
+      "Pass a different base: --base <branch>."
   fi
 }
 
@@ -236,9 +287,55 @@ do-github-release() {
   log_success "Published GitHub release: ${gh_msg}"
 }
 
-# do-undo [<version>] — locally undo the artefacts of a prior ver-bump run:
-# delete the release branch and tag for <version>. Refuses if the working
-# tree is dirty, if the tag/branch were pushed, or if the branch was merged.
+# Open a GitHub pull request for the release branch (head = release-<v>,
+# base = $PR_BASE resolved by check-pr-deps). No-op unless DO_PR=true. Like
+# do-github-release, it needs a commit and a successful push (the head branch
+# must be on the remote). Honours FLAG_DRYRUN by printing the resolved
+# `gh pr create` invocation instead of executing it.
+do-pr() {
+  [ "${DO_PR:-false}" = true ] || return 0
+  # No commit → no release branch content to propose.
+  [ "${FLAG_NOCOMMIT:-false}" = true ] && return 0
+  # The push must have reached the remote; otherwise the head branch isn't there.
+  if [ "${PUSH_OK:-true}" != true ]; then
+    log_warn "Skipping release PR — the push did not succeed, so the branch isn't on the remote."
+    log_trace "Fix the push, then run: gh pr create --head ${REL_PREFIX}${V_NEW} --base ${PR_BASE}"
+    return 0
+  fi
+
+  local head title body RANGE
+  head="${REL_PREFIX}${V_NEW}"
+  title="Release ${TAG_PREFIX}${V_NEW}"
+  # Body mirrors the changelog entry: commits since the previous tag (same range
+  # do-changelog uses), so the PR description is useful even when -c was passed.
+  RANGE=$([ "$(git tag -l "${TAG_PREFIX}${V_PREV}")" ] && echo "${TAG_PREFIX}${V_PREV}..HEAD")
+  # shellcheck disable=SC2086
+  body=$( git log --pretty=format:"- %s" ${RANGE} 2>/dev/null )
+  [ -z "$body" ] && body="Release ${TAG_PREFIX}${V_NEW} (${V_PREV} → ${V_NEW})."
+
+  echo -e "\nOpening release PR..."
+
+  if [ "${FLAG_DRYRUN:-false}" = true ]; then
+    echo -e "${S_LIGHT}[dry-run]${RESET} would run: gh pr create --head ${S_VAL}${head}${RESET} --base ${S_VAL}${PR_BASE}${RESET} --title '${title}'" >&2
+    log_success "(dry-run) release PR prepared: ${S_VAL}${head}${RESET} → ${S_VAL}${PR_BASE}${RESET}"
+    return
+  fi
+
+  local pr_msg pr_rc
+  pr_msg=$( gh pr create --head "$head" --base "$PR_BASE" --title "$title" --body "$body" 2>&1 ); pr_rc=$?
+  if [ "$pr_rc" -ne 0 ]; then
+    fail 1 \
+      "gh pr create failed: ${pr_msg}" \
+      "The branch + tag were pushed; re-run 'gh pr create --head ${head} --base ${PR_BASE}' once the issue is fixed."
+  fi
+  log_success "Opened release PR: ${pr_msg}"
+}
+
+# do-undo [<version>] — locally undo the artefacts of a prior ver-bump run.
+# Branch-mode release: delete the release branch + tag. Tag-in-place release
+# (no branch, the 2.0 default): delete the tag and leave the bump commit in
+# place. Refuses if the working tree is dirty, if the tag/branch were pushed,
+# or if the branch was merged.
 # Honours FLAG_DRYRUN (print plan only) and FLAG_YES (skip confirmation).
 #
 # Resolution order for <version>:
@@ -285,9 +382,13 @@ do-undo() {
     "Tag '${tag}' does not exist locally — nothing to undo." \
     "Check 'git tag -l ${TAG_PREFIX}*' for what's available."
 
-  git rev-parse --verify --quiet "refs/heads/${branch}" >/dev/null || fail 3 \
-    "Branch '${branch}' does not exist locally — nothing to undo." \
-    "Check 'git branch --list ${REL_PREFIX}*' for what's available."
+  # The release branch is optional: tag-in-place releases (the 2.0 default) have
+  # a tag but no release branch. Branch present → full undo (delete branch + tag);
+  # branch absent → tag-only undo (delete the tag; the bump commit stays put).
+  local branch_exists=false
+  if git rev-parse --verify --quiet "refs/heads/${branch}" >/dev/null; then
+    branch_exists=true
+  fi
 
   # Pushed-state check across all remotes. If either the tag or the branch
   # exists on any remote, refuse and print the manual cleanup commands.
@@ -338,39 +439,49 @@ do-undo() {
       "Use 'git revert' on the merge or bump commit instead — undo would lose history."
   fi
 
-  # Pick a parent branch to switch to before deleting. Strategy:
-  #   1. reflog — the branch checked out immediately before 'release-X.Y.Z'
-  #   2. fallback — first non-release branch containing the bump's parent
-  parent_branch=$(
-    git reflog show --pretty='%gs' HEAD 2>/dev/null \
-      | awk -v b="$branch" '
-          /^checkout: moving from / {
-            from=$4; to=$6
-            if (to==b && from!=b) { print from; exit }
-          }'
-  )
-  if [ -z "$parent_branch" ] || ! git rev-parse --verify --quiet "refs/heads/${parent_branch}" >/dev/null; then
-    local parent_sha
-    parent_sha=$(git rev-parse "${branch}^" 2>/dev/null) || parent_sha=""
-    if [ -n "$parent_sha" ]; then
-      while read -r b; do
-        b="${b## }"; b="${b#\* }"; b="${b#+ }"
-        [[ -z "$b" || "$b" == "$branch" || "$b" == "${REL_PREFIX}"* ]] && continue
-        parent_branch="$b"; break
-      done < <(git branch --contains "$parent_sha" 2>/dev/null)
+  # Branch-mode only: find a branch to switch to before deleting the release
+  # branch. Skipped for tag-in-place (there's no branch to leave or delete).
+  if [ "$branch_exists" = true ]; then
+    # Pick a parent branch to switch to before deleting. Strategy:
+    #   1. reflog — the branch checked out immediately before 'release-X.Y.Z'
+    #   2. fallback — first non-release branch containing the bump's parent
+    parent_branch=$(
+      git reflog show --pretty='%gs' HEAD 2>/dev/null \
+        | awk -v b="$branch" '
+            /^checkout: moving from / {
+              from=$4; to=$6
+              if (to==b && from!=b) { print from; exit }
+            }'
+    )
+    if [ -z "$parent_branch" ] || ! git rev-parse --verify --quiet "refs/heads/${parent_branch}" >/dev/null; then
+      local parent_sha
+      parent_sha=$(git rev-parse "${branch}^" 2>/dev/null) || parent_sha=""
+      if [ -n "$parent_sha" ]; then
+        while read -r b; do
+          b="${b## }"; b="${b#\* }"; b="${b#+ }"
+          [[ -z "$b" || "$b" == "$branch" || "$b" == "${REL_PREFIX}"* ]] && continue
+          parent_branch="$b"; break
+        done < <(git branch --contains "$parent_sha" 2>/dev/null)
+      fi
     fi
-  fi
-  if [ -z "$parent_branch" ]; then
-    fail 3 \
-      "Could not determine which branch to switch to before deleting '${branch}'." \
-      "Checkout your intended branch first, then re-run --undo."
+    if [ -z "$parent_branch" ]; then
+      fail 3 \
+        "Could not determine which branch to switch to before deleting '${branch}'." \
+        "Checkout your intended branch first, then re-run --undo."
+    fi
   fi
 
   section "Undo"
   log_info "Plan:"
-  log_trace "git checkout ${parent_branch}"
-  log_trace "git branch -D ${branch}"
+  if [ "$branch_exists" = true ]; then
+    log_trace "git checkout ${parent_branch}"
+    log_trace "git branch -D ${branch}"
+  fi
   log_trace "git tag -d ${tag}"
+  if [ "$branch_exists" != true ]; then
+    log_info "Tag-in-place release: the version-bump commit stays on your current branch."
+    log_trace "git reset --hard HEAD~1   # also drop the bump commit — only if it's HEAD and unpushed"
+  fi
 
   if [ "${FLAG_DRYRUN:-false}" = true ]; then
     printf '\n%b[dry-run]%b no changes made.\n' "${S_LIGHT-}" "${RESET-}"
@@ -386,17 +497,23 @@ do-undo() {
     esac
   fi
 
-  git checkout "$parent_branch" >/dev/null 2>&1 || fail 1 \
-    "Failed to checkout '${parent_branch}'." \
-    "Resolve the issue manually, then re-run --undo."
+  if [ "$branch_exists" = true ]; then
+    git checkout "$parent_branch" >/dev/null 2>&1 || fail 1 \
+      "Failed to checkout '${parent_branch}'." \
+      "Resolve the issue manually, then re-run --undo."
 
-  git branch -D "$branch" >/dev/null 2>&1 || fail 1 \
-    "Failed to delete branch '${branch}'." \
-    "Delete it manually with: git branch -D ${branch}"
+    git branch -D "$branch" >/dev/null 2>&1 || fail 1 \
+      "Failed to delete branch '${branch}'." \
+      "Delete it manually with: git branch -D ${branch}"
+  fi
 
   git tag -d "$tag" >/dev/null 2>&1 || fail 1 \
     "Failed to delete tag '${tag}'." \
     "Delete it manually with: git tag -d ${tag}"
 
-  log_success "Undid release ${S_VAL}${ver}${RESET-} — back on ${S_VAL}${parent_branch}${RESET-}"
+  if [ "$branch_exists" = true ]; then
+    log_success "Undid release ${S_VAL}${ver}${RESET-} — back on ${S_VAL}${parent_branch}${RESET-}"
+  else
+    log_success "Undid release ${S_VAL}${ver}${RESET-} — deleted tag ${S_VAL}${tag}${RESET-} (bump commit left in place)."
+  fi
 }

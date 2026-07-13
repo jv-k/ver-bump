@@ -38,10 +38,11 @@ load 'test_helper'
   # ($S_LIGHT) and the narrative body is plain.
   run grep -rh --include='*.sh' -c 'S_LIGHT}Option set:${RESET}' "${repo_dir}/lib"
   assert_success
-  # At least the 10 option handlers (-m, -f, -p, -t, -B, -d, -n, -b, -c, -l).
+  # At least the 9 option handlers that still emit a set-banner (-m, -f, -p,
+  # -t, -B, -d, -n, -c, -l). -b/--no-branch is a deprecation note as of 2.0.
   local total=0 line
   while IFS= read -r line; do total=$((total + line)); done <<< "${output}"
-  [ "${total}" -ge 10 ]
+  [ "${total}" -ge 9 ]
 }
 
 @test "UI: dry-run lines keep [dry-run] dim marker" {

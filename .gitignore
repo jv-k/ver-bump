@@ -18,3 +18,4 @@ test/test_helper/
 
 # Claude Code per-project local settings
 .claude/
+.worktrees/

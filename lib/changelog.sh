@@ -9,6 +9,50 @@ get-commit-msg() {
   echo bumped "$CMD" "$V_NEW"
 }
 
+# Render the final bump-commit message (R-TPL-1..3, issue #69).
+#   $1 = the accumulated changed-file list ("updated package.json, ..."),
+#        i.e. GIT_MSG before the trailing "bumped ..." summary is appended.
+#
+# COMMIT_MSG_TEMPLATE unset/empty → legacy output, byte-identical to 1.x:
+# COMMIT_MSG_PREFIX + file list + get-commit-msg (R-TPL-1).
+#
+# COMMIT_MSG_TEMPLATE set → the template owns the WHOLE message and
+# COMMIT_MSG_PREFIX is ignored (R-TPL-2). Placeholders are replaced with
+# plain bash string substitution — the template is never eval'd, so
+# $(...) or `...` inside it stays literal text (R-TPL-3):
+#   ${version}       the new version                   (V_NEW)
+#   ${prev_version}  the previous version              (V_PREV)
+#   ${tag}           the new tag                       (TAG_PREFIX + V_NEW)
+#   ${files}         the generated changed-file list, without the
+#                    trailing ", " the legacy assembly relies on
+# Unknown placeholders pass through untouched. ${files} is substituted
+# LAST so a file name that happens to contain placeholder text can't be
+# substituted a second time.
+#
+# Both do-commit (the real commit) and do-changelog (the manual bump entry,
+# written before that commit exists) MUST render through here — one
+# renderer is what keeps the CHANGELOG entry and the actual commit message
+# from drifting apart.
+# shellcheck disable=SC2016 # the single-quoted ${...} placeholders below are literal search patterns, not expansions
+render-commit-msg() {
+  local files=$1
+
+  if [ -z "${COMMIT_MSG_TEMPLATE-}" ]; then
+    printf '%s' "${COMMIT_MSG_PREFIX}${files}$(get-commit-msg)"
+    return 0
+  fi
+
+  # Pattern lives in a variable and is quoted at expansion, so bash treats
+  # it as a literal string, not a glob — safe on bash 3.2.
+  local msg="$COMMIT_MSG_TEMPLATE" ph
+  local tag="${TAG_PREFIX}${V_NEW}" files_trimmed="${files%, }"
+  ph='${version}';      msg=${msg//"$ph"/$V_NEW}
+  ph='${prev_version}'; msg=${msg//"$ph"/$V_PREV}
+  ph='${tag}';          msg=${msg//"$ph"/$tag}
+  ph='${files}';        msg=${msg//"$ph"/$files_trimmed}
+  printf '%s' "$msg"
+}
+
 capitalise() {
   echo "$(tr '[:lower:]' '[:upper:]' <<< "${1:0:1}")${1:1}"
 }
@@ -106,7 +150,8 @@ _changelog-grouped-section() {
   fi
 
   # The bump commit is classified like any other commit (its section
-  # follows COMMIT_MSG_PREFIX — "chore: " lands in Other by default).
+  # follows the rendered message — the default "chore: " prefix, or a
+  # COMMIT_MSG_TEMPLATE's leading type, lands it in Other/feat/fix/…).
   entry="- $(_changelog-render-subject "$bump_entry")"$'\n'
   case "$(classify-commit "$bump_entry" "")" in
     breaking) breaking+="$entry" ;;
@@ -192,16 +237,21 @@ do-changelog() {
   TMP=$(mktemp "./CHANGELOG.md.XXXXXX")
 
   # The bump commit's own entry:
-  # - The final commit is done after do-changelog(), so we need to create the log entry for it manually:
-  LOG_MSG="${GIT_MSG}$(get-commit-msg)"
+  # - The final commit is done after do-changelog(), so we need to create the log entry for it manually.
+  # - render-commit-msg is the ONE renderer shared with do-commit, so this
+  #   entry and the eventual commit message cannot drift (R-TPL-1/2). Only
+  #   the first line is logged — the same subject-only view `git log %s`
+  #   gives every other entry (a template may carry a multi-line body).
+  LOG_MSG=$(render-commit-msg "$GIT_MSG")
+  LOG_MSG="${LOG_MSG%%$'\n'*}"
 
   if [ "${CHANGELOG_STYLE-}" = "grouped" ]; then
-    _changelog-grouped-section "$COMMITS_MSG" "${COMMIT_MSG_PREFIX}${LOG_MSG}" "$RANGE" > "$TMP"
+    _changelog-grouped-section "$COMMITS_MSG" "${LOG_MSG}" "$RANGE" > "$TMP"
   else
     # Heading
     echo "## $V_NEW ($NOW)" > "$TMP"
     # Log the bumping commit
-    echo "- ${COMMIT_MSG_PREFIX}${LOG_MSG}" >> "$TMP"
+    echo "- ${LOG_MSG}" >> "$TMP"
     # Add previous commits
     [ -n "$COMMITS_MSG" ] && echo "$COMMITS_MSG" >> "$TMP"
   fi

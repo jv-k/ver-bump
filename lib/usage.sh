@@ -119,6 +119,7 @@ usage() {
   print-opt-row "-l" "--pause-changelog" ""          "Pause before commit so CHANGELOG.md can be edited."
   print-opt-row "-h" "--help"          ""            "Show this help message."
   print-opt-row "-y" "--yes"           ""            "Skip interactive confirmation prompts."
+  print-opt-row "-q" "--quiet"         ""            "Suppress decoration; print only the new version on stdout (needs -y, -v, or a level)."
   print-opt-row ""   "--undo"          "[<version>]" "Locally delete release-X.Y.Z + tag vX.Y.Z (refuses if pushed/dirty)."
   print-opt-row ""   "--major"              ""            "Force a major bump from the current version (mutually exclusive)."
   print-opt-row ""   "--minor"              ""            "Force a minor bump from the current version (mutually exclusive)."

@@ -13,15 +13,8 @@ Stable machine contract (PRD G4) so CI wrappers can branch on failure class.
 
 | ID | Requirement | Status |
 | --- | --- | --- |
-| R-EXIT-1 | Every user-visible error path exits with a contract code via `fail`, never bare `exit 1`. | ⚠️ shipped with known deviations (below) |
+| R-EXIT-1 | Every user-visible error path exits with a contract code via `fail`, never bare `exit 1`. | ✅ shipped — ESC at the version prompt and the `--undo` remote-artefacts precondition now exit via `fail` (`5` and `3`) |
 | R-EXIT-2 | Contract is versioned with the major release; must not shift between `2.x` patches. | ✅ documented here + `lib/errors.sh` |
-
-Known deviations (open bugs):
-
-- ESC at the version prompt exits `130` (`lib/version.sh`) instead of `5`,
-  and bypasses `fail`. The push-decline path correctly uses `fail 5`.
-- One `--undo` precondition path exits `3` directly after `log_warn`
-  (`lib/git-actions.sh`) instead of via `fail`.
 
 Modules: `lib/errors.sh` (`fail <code> <message> [hint]`).
 Tests: `test/errors.bats` (19) — every new `fail` site needs a case here.

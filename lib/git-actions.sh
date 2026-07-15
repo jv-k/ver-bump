@@ -403,7 +403,6 @@ do-undo() {
   done < <(git remote)
 
   if (( ${#remote_hits[@]} > 0 )); then
-    log_warn "Refusing to undo — release artefacts are present on remote(s):"
     local hit
     for hit in "${remote_hits[@]}"; do
       log_trace "$hit"
@@ -412,7 +411,9 @@ do-undo() {
     log_trace "git push origin :refs/tags/${tag}      # delete remote tag"
     log_trace "git push origin --delete ${branch}    # delete remote branch"
     log_trace "git tag -d ${tag} && git branch -D ${branch}"
-    exit 3
+    fail 3 \
+      "Refusing to undo — release artefacts are present on remote(s): ${remote_hits[*]}." \
+      "Delete the remote tag/branch first (commands above), then re-run --undo."
   fi
 
   # Refuse if the release branch's tip has already been merged into another

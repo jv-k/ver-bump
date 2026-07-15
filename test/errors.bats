@@ -187,6 +187,19 @@ SH
   assert_output --partial "--yes"
 }
 
+@test "exit code: ESC at the version prompt -> 5 via fail" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  V_TEST="1.2.3"
+  create_ver_file
+  # First byte on stdin is ESC — the prompt's single-keystroke pre-read
+  # detects it and must abort via `fail 5`, not a raw `exit 130`.
+  run process-version <<< $'\e'
+  assert_failure 5
+  assert_output --partial "version prompt aborted"
+  assert_output --partial "Hint:"
+}
+
 @test "exit code: do-push declining the prompt -> 5" {
   source ${profile_script}
   cd "$(scratch_repo)"

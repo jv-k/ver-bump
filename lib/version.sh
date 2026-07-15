@@ -338,7 +338,7 @@ do-packagefile-bump() {
     if ! json_set_version "$VER_FILE" "$V_NEW"; then
       fail 1 \
         "Error updating <${VER_FILE}>." \
-        "Check that ${VER_FILE} is valid JSON (run: jq . ${VER_FILE}) and that the file is writable."
+        "Check that ${VER_FILE} is valid JSON (run: jq . \"${VER_FILE}\") and that the file is writable."
     fi
     # package-lock.json: update both top-level .version and (if present) the
     # root package entry .packages[""].version — matches npm's own behaviour.

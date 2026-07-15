@@ -45,6 +45,7 @@ It does several things that are typically required for releasing a Git repositor
   - [Config file (`.ver-bumprc`)](#config-file-ver-bumprc)
   - [Version suggestion](#version-suggestion)
   - [Dry-run](#dry-run)
+  - [Release hooks](#release-hooks)
   - [Exit codes](#exit-codes)
 - [Shell completions](#shell-completions)
 - [Example](#example)
@@ -264,7 +265,7 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
            [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-q|--quiet] [-h|--help] \
            [--source <file.json>] [--branch] [--pr] [--base <branch>] \
-           [--allow-dirty] [--allow-empty] [--no-fetch] \
+           [--allow-dirty] [--allow-empty] [--no-fetch] [--no-hooks] \
            [--undo [<version>]] [--major | --minor | --patch] [--release] \
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
 ```
@@ -303,6 +304,8 @@ Supported keys (each maps 1:1 to an existing global):
 | `NO_FETCH` | `--no-fetch` | *unset* (fetch + behind-upstream check) |
 | `RELEASE_BRANCHES` | *(no flag)* | *unset* (release from any branch) |
 | `TAG_SIGN` | `--sign` | `false` (annotated, unsigned tag) |
+| `PRE_BUMP_CMD` | *(no flag — see [Release hooks](#release-hooks))* | *unset* (no hook) |
+| `POST_TAG_CMD` | *(no flag — see [Release hooks](#release-hooks))* | *unset* (no hook) |
 
 Example:
 
@@ -466,6 +469,9 @@ to the bump commit only; the annotated tag's message keeps its own knob,
                               --tags' and no behind-upstream check before releasing.
                               Remote-only tag collisions then surface at push time
                               instead. Also available as the NO_FETCH config/env key.
+    --no-hooks                Skip the PRE_BUMP_CMD / POST_TAG_CMD release hooks for
+                              this run (like git's --no-verify). CLI-only — there is
+                              no env or .ver-bumprc equivalent.
     --branch                  Cut a release-<version> branch (the pre-2.0 default).
                               Otherwise ver-bump tags the current branch in place.
     --pr                      Create the release branch, push it, then open a pull
@@ -541,6 +547,54 @@ $ ver-bump --dry-run
 Combine with `--no-branch` / `--no-commit` / `--no-changelog` to narrow the
 preview down to just the steps you want to see.
 
+### Release hooks
+
+Two hook points cover the common "run my tests before tagging" and "build an
+artifact after tagging" cases. Each is a single command string, run via
+`bash -c`, set as an environment variable or a `.ver-bumprc` key (same
+[precedence](#config-file-ver-bumprc) as every other key — there is
+deliberately no CLI flag to set them):
+
+| Key | Runs | On non-zero exit |
+| --- | --- | --- |
+| `PRE_BUMP_CMD` | after **all** Verify preflights pass, before any file is touched | exit `4`, nothing mutated |
+| `POST_TAG_CMD` | after the tag is created, before push / `--pr` / `--release` | exit `4`; the commit + tag are kept — recover with `--undo` |
+
+```sh
+# .ver-bumprc
+PRE_BUMP_CMD="npm test"
+POST_TAG_CMD="npm run build:artifacts"
+```
+
+Hook stdout/stderr stream straight through to your terminal, and the resolved
+command is logged before it runs. Each hook sees the release context in its
+environment:
+
+| Variable | Value |
+| --- | --- |
+| `VER_BUMP_VERSION` | the new version (e.g. `1.3.0`) |
+| `VER_BUMP_PREV_VERSION` | the previous version (e.g. `1.2.3`) |
+| `VER_BUMP_TAG` | the full tag name (e.g. `v1.3.0`) |
+
+**Quoting:** `.ver-bumprc` is shell-sourced, so **single-quote** hook strings
+that reference these variables — a double-quoted `"echo $VER_BUMP_TAG"`
+expands at config-load time (while the variables are still empty), whereas
+`'echo $VER_BUMP_TAG'` defers expansion until the hook runs:
+
+```sh
+POST_TAG_CMD='echo "released $VER_BUMP_TAG" >> releases.log'
+```
+
+Under `--dry-run` the hook command is printed with the `[dry-run]` prefix and
+not executed. Pass `--no-hooks` to skip both hooks for a single run (git's
+`--no-verify` convention); to disable just one hook for a run, empty the key
+instead — env beats the file: `PRE_BUMP_CMD= ver-bump …`
+
+> **Migrating from 1.x:** ver-bump 2.0 no longer shells out to `npm version`,
+> so npm's `preversion` / `version` / `postversion` lifecycle scripts stopped
+> firing as a side-effect. If you relied on `preversion` to run your tests,
+> one `.ver-bumprc` line restores it: `PRE_BUMP_CMD="npm test"`.
+
 ### Exit codes
 
 | Code | Meaning |
@@ -549,7 +603,7 @@ preview down to just the steps you want to see.
 | `1` | Generic runtime error (failed commit, jq write error, etc.). |
 | `2` | Usage / argument-parse error (unknown flag, missing value). |
 | `3` | Precondition failure (missing `package.json`, missing `git`/`jq`, SemVer validation, insecure `.ver-bumprc`, branch/tag already exists). |
-| `4` | Hook failure (reserved for future use). |
+| `4` | Hook failure — `PRE_BUMP_CMD` or `POST_TAG_CMD` exited non-zero (see [Release hooks](#release-hooks)). |
 | `5` | User abort (declined a prompt, e.g. push confirmation). |
 
 ## Shell completions

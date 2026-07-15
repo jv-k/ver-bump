@@ -295,3 +295,32 @@ tagged_repo_no_source() {
   assert_output --partial -- "-l source"
   assert_output --partial "__fish_complete_suffix .json"
 }
+
+# ── Review regressions (PR #83): stdout hygiene + dry-run parity ──────────
+
+@test "--source before --completions keeps stdout clean (Option set goes to stderr)" {
+  # --source is parsed in the same normalize loop that emits completions, so
+  # its "Option set" notice must not land on stdout and corrupt the script.
+  run bash -c '"$1" --source pkg.json --completions bash 2>/dev/null </dev/null' _ "${profile_script}"
+  assert_success
+  refute_output --partial "Option set"
+  echo "$output" | bash -n
+}
+
+@test "dry-run previews a commit for pre-staged changes (R-SRC-3 parity, no dry-run-only skip)" {
+  tagged_repo_no_source
+  git commit -q --allow-empty -m "feat: releasable change"
+  # A change staged outside this run (the --allow-dirty scenario). Source is
+  # absent and -c skips the changelog, so this run's own ledger is empty — but
+  # the index is not, so a live run would commit it. Dry-run must preview that
+  # commit, not take a tag-only early return. -p origin + --dry-run intercepts
+  # the push with no prompt (R-DRY-4).
+  echo "outside change" > extra.txt
+  git add extra.txt
+
+  run ${profile_script} --dry-run --allow-dirty -c -v 1.5.0 -p origin </dev/null
+  assert_success
+  strip_ansi_output
+  refute_output --partial "Nothing staged to commit"
+  assert_output --partial "would run: git commit"
+}

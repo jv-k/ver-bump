@@ -58,6 +58,7 @@ FLAG_DRYRUN=false
 : "${TAG_PREFIX:=v}"
 : "${COMMIT_MSG_PREFIX:=chore: }" # Commit msg prefix for the file changes this script makes
 : "${PUSH_DEST:=origin}"
+: "${CHANGELOG_STYLE:=flat}" # CHANGELOG.md style: flat (1.x-identical, default) | grouped
 
 JSON_FILES=()
 

@@ -289,6 +289,7 @@ Supported keys (each maps 1:1 to an existing global):
 | `ALLOW_DIRTY` | `--allow-dirty` | *unset* (dirty tree refuses) |
 | `NO_FETCH` | `--no-fetch` | *unset* (fetch + behind-upstream check) |
 | `RELEASE_BRANCHES` | *(no flag)* | *unset* (release from any branch) |
+| `TAG_SIGN` | `--sign` | `false` (annotated, unsigned tag) |
 
 Example:
 
@@ -417,6 +418,11 @@ output stays byte-identical to previous releases.
                               (GitHub-only, requires `gh` and -p / --push <remote>).
                               Notes are read from $VER_BUMP_RELEASE_NOTES_CMD (default
                               `npx jv-k/releasetool`).
+    --sign                    Create a signed tag (git tag -s) instead of an annotated
+                              one. The signing key and program come from your git
+                              config (user.signingkey, gpg.format) — ver-bump does no
+                              key management. Also available as the TAG_SIGN
+                              config/env key.
     --about                   Print name, version, author, and homepage; then exit.
     --completions <shell>     Emit completion script for bash, zsh, or fish to stdout.
     --install-completions [=<shell>]

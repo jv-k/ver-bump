@@ -142,12 +142,12 @@ _ver_bump() {
             return 0
             ;;
         # Options that take a free-form argument — no completion
-        -v|--version|-m|--message|-p|--push|-t|--tag-prefix|-B|--branch-prefix|--undo|--base|--preid)
+        -v|--version|-m|--message|-p|--push|-t|--tag-prefix|-B|--branch-prefix|--undo|--base|--preid|--bump)
             return 0
             ;;
     esac
 
-    opts="--version --message --file --source --push --tag-prefix --branch-prefix \
+    opts="--version --message --file --source --bump --push --tag-prefix --branch-prefix \
           --dry-run --no-commit --no-branch --no-changelog --pause-changelog \
           --yes --quiet --undo --branch --pr --base --major --minor --patch --preid --release \
           --sign --allow-dirty --allow-empty --no-fetch --no-hooks \
@@ -172,6 +172,7 @@ _ver_bump() {
     '(-m --message)'{-m,--message}'[custom annotated-tag message]:message:' \
     '(-f --file)'{-f,--file}'[bump version in extra JSON file]:file:_files -g "*.json"' \
     '--source[version source + primary bump target (default package.json)]:file:_files -g "*.json"' \
+    '*--bump[bump a JSON/TOML/YAML/text file: <file>[:@<path>|:<pattern with {{version}}>]]:spec:' \
     '(-p --push)'{-p,--push}'[push branch + tag to <remote>]:remote:' \
     '(-t --tag-prefix)'{-t,--tag-prefix}'[override tag prefix]:prefix:' \
     '(-B --branch-prefix)'{-B,--branch-prefix}'[override branch prefix]:prefix:' \
@@ -214,6 +215,7 @@ for _cmd in ver-bump ver-bump.sh
     complete -c $_cmd -s m -l message        -r -d 'Custom annotated-tag message'
     complete -c $_cmd -s f -l file           -r -a '(__fish_complete_suffix .json)' -d 'Bump version in extra JSON file'
     complete -c $_cmd      -l source         -r -a '(__fish_complete_suffix .json)' -d 'Version source + primary bump target'
+    complete -c $_cmd      -l bump           -r -d 'Bump a JSON/TOML/YAML/text file: <file>[:@<path>|:<pattern with {{version}}>]'
     complete -c $_cmd -s p -l push           -r -d 'Push branch + tag to <remote>'
     complete -c $_cmd -s t -l tag-prefix     -r -d 'Override tag prefix'
     complete -c $_cmd -s B -l branch-prefix  -r -d 'Override branch prefix'

@@ -248,6 +248,33 @@ normalize-long-opts() {
       continue
     fi
 
+    # --bump <spec> / --bump=<spec> — register a multi-format bump target
+    # (R-TGT). Long-only, repeatable, value flag (same shape as --source);
+    # captured here so it needs no getopts slot. Each spec is
+    # <file>[:@<path> | :<pattern with {{version}}>]. Grammar is validated
+    # later in check-bump-deps (which also covers BUMP_FILES from the rc),
+    # before any mutation — here we only reject an empty value.
+    if [ "$arg" = "--bump" ] || [[ "$arg" == "--bump="* ]]; then
+      local bump_spec
+      if [[ "$arg" == "--bump="* ]]; then
+        bump_spec="${arg#--bump=}"
+        [ -z "$bump_spec" ] && fail 2 \
+          "--bump= requires a spec." \
+          "Pass <file>, <file>:@<path>, or '<file>:<pattern with {{version}}>'."
+      elif (( $# )) && [ "${1:0:1}" != "-" ]; then
+        bump_spec="$1"; shift
+      else
+        fail 2 \
+          "Option --bump requires a spec." \
+          "Pass <file>, <file>:@<path>, or '<file>:<pattern with {{version}}>'."
+      fi
+      BUMP_TARGETS+=("$bump_spec")
+      # To stderr (same reasoning as --source): keeps stdout clean when --bump
+      # precedes --completions / --quiet.
+      echo -e "\n${S_LIGHT}Option set:${RESET} bump target: <${S_VAL}${bump_spec}${RESET}>" >&2
+      continue
+    fi
+
     # --no-hooks — long-only boolean: skip both release hooks (PRE_BUMP_CMD /
     # POST_TAG_CMD) for this run (R-HOOK-5) — git's --no-verify convention.
     # CLI-only like --allow-empty (reset in process-arguments): an rc or env

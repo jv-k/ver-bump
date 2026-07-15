@@ -257,6 +257,39 @@ there is nothing to commit). Keep a JSON manifest like `composer.json`?
 Point `--source` at it (or set `SOURCE_FILE` in `.ver-bumprc`) and it
 becomes both the version source and the file that gets bumped.
 
+**Bumping stack-specific files** — keep the version in a `pyproject.toml`, a
+Go const, a Helm `Chart.yaml`, or any text file in lock-step with the tag
+via `--bump` (repeatable), or declare the targets once in `.ver-bumprc` as
+`BUMP_FILES`:
+
+```sh
+# Text pattern — no extra tool; rewrites only the matching line.
+# Works for a Go const, a Python __version__, a Makefile, a Dockerfile, …
+ver-bump --bump 'main.go:Version = "{{version}}"'
+ver-bump --bump 'src/mypkg/__init__.py:__version__ = "{{version}}"'
+
+# Structured dotted path — JSON via jq (built in), TOML/YAML via the
+# jq-based yq suite (tomlq / yq) when installed.
+ver-bump --bump pyproject.toml:@project.version --bump Chart.yaml:@version
+
+# Or declare them once (newline-separated) — every run keeps them in sync:
+# .ver-bumprc
+BUMP_FILES="main.go:Version = \"{{version}}\"
+src/mypkg/__init__.py:__version__ = \"{{version}}\"
+pyproject.toml:@project.version
+Chart.yaml:@version"
+```
+
+Match your file's exact quoting and spacing — the pattern is a literal
+search. `__version__='1.2.3'` (single quotes, no spaces) needs
+`--bump "…/__init__.py:__version__='{{version}}'"`.
+
+A bare `--bump <file>` bumps the file's top-level `.version` (JSON/TOML/YAML);
+`@<path>` targets any dotted key — including a nested one that the JSON
+`.version` default can't reach; and a `{{version}}` text pattern covers
+everything else with no dependency. Same-version and missing files are
+skipped with a notice; every change is staged and listed in the bump commit.
+
 ### CLI
 
 ```sh
@@ -264,7 +297,7 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
            [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
            [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-q|--quiet] [-h|--help] \
-           [--source <file.json>] [--branch] [--pr] [--base <branch>] \
+           [--source <file.json>] [--bump <spec>]... [--branch] [--pr] [--base <branch>] \
            [--allow-dirty] [--allow-empty] [--no-fetch] [--no-hooks] \
            [--undo [<version>]] [--major | --minor | --patch] [--preid <id>] [--release] \
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
@@ -293,6 +326,7 @@ Supported keys (each maps 1:1 to an existing global):
 | `REL_PREFIX` | `-B` / `--branch-prefix` | `release-` |
 | `PUSH_DEST` | `-p` / `--push` | `origin` |
 | `SOURCE_FILE` | `--source` | `package.json` |
+| `BUMP_FILES` | `--bump` | *unset* (no extra targets) |
 | `COMMIT_MSG_PREFIX` | *(no flag)* | `"chore: "` |
 | `COMMIT_MSG_TEMPLATE` | *(no flag)* | *unset* (prefix + generated file list) |
 | `CHANGELOG_STYLE` | *(no flag)* | `flat` |
@@ -449,6 +483,20 @@ to the bump commit only; the annotated tag's message keeps its own knob,
                               (tag + CHANGELOG release; with nothing staged, the
                               commit is skipped and the tag lands on HEAD). Also
                               available as the SOURCE_FILE config/env key.
+    --bump <spec>             Also bump the version in a JSON / TOML / YAML / text
+                              file. Repeatable. <spec> is one of:
+                                <file>                 structured, top-level .version
+                                                       by file type (jq / tomlq / yq)
+                                <file>:@<path>         structured, explicit dotted path
+                                                       (e.g. pyproject.toml:@tool.poetry.version)
+                                '<file>:<pattern>'     text search/replace; <pattern>
+                                                       must contain the {{version}} token
+                              Text patterns need no extra tool and rewrite only the
+                              matching line (Go const, Makefile, Dockerfile, plain
+                              VERSION, …). TOML/YAML @paths need the jq-based yq suite
+                              (tomlq / yq); a missing helper exits 3 and points you at
+                              the text-pattern alternative. Also available as the
+                              BUMP_FILES config/env key (newline-separated specs).
     --undo [<version>]        Locally delete the release branch + tag for <version>
                               (refuses if pushed, dirty, or already merged).
     --major                   Force a major bump from the current version.

@@ -273,15 +273,19 @@ bump-json-files() {
       elif [ "$V_PREV" = "$V_NEW" ]; then
         echo -e "\n${I_WARN} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$V_PREV"
       else
-        # Write to output file
-        FILE_MSG=$( jq --arg V_NEW "$V_NEW" '.version = $V_NEW' "$FILE" > "${FILE}.temp" )
+        # Write to output file. jq's stdout is the rewritten JSON and goes to
+        # the temp file, so 2>&1 has to come first for the substitution to
+        # capture stderr — the errors the -z check below is testing for.
+        FILE_MSG=$( jq --arg V_NEW "$V_NEW" '.version = $V_NEW' "$FILE" 2>&1 > "${FILE}.temp" )
 
         if [ -z "$FILE_MSG" ]; then
           echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$V_PREV ${S_NOTICE}-> ${S_QUESTION}$V_NEW"
-          # rm -f "${FILE}.temp"
           mv -f "${FILE}.temp" "${FILE}"
           # Add file change to commit message:
           GIT_MSG+="updated $FILE, "
+        else
+          echo -e "\n${I_STOP} ${S_ERROR}Error updating version in file <${S_NORM}$FILE${S_ERROR}>:\n${S_WARN}$FILE_MSG"
+          rm -f "${FILE}.temp"
         fi
       fi
 

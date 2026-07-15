@@ -46,7 +46,7 @@ usage() {
   printf '\n%bUSAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   printf '  %b%s%b [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
-  printf '  %b%s%b [--branch] [--pr] [--base <branch>] [--major | --minor | --patch] [--release] [--sign] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
+  printf '  %b%s%b [--source <file.json>] [--branch] [--pr] [--base <branch>] [--major | --minor | --patch] [--release] [--sign] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
 
   # Column width for label + 2-space gutter. Longest label is
@@ -120,6 +120,8 @@ usage() {
   print-opt-row "-h" "--help"          ""            "Show this help message."
   print-opt-row "-y" "--yes"           ""            "Skip interactive confirmation prompts."
   print-opt-row "-q" "--quiet"         ""            "Suppress decoration; print only the new version on stdout (needs -y, -v, or a level)."
+  print-opt-row ""   "--source"        "<file.json>" "Version source + primary bump target (default: package.json)."
+  print-opt-cont "If the file is missing, the current version derives from the latest matching git tag."
   print-opt-row ""   "--undo"          "[<version>]" "Locally delete release-X.Y.Z + tag vX.Y.Z (refuses if pushed/dirty)."
   print-opt-row ""   "--major"              ""            "Force a major bump from the current version (mutually exclusive)."
   print-opt-row ""   "--minor"              ""            "Force a minor bump from the current version (mutually exclusive)."
@@ -146,6 +148,7 @@ usage() {
   print-example-row "${SCRIPT_NAME} --pr"                  "Branch, push, and open a release PR (needs gh)."
   print-example-row "${SCRIPT_NAME} -t release/"           "Use a custom tag prefix (e.g. release/1.2.3)."
   print-example-row "${SCRIPT_NAME} -f composer.json"      "Also bump version in an extra JSON file."
+  print-example-row "${SCRIPT_NAME} --source composer.json" "Use composer.json as the version source (non-Node repo)."
   print-example-row "${SCRIPT_NAME} --about"               "Show branded version info."
   print-example-row "${SCRIPT_NAME} --install-completions" "Install shell completions (auto-detects shell)."
 

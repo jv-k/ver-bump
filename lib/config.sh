@@ -24,6 +24,8 @@ true
 #                        ${version}/${prev_version}/${tag}/${files}
 #                        placeholders; when set COMMIT_MSG_PREFIX is
 #                        ignored; empty = legacy prefix+list, R-TPL-1/2)
+#   SOURCE_FILE (version source + primary bump target, mirrors --source;
+#                default package.json, R-SRC-1/5)
 #   PRE_BUMP_CMD (release hook before any mutation; empty = no hook, R-HOOK-1)
 #   POST_TAG_CMD (release hook after tag, before push; empty = no hook, R-HOOK-2)
 #   FLAG_NOBRANCH (deprecated, no-op — tag-in-place is the default as of 2.0)
@@ -36,7 +38,7 @@ true
 _CONFIG_KEYS=(TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX \
               COMMIT_MSG_TEMPLATE FLAG_BRANCH PR_BASE CHANGELOG_STYLE \
               FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE \
-              ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES TAG_SIGN \
+              ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES TAG_SIGN SOURCE_FILE \
               PRE_BUMP_CMD POST_TAG_CMD)
 
 # Walk up from $PWD. Echoes the first .ver-bumprc found; returns 1 if none.
@@ -146,4 +148,7 @@ apply-config-defaults() {
   # Signed tags are opt-in (R-SIGN-1). Explicit false default; false and
   # unset behave identically under [ "$TAG_SIGN" = true ].
   TAG_SIGN="${TAG_SIGN:-false}"
+  # Version source + primary bump target (R-SRC-1/5). VER_FILE derives from
+  # it in main() after process-arguments, so --source (CLI) wins per R-CFG-3.
+  SOURCE_FILE="${SOURCE_FILE:-package.json}"
 }

@@ -139,6 +139,27 @@ _live_repo() {
   [ ! -f pwned-b ]
 }
 
+@test "render-commit-msg: & and backslash in the template text stay literal" {
+  source ${profile_script}
+  _render_fixture
+  COMMIT_MSG_TEMPLATE='R&D \release\ v${version} & co'
+
+  assert_equal "$(render-commit-msg '')" 'R&D \release\ v1.1.0 & co'
+}
+
+@test "render-commit-msg: & and backslash in substituted values stay literal (bash 5.2 patsub_replacement)" {
+  source ${profile_script}
+  _render_fixture
+  # On bash 5.2+ an unescaped & in the replacement would splice the matched
+  # placeholder back in ("updated R${files}D.json ..."); bash 3.2 was always
+  # literal. The assertion is on the final message only, so it must pass
+  # identically on both generations.
+  COMMIT_MSG_TEMPLATE='files: ${files} (${version})'
+
+  assert_equal "$(render-commit-msg 'updated R&D.json, updated a\b.json, ')" \
+    'files: updated R&D.json, updated a\b.json (1.1.0)'
+}
+
 @test "live: injection-shaped template lands literally in the real commit, and nothing executes" {
   _live_repo
 
@@ -148,6 +169,19 @@ _live_repo() {
 
   [ ! -f ./pwned ]
   assert_equal "$(git log -1 --pretty=%B)" 'release 1.1.0 $(touch ./pwned)'
+}
+
+@test "live: bumped file named with & lands literally in the templated message" {
+  _live_repo
+  printf '{ "version": "1.0.0" }\n' > "R&D.json"
+  git add "R&D.json" && git commit -qm "chore: add R&D.json"
+
+  COMMIT_MSG_TEMPLATE='files: ${files}' \
+    run ${profile_script} -v 1.1.0 -p "${LIVE_REMOTE}" -y -f "R&D.json"
+  assert_success
+
+  assert_equal "$(git log -1 --pretty=%B)" \
+    "files: updated package.json, updated R&D.json, created CHANGELOG.md"
 }
 
 # CHANGELOG parity: the manual bump entry uses the same renderer ###############
@@ -219,7 +253,8 @@ _live_repo() {
     run ${profile_script} -d -b -c -p origin -v 1.0.1
   strip_ansi_output
   assert_success
-  assert_output --partial "git commit -m 'from-env 1.0.1'"
+  # The preview %q-quotes the message (spaces become backslash-escaped).
+  assert_output --partial 'git commit -m from-env\ 1.0.1'
   refute_output --partial "from-file"
 }
 
@@ -234,8 +269,8 @@ _live_repo() {
   run ${profile_script} -d -b -c -p origin -v 1.0.1
   strip_ansi_output
   assert_success
-  assert_output --partial "git commit -m 'from-file 1.0.1'"
-  refute_output --partial "chore: updated package.json"
+  assert_output --partial 'git commit -m from-file\ 1.0.1'
+  refute_output --partial "chore:"
 }
 
 @test "precedence: nothing set — dry-run previews the legacy message (end-to-end)" {
@@ -248,5 +283,5 @@ _live_repo() {
   run ${profile_script} -d -b -c -p origin -v 1.0.1
   strip_ansi_output
   assert_success
-  assert_output --partial "git commit -m 'chore: updated package.json, bumped 1.0.0 -> 1.0.1'"
+  assert_output --partial 'git commit -m chore:\ updated\ package.json\,\ bumped\ 1.0.0\ -\>\ 1.0.1'
 }

@@ -50,7 +50,10 @@ do-commit() {
   echo -e "\nCommitting..."
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git commit -m '${S_VAL}${FINAL_MSG}${RESET}'" >&2
+    # %q shell-quotes the message so the preview stays copy-pasteable even
+    # when a template carries quotes, backslashes, or $(...) text.
+    printf '%b[dry-run]%b would run: git commit -m %b%q%b\n' \
+      "${S_LIGHT}" "${RESET}" "${S_VAL}" "${FINAL_MSG}" "${RESET}" >&2
     log_success "(dry-run) commit prepared"
     return
   fi

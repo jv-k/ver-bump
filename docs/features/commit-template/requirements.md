@@ -34,9 +34,16 @@ placeholder text cannot be substituted a second time. Because
 (`COMMIT_MSG_TEMPLATE='chore(release): v${version}'`) or the shell
 expands the placeholders to empty strings at source time.
 
+On bash 5.2+ (`patsub_replacement`, on by default) `&` and `\` are special
+on the replacement side of `${var//pat/rep}`, so substituted values are
+backslash-escaped first — but only when that option is active, because
+bash 3.2 substitutes replacements literally and the extra backslashes
+would leak into the message there. A bumped file named `R&D.json` renders
+identically on both generations (pinned in tests).
+
 ## Test mapping
 
-`test/commit-template.bats` (16):
+`test/commit-template.bats` (19):
 
 - R-TPL-1 — legacy byte-identical pin (unit + live), each placeholder
   renders, `${files}` matches the generated list (live), unknown
@@ -45,7 +52,9 @@ expands the placeholders to empty strings at source time.
 - R-TPL-2 — `COMMIT_MSG_PREFIX` ignored when template set (unit + live
   whole-message assert).
 - R-TPL-3 — `$(touch …)`/backtick templates stay literal and execute
-  nothing (unit + live commit).
+  nothing (unit + live commit); `&`/`\` stay literal in template text and
+  in substituted values (unit + live `-f R&D.json`), identically on bash
+  3.2 and 5.2+.
 - R-TPL-4 — annotated tag message unaffected (live).
 - Renderer sharing — CHANGELOG bump entry equals the commit subject in
   flat and grouped styles; multi-line template keeps its body in the

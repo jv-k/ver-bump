@@ -45,9 +45,27 @@ render-commit-msg() {
   # Pattern lives in a variable and is quoted at expansion, so bash treats
   # it as a literal string, not a glob — safe on bash 3.2.
   local msg="$COMMIT_MSG_TEMPLATE" ph
+  local version="$V_NEW" prev="$V_PREV"
   local tag="${TAG_PREFIX}${V_NEW}" files_trimmed="${files%, }"
-  ph='${version}';      msg=${msg//"$ph"/$V_NEW}
-  ph='${prev_version}'; msg=${msg//"$ph"/$V_PREV}
+
+  # bash 5.2+ enables patsub_replacement by default, which makes `&` and
+  # `\` special on the REPLACEMENT side of ${var//pat/rep} — a bumped file
+  # named "R&D.json" would splice the matched placeholder back into the
+  # message. Escape the values, but only when that option is active: bash
+  # 3.2 substitutes replacements literally and must NOT get the extra
+  # backslashes (its shopt doesn't know the option, so the block is
+  # skipped). The escape expansions use double-quoted replacements, which
+  # both bash generations treat literally.
+  if shopt -q patsub_replacement 2>/dev/null; then
+    local bs=$'\\'
+    version=${version//"$bs"/"$bs$bs"};             version=${version//&/"$bs&"}
+    prev=${prev//"$bs"/"$bs$bs"};                   prev=${prev//&/"$bs&"}
+    tag=${tag//"$bs"/"$bs$bs"};                     tag=${tag//&/"$bs&"}
+    files_trimmed=${files_trimmed//"$bs"/"$bs$bs"}; files_trimmed=${files_trimmed//&/"$bs&"}
+  fi
+
+  ph='${version}';      msg=${msg//"$ph"/$version}
+  ph='${prev_version}'; msg=${msg//"$ph"/$prev}
   ph='${tag}';          msg=${msg//"$ph"/$tag}
   ph='${files}';        msg=${msg//"$ph"/$files_trimmed}
   printf '%s' "$msg"

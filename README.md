@@ -252,7 +252,7 @@ branch.
 $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... \
            [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
-           [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-h|--help] \
+           [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-q|--quiet] [-h|--help] \
            [--branch] [--pr] [--base <branch>] \
            [--allow-dirty] [--allow-empty] [--no-fetch] [--no-hooks] \
            [--undo [<version>]] [--major | --minor | --patch] [--release] \
@@ -290,6 +290,7 @@ Supported keys (each maps 1:1 to an existing global):
 | `ALLOW_DIRTY` | `--allow-dirty` | *unset* (dirty tree refuses) |
 | `NO_FETCH` | `--no-fetch` | *unset* (fetch + behind-upstream check) |
 | `RELEASE_BRANCHES` | *(no flag)* | *unset* (release from any branch) |
+| `TAG_SIGN` | `--sign` | `false` (annotated, unsigned tag) |
 | `PRE_BUMP_CMD` | *(no flag — see [Release hooks](#release-hooks))* | *unset* (no hook) |
 | `POST_TAG_CMD` | *(no flag — see [Release hooks](#release-hooks))* | *unset* (no hook) |
 
@@ -378,6 +379,14 @@ output stays byte-identical to previous releases.
 -c, --no-changelog            Disable updating CHANGELOG.md automatically.
 -l, --pause-changelog         Pause before commit so CHANGELOG.md can be hand-edited.
 -y, --yes                     Skip interactive confirmation prompts.
+-q, --quiet                   Suppress decorative output — on success stdout carries
+                              exactly one line: the new version (no tag prefix, no
+                              colour); everything else goes to stderr. Errors keep
+                              the usual exit codes; a no-op run (nothing to release)
+                              prints nothing and exits 0. Requires --yes, -v, or
+                              --major/--minor/--patch, and refuses -l/--pause-changelog
+                              (a hidden prompt would hang the pipeline). CI capture:
+                                NEW_VERSION=$(ver-bump --yes --quiet -p origin)
 -h, --help                    Show help message.
     --undo [<version>]        Locally delete the release branch + tag for <version>
                               (refuses if pushed, dirty, or already merged).
@@ -415,6 +424,11 @@ output stays byte-identical to previous releases.
                               (GitHub-only, requires `gh` and -p / --push <remote>).
                               Notes are read from $VER_BUMP_RELEASE_NOTES_CMD (default
                               `npx jv-k/releasetool`).
+    --sign                    Create a signed tag (git tag -s) instead of an annotated
+                              one. The signing key and program come from your git
+                              config (user.signingkey, gpg.format) — ver-bump does no
+                              key management. Also available as the TAG_SIGN
+                              config/env key.
     --about                   Print name, version, author, and homepage; then exit.
     --completions <shell>     Emit completion script for bash, zsh, or fish to stdout.
     --install-completions [=<shell>]

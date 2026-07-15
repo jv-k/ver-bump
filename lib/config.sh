@@ -17,6 +17,7 @@ true
 #   FLAG_BRANCH  PR_BASE  FLAG_NOCHANGELOG  FLAG_CHANGELOG_PAUSE
 #   ALLOW_DIRTY (skip the clean-working-tree preflight, R-SAFE-2)
 #   NO_FETCH (skip the remote-sync preflight, R-SAFE-8)
+#   TAG_SIGN (create a signed tag via `git tag -s`, R-SIGN-1)
 #   RELEASE_BRANCHES (space-separated glob allowlist of branches a release
 #                     may be cut from; empty = no guard, R-SAFE-10)
 #   PRE_BUMP_CMD (release hook before any mutation; empty = no hook, R-HOOK-1)
@@ -31,7 +32,7 @@ true
 _CONFIG_KEYS=(TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX \
               FLAG_BRANCH PR_BASE CHANGELOG_STYLE \
               FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE \
-              ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES \
+              ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES TAG_SIGN \
               PRE_BUMP_CMD POST_TAG_CMD)
 
 # Walk up from $PWD. Echoes the first .ver-bumprc found; returns 1 if none.
@@ -136,4 +137,7 @@ apply-config-defaults() {
   # "flat" (default, 1.x-identical) or "grouped" (R-CHLOG-1). Any other
   # value behaves as flat — same lenient contract as the FLAG_* keys.
   CHANGELOG_STYLE="${CHANGELOG_STYLE:-flat}"
+  # Signed tags are opt-in (R-SIGN-1). Explicit false default; false and
+  # unset behave identically under [ "$TAG_SIGN" = true ].
+  TAG_SIGN="${TAG_SIGN:-false}"
 }

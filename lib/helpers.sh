@@ -48,8 +48,9 @@ usage() {
   echo -e "$S_WARN-f$S_NORM <filename.json>\tUpdate version number inside JSON files."\
           "\n\t\t\tFor multiple files, add a separate -f option for each one, for example:"\
           "\n\t\t\t${S_NORM}ver-bump -f src/plugin/package.json -f composer.json"
-  echo -e "$S_WARN-p$S_NORM <repository alias>\tPush release branch and tags to that remote, bypassing the prompt."\
-          "\n\t\t\tThe alias is required, for example: ${S_NORM}ver-bump -p origin"
+  echo -e "$S_WARN-p$S_NORM <repository alias>\tPush the new tag to that remote, bypassing the prompt."\
+          "\n\t\t\tThe alias is required, for example: ${S_NORM}ver-bump -p origin"\
+          "\n\t\t\t${S_NORM}Pushes the tag only. Push the commit yourself, eg git push --follow-tags."
   echo -e "$S_WARN-n$S_NORM \t\t\tDisable commit after tagging release."
   echo -e "$S_WARN-b$S_NORM \t\t\tDisable commit to a new release-x.x.x branch."
   echo -e "$S_WARN-c$S_NORM \t\t\tDisable updating CHANGELOG.md automatically with new commits since last release tag."

@@ -63,9 +63,10 @@ fi
 
 # Preset styles (character-level) — semantic aliases. Call sites reference
 # these rather than raw colour vars so a single edit here re-skins the tool.
-S_NORM="${WHITE}"
-S_LIGHT="${LIGHTGRAY}"
+S_NORM="${BOLD}"      # emphasis = bold of the terminal's own fg (no colour)
+S_LIGHT="${DIM}"      # markers/secondary = dim the terminal fg (theme-adaptive)
 S_QUESTION="${YELLOW}"
+S_PROMPT="${CYAN}"    # accent for the leading prompt glyph only
 S_WARN="${LIGHTRED}"
 S_ERROR="${RED}"
 S_DIM="${DIM}"

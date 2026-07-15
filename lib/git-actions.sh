@@ -126,7 +126,8 @@ do-push() {
   if [ "$FLAG_PUSH" = true ]; then
     CONFIRM="Y"
   else
-    echo -ne "\n${S_QUESTION}Push branch + tags to <${S_VAL}${PUSH_DEST}${S_QUESTION}>? [${S_NORM}N/y${S_QUESTION}]:${RESET} "
+    printf '\n%b%s%b Push branch + tags to <%b%s%b>? %b[N/y]%b ' \
+      "${S_PROMPT-}" "${I_PROMPT-}" "${RESET-}" "${S_VAL-}" "${PUSH_DEST}" "${RESET-}" "${S_DIM-}" "${RESET-}"
     read -r CONFIRM
   fi
 
@@ -520,7 +521,8 @@ do-undo() {
   fi
 
   if [ "${FLAG_YES:-false}" != true ]; then
-    printf '\n%bProceed?%b [y/N] ' "${S_QUESTION-}" "${RESET-}"
+    printf '\n%b%s%b Proceed? %b[y/N]%b ' \
+      "${S_PROMPT-}" "${I_PROMPT-}" "${RESET-}" "${S_DIM-}" "${RESET-}"
     read -r reply
     case "${reply}" in
       y|Y|yes|YES) ;;

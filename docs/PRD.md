@@ -322,7 +322,7 @@ Each requirement has an ID so tests and PRs can reference it.
 
 ## 10. Testing strategy
 
-- **Unit level** — one `.bats` file per feature under `test/` (`args.bats`, `version.bats`, `release.bats`, `pr.bats`, `undo.bats`, …) covers every requirement in §5. Currently **227 tests** across 21 files.
+- **Unit level** — one `.bats` file per feature under `test/` (`args.bats`, `version.bats`, `release.bats`, `pr.bats`, `undo.bats`, `sandbox.bats`, …) covers every requirement in §5. Currently **237 tests** across 22 files — every `R-*` bucket now has coverage (AC-1 holds).
 - **Contract level** — exit-code table is asserted per branch in `fail()` unit tests (`test/errors.bats`).
 - **Regression** — running the test suite must not mutate the host repo: anything touching git state runs inside a `scratch_repo` throwaway (`test/test_helper.bash`).
 - **Emitted artefacts** — every completion script is syntax-checked (`bash -n` / `zsh -n` / `fish --no-execute`) in `test/completions-syntax.bats`.

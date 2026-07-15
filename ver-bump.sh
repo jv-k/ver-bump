@@ -37,6 +37,7 @@ source "$MODULE_DIR/lib/git-checks.sh"
 source "$MODULE_DIR/lib/version.sh"
 source "$MODULE_DIR/lib/changelog.sh"
 source "$MODULE_DIR/lib/git-actions.sh"
+source "$MODULE_DIR/lib/hooks.sh"
 
 source "$MODULE_DIR/lib/config.sh"
 
@@ -89,6 +90,7 @@ main() {
   check-pr-deps
 
   section "Release"
+  run-pre-bump-hook # PRE_BUMP_CMD: all preflights passed, nothing mutated yet (R-HOOK-1)
   do-packagefile-bump
   bump-json-files
   do-versionfile
@@ -96,6 +98,7 @@ main() {
   do-branch
   do-commit
   do-tag
+  run-post-tag-hook # POST_TAG_CMD: tag exists, nothing pushed yet (R-HOOK-2)
   do-push
   do-pr
   do-github-release

@@ -90,7 +90,7 @@ Canonical table (from `fail` in [lib/errors.sh](../lib/errors.sh)):
 | 1    | generic error                                                           |
 | 2    | usage / arg-parse error                                                 |
 | 3    | precondition (dirty tree, missing tag, SemVer parse, missing dep, …)    |
-| 4    | hook failure (reserved)                                                 |
+| 4    | hook failure (`PRE_BUMP_CMD` / `POST_TAG_CMD` exited non-zero)          |
 | 5    | user abort (declined prompt)                                            |
 
 Always exit via `fail <code> "<message>" "<hint>"`. The hint is optional

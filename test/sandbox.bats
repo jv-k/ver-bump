@@ -234,3 +234,24 @@ sandbox_dir_from_output() {
   [ -n "$dir" ]
   [ ! -d "$dir" ]
 }
+
+# ── --remote: a bare origin so a real push path can be exercised ─────────────
+
+@test "sandbox: --remote adds a bare origin so a real push succeeds, then wipes it" {
+  cd "$(scratch_repo)"
+
+  # With a real origin, -p origin auto-confirms and the push actually lands —
+  # the run reaches DONE (exit 0) instead of the declined-push exit 5.
+  run "$(sandbox_script)" --remote -v 2.0.0 -y -p origin
+  strip_ansi_output
+  assert_success
+  assert_output --partial "added bare origin at"
+  assert_output --partial "Bumped 0.1.0 -> 2.0.0"
+
+  # the bare remote lived outside the host checkout and was removed on exit
+  local remote
+  remote="$(printf '%s\n' "$output" | sed -n 's/^sandbox: added bare origin at \(\/.*\)$/\1/p' | head -n1)"
+  [ -n "$remote" ]
+  case "$remote" in "${repo_dir}"*) bats_fail "remote ${remote} inside host repo" ;; esac
+  [ ! -d "$remote" ]
+}

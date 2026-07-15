@@ -16,6 +16,7 @@
 #   ./dev/sandbox.sh -v 2.0.0                # non-interactive, explicit version
 #   ./dev/sandbox.sh --dry-run --no-branch   # try long options
 #   ./dev/sandbox.sh --keep                  # don't wipe the sandbox on exit
+#   ./dev/sandbox.sh --remote -v 2.0.0 -p origin  # add a bare 'origin' so a real push succeeds
 #
 # After a run with --keep you can `cd` into the printed path to poke around.
 
@@ -31,11 +32,13 @@ fi
 
 KEEP=0
 QUIET=0
+MK_REMOTE=0
 PASSTHROUGH=()
 while (( $# )); do
   case "$1" in
     -k|--keep) KEEP=1; shift ;;
     -q|--quiet) QUIET=1; shift ;;
+    --remote) MK_REMOTE=1; shift ;;
     -h|--help-sandbox)
       # Pass -h / --help through to ver-bump; print our own help only for
       # this long alias so we don't shadow ver-bump's usage output.
@@ -56,14 +59,16 @@ say() {
 
 SANDBOX_VERSION="${SANDBOX_VERSION:-0.1.0}"
 SANDBOX_DIR="$(mktemp -d -t ver-bump-sandbox.XXXXXX)"
+REMOTE_DIR=""
 
 cleanup() {
   local rc=$?
   if (( KEEP )); then
     echo
-    echo "sandbox: preserved at $SANDBOX_DIR (--keep)" >&2
+    echo "sandbox: preserved at $SANDBOX_DIR${REMOTE_DIR:+ (remote: $REMOTE_DIR)} (--keep)" >&2
   else
     rm -rf "$SANDBOX_DIR"
+    [ -n "$REMOTE_DIR" ] && rm -rf "$REMOTE_DIR"
   fi
   exit "$rc"
 }
@@ -87,6 +92,15 @@ git init --quiet --initial-branch=main 2>/dev/null || git init --quiet
 git config user.email "sandbox@ver-bump.local"
 git config user.name  "ver-bump sandbox"
 git config commit.gpgsign false
+
+# Optional bare 'origin' so a real `-p origin` push has somewhere to go — lets
+# the demo (and manual --keep runs) exercise the full push path end to end.
+if (( MK_REMOTE )); then
+  REMOTE_DIR="$(mktemp -d -t ver-bump-remote.XXXXXX)"
+  git init --quiet --bare "$REMOTE_DIR"
+  git remote add origin "$REMOTE_DIR"
+  say "sandbox: added bare origin at $REMOTE_DIR"
+fi
 
 git add package.json
 git commit --quiet -m "chore: initial commit"

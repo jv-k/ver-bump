@@ -102,7 +102,7 @@ real script (not just dry-run) without touching their working repo.
 - **Not a CHANGELOG rewriter.** The existing `git log` dump is preserved as-is. A grouped, conventional-commit-aware changelog is scope for a later release.
 - **Not a monorepo release manager.** One tool, one `package.json`, one bump. `-f` remains a secondary knob.
 - **Not an npm publisher.** Registry publishing stays in the user's CI. (GitHub-release creation *did* land in 2.0, behind the opt-in `--release` flag — see §5.8; it is off by default and adds no default-path dependencies.)
-- **No plugin/hook system** in this release (exit code `4` is reserved for it as a forward-compat signal). *Post-2.0, issue #62 claimed the reserved code for a deliberately minimal two-hook surface — `PRE_BUMP_CMD` / `POST_TAG_CMD` (R-HOOK-1..6, [`docs/features/hooks`](features/hooks/requirements.md)) — which stays short of a plugin system.*
+- **No plugin system** in this release. *Post-2.0, issue #62 added a deliberately minimal two-hook surface — `PRE_BUMP_CMD` / `POST_TAG_CMD` (R-HOOK-1..6, [`docs/features/hooks`](features/hooks/requirements.md)) — which stays short of a plugin system; exit code `4`, previously reserved, is now in use for hook failures.*
 
 ---
 
@@ -355,7 +355,7 @@ All resolved for 2.0:
 ## 13. Future work (post-2.0)
 
 - **Grouped CHANGELOG** from Conventional Commits (the other major friction point vs. modern tools). *Shipped post-2.0 as opt-in `CHANGELOG_STYLE=grouped` (issue #61; R-CHLOG-1..5 in [docs/features/changelog/requirements.md](features/changelog/requirements.md)); the flat default is unchanged — flipping it is a 3.0 decision.*
-- **Hook system** (exit code `4` is reserved): `pre-bump`, `post-tag`, `post-push`. *`pre-bump` and `post-tag` shipped post-2.0 as `PRE_BUMP_CMD` / `POST_TAG_CMD` (issue #62; R-HOOK-1..6 in [docs/features/hooks/requirements.md](features/hooks/requirements.md)), claiming exit code `4`. `post-push` remains future work.*
+- **Hook system** — a `post-push` hook remains future work. *`pre-bump` and `post-tag` shipped post-2.0 as `PRE_BUMP_CMD` / `POST_TAG_CMD` (issue #62; R-HOOK-1..6 in [docs/features/hooks/requirements.md](features/hooks/requirements.md)) and now use exit code `4` for hook failures — it is no longer reserved.*
 - **Non-npm install paths** — Homebrew formula (deferred from 2.0; issue [#24](https://github.com/jv-k/ver-bump/issues/24)), `basher` ([#39](https://github.com/jv-k/ver-bump/issues/39)).
 - **GitHub Packages publishing docs** ([#40](https://github.com/jv-k/ver-bump/issues/40)).
 

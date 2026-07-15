@@ -69,7 +69,7 @@ sandbox_dir_from_output() {
 @test "sandbox: SIGTERM mid-run (Ctrl-C analogue) removes the temp dir" {
   local work fifo out pid child dir i
   work="$(mktemp -d)"
-  CLEANUP_CMDS+=("rm -rf ${work}")
+  CLEANUP_CMDS+=("rm -rf '${work}'")
   fifo="${work}/stdin.fifo"
   out="${work}/out.log"
   mkfifo "$fifo"
@@ -90,7 +90,7 @@ sandbox_dir_from_output() {
   dir="$(sed -n 's/^sandbox: \(\/.*\)$/\1/p' "$out" | head -n 1)"
   [ -n "$dir" ]
   [ -d "$dir" ]
-  CLEANUP_CMDS+=("rm -rf ${dir}")
+  CLEANUP_CMDS+=("rm -rf '${dir}'")
 
   # Ctrl-C sends the signal to the whole foreground process group; from a
   # test we reproduce that by signalling the sandbox AND its ver-bump child
@@ -149,14 +149,15 @@ sandbox_dir_from_output() {
   # Live (non-dry-run) bump; the declined push is the documented exit-5
   # user-abort (same recipe as e2e-live.bats), but branch + tag + file bump
   # have already happened — inside the sandbox thanks to --keep.
-  run bash -c "printf 'n\n' | $(sandbox_script) --keep -v 9.9.9"
+  # Script path passed as a positional so bash -c never re-parses it.
+  run bash -c 'printf "n\n" | "$1" --keep -v 9.9.9' _ "$(sandbox_script)"
   assert_failure 5
 
   strip_ansi_output
   local dir
   dir="$(sandbox_dir_from_output)"
   [ -n "$dir" ]
-  CLEANUP_CMDS+=("rm -rf ${dir}")
+  CLEANUP_CMDS+=("rm -rf '${dir}'")
   [ -d "$dir" ]
 
   # The bump happened in the sandbox repo ...
@@ -187,7 +188,7 @@ sandbox_dir_from_output() {
   local dir
   dir="$(sandbox_dir_from_output)"
   [ -n "$dir" ]
-  CLEANUP_CMDS+=("rm -rf ${dir}")
+  CLEANUP_CMDS+=("rm -rf '${dir}'")
 
   # --keep preserved the sandbox ...
   [ -d "$dir" ]
@@ -209,7 +210,7 @@ sandbox_dir_from_output() {
   local dir
   dir="$(sandbox_dir_from_output)"
   [ -n "$dir" ]
-  CLEANUP_CMDS+=("rm -rf ${dir}")
+  CLEANUP_CMDS+=("rm -rf '${dir}'")
   [ -d "$dir" ]
 
   # Custom seeds present, default seeds absent, count = initial + 2.

@@ -37,6 +37,41 @@ check-worktree-clean() {
     "Commit or stash them first, or pass --allow-dirty / set ALLOW_DIRTY=true to release anyway (untracked files are ignored)."
 }
 
+# Optional release-branch guard (R-SAFE-10..13). RELEASE_BRANCHES (config/env
+# key, no flag) is a space-separated glob list, e.g. "main develop release/*".
+# Unset/empty (the default) = no guard, zero behaviour change. When set, a
+# release from a non-matching branch — or from a detached HEAD — exits 3.
+# Deliberately NOT bypassed by --yes: this is a guard, not a prompt. The
+# one-shot bypass is an empty env override (RELEASE_BRANCHES= ver-bump …),
+# which beats the rc value per R-CFG-3. Release flow only: --undo,
+# --completions, --about, and --help all exit before the Verify section.
+check-release-branch() {
+  [ -n "${RELEASE_BRANCHES:-}" ] || return 0
+
+  local branch pat matched=false
+  branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)
+  if [ -z "$branch" ]; then
+    fail 3 \
+      "RELEASE_BRANCHES is set (${RELEASE_BRANCHES}) but HEAD is detached — a release must be cut from a named branch." \
+      "Checkout an allowed branch first, or clear the guard for one run: RELEASE_BRANCHES= ver-bump …"
+  fi
+
+  # Glob-match against each pattern. Word-splitting of the unquoted list and
+  # the unquoted case pattern are both intentional (space-separated globs).
+  # shellcheck disable=SC2254
+  for pat in $RELEASE_BRANCHES; do
+    case "$branch" in
+      $pat) matched=true; break ;;
+    esac
+  done
+
+  if [ "$matched" != true ]; then
+    fail 3 \
+      "Branch '${branch}' is not a release branch (RELEASE_BRANCHES: ${RELEASE_BRANCHES})." \
+      "Checkout an allowed branch, adjust RELEASE_BRANCHES in .ver-bumprc, or clear the guard for one run: RELEASE_BRANCHES= ver-bump …"
+  fi
+}
+
 # If there are no commits in repo, quit, because you can't tag with zero commits.
 check-commits-exist() {
   if ! git rev-parse HEAD &> /dev/null; then

@@ -23,7 +23,7 @@ contract); IDs added after the PRD are backfilled here first.
 | [github-release](./github-release/requirements.md) | R-REL | `release.bats` |
 | [undo](./undo/requirements.md) | R-UNDO | `undo.bats` |
 | [safety-preflights](./safety-preflights/requirements.md) | R-SAFE | `worktree-clean.bats`, `release-branch-guard.bats`, `remote-sync.bats`, `no-release.bats` |
-| [ui-output](./ui-output/requirements.md) | R-UI | `ui.bats`, `color.bats`, `about.bats` |
+| [ui-output](./ui-output/requirements.md) | R-UI, R-OUT | `ui.bats`, `color.bats`, `about.bats`, `quiet.bats` |
 | [dev-sandbox](./dev-sandbox/requirements.md) | R-DEV | `sandbox.bats` |
 | [json-bump-formatting](./json-bump-formatting/requirements.md) | R-FMT | `json.bats`, `bumpfile.bats` |
 | [installer](./installer/requirements.md) | R-DIST | `install.bats` |

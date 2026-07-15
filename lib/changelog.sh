@@ -225,7 +225,7 @@ _changelog-grouped-section() {
 do-changelog() {
   [ "$FLAG_NOCHANGELOG" = true ] && return
   subsection "changelog"
-  local ACTION_MSG COMMITS_MSG LOG_MSG LOG_RC RANGE TMP
+  local ACTION_MSG COMMITS_MSG LOG_MSG LOG_RC RANGE TMP _chlog_line
 
   RANGE=$([ "$(git tag -l "${TAG_PREFIX}${V_PREV}")" ] && echo "${TAG_PREFIX}${V_PREV}..HEAD")
   if [ "${CHANGELOG_STYLE-}" = "grouped" ]; then

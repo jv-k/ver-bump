@@ -49,8 +49,11 @@ teardown() {
 }
 
 @test "undo: --dry-run preview prints to stderr, not stdout (R-DRY-2)" {
-  ${profile_script} --undo --dry-run \
-    >"$BATS_TEST_TMPDIR/out" 2>"$BATS_TEST_TMPDIR/err"
+  # Redirections live inside bash -c so `run` still captures the real exit
+  # status while stdout/stderr land in separate files for the assertions.
+  run bash -c '"$1" --undo --dry-run >"$2/out" 2>"$2/err"' _ \
+    "${profile_script}" "$BATS_TEST_TMPDIR"
+  assert_success
 
   # The [dry-run] preview line goes to stderr…
   run cat "$BATS_TEST_TMPDIR/err"

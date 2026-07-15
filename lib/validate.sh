@@ -73,12 +73,22 @@ bump-prerelease() {
 # after '+' is preserved either way. Caller (process-version) only invokes
 # this once $1 is confirmed to have an existing prerelease segment
 # (R-PRE-3 handles the stable-version case separately).
+#
+# --preid is a full dot-separated identifier chain, so "same id" compares
+# the WHOLE current id — the prerelease string minus a single trailing
+# numeric counter segment — against $want, not just the first segment.
+# That keeps dotted ids intact (foo.bar.6 + foo.bar -> foo.bar.7) and makes
+# a prefix like "foo" count as DIFFERENT from "foo.bar" (foo.bar.6 + foo ->
+# foo.1). A current prerelease with no trailing numeric counter is its own
+# id (1.0.0-alpha + alpha -> alpha.1, the R-BUMP-1 append-".1" behaviour).
 # Examples:
-#   bump-preid "4.0.0-dev.6"        dev -> 4.0.0-dev.7   (same id, counter++)
-#   bump-preid "2.0.0-alpha.3"      rc  -> 2.0.0-rc.1     (different id, reset)
-#   bump-preid "2.1.0-beta.3+b.sha" rc  -> 2.1.0-rc.1+b.sha
+#   bump-preid "4.0.0-dev.6"        dev     -> 4.0.0-dev.7      (same id, counter++)
+#   bump-preid "1.2.3-foo.bar.6"    foo.bar -> 1.2.3-foo.bar.7  (dotted same id, counter++)
+#   bump-preid "1.2.3-foo.bar.6"    foo     -> 1.2.3-foo.1       (different id, reset)
+#   bump-preid "2.0.0-alpha.3"      rc      -> 2.0.0-rc.1        (different id, reset)
+#   bump-preid "2.1.0-beta.3+b.sha" rc      -> 2.1.0-rc.1+b.sha
 bump-preid() {
-  local version="$1" want="$2" core build="" pre cur_id base
+  local version="$1" want="$2" core build="" pre cur_id last_seg base
   core="$version"
   if [[ "$core" == *+* ]]; then
     build="+${core#*+}"
@@ -86,7 +96,14 @@ bump-preid() {
   fi
   if [[ "$core" == *-* ]]; then
     pre="${core#*-}"
-    cur_id="${pre%%.*}"
+    # The current id is the whole prerelease chain minus a trailing numeric
+    # counter segment (if any). Strip only when there's a dotted segment to
+    # strip, so a bare "alpha" stays "alpha".
+    cur_id="$pre"
+    if [[ "$pre" == *.* ]]; then
+      last_seg="${pre##*.}"
+      is_number "$last_seg" && cur_id="${pre%.*}"
+    fi
     if [ "$cur_id" = "$want" ]; then
       bump-prerelease "$version"
       return

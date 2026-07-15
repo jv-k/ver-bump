@@ -44,7 +44,7 @@ sandbox_dir_from_output() {
 
   # ... which lives outside the host checkout ...
   case "$dir" in
-    "${repo_dir}"*) fail "sandbox dir ${dir} is inside the host repo" ;;
+    "${repo_dir}"*) bats_fail "sandbox dir ${dir} is inside the host repo" ;;
   esac
 
   # ... and was wiped by the EXIT trap
@@ -85,7 +85,7 @@ sandbox_dir_from_output() {
     grep -q -- '---' "$out" 2>/dev/null && break
     sleep 0.1
   done
-  grep -q -- '---' "$out" || { exec 9>&-; fail "sandbox never reached ver-bump (out: $(cat "$out"))"; }
+  grep -q -- '---' "$out" || { exec 9>&-; bats_fail "sandbox never reached ver-bump (out: $(cat "$out"))"; }
 
   dir="$(sed -n 's/^sandbox: \(\/.*\)$/\1/p' "$out" | head -n 1)"
   [ -n "$dir" ]
@@ -130,7 +130,7 @@ sandbox_dir_from_output() {
   local dir
   dir="$(sandbox_dir_from_output)"
   case "$dir" in
-    ""|"${repo_dir}"*) fail "sandbox dir '${dir}' is missing or inside the host repo" ;;
+    ""|"${repo_dir}"*) bats_fail "sandbox dir '${dir}' is missing or inside the host repo" ;;
   esac
 
   run "$(sandbox_script)" -v not-semver

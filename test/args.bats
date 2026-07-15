@@ -563,7 +563,7 @@ load 'test_helper'
   for flag in $flags; do
     [[ "$flag" == "--name" ]] && continue
     grep -qF -- "$flag" "${repo_dir}/README.md" \
-      || fail "Flag ${flag} appears in --help but not in README.md"
+      || bats_fail "Flag ${flag} appears in --help but not in README.md"
   done
 }
 

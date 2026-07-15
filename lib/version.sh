@@ -134,7 +134,11 @@ process-version() {
     fi
   else
     # Display a suggested version
-    echo -ne "\n${S_QUESTION}Enter a new version number, <enter> for [${S_VAL}$V_SUGGEST${S_QUESTION}], or <esc> to quit:${RESET} "
+    printf '\n%b%s%b Enter a new version number, %b<enter> for [%b%s%b], or <esc> to quit:%b ' \
+      "${S_PROMPT-}" "${I_PROMPT-}" "${RESET-}" \
+      "${S_DIM-}" \
+      "${S_VAL-}" "$V_SUGGEST" "${RESET-}${S_DIM-}" \
+      "${RESET-}"
 
     # Two-stage read:
     #   1. Capture a single keystroke silently. If ESC → abort instantly.

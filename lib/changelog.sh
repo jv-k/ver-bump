@@ -224,6 +224,7 @@ _changelog-grouped-section() {
 # pause and staging behaviour (R-CHLOG-5).
 do-changelog() {
   [ "$FLAG_NOCHANGELOG" = true ] && return
+  subsection "changelog"
   local ACTION_MSG COMMITS_MSG LOG_MSG LOG_RC RANGE TMP
 
   RANGE=$([ "$(git tag -l "${TAG_PREFIX}${V_PREV}")" ] && echo "${TAG_PREFIX}${V_PREV}..HEAD")
@@ -284,8 +285,14 @@ do-changelog() {
   fi
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    printf '%b[dry-run]%b would replace CHANGELOG.md with:\n' "${S_LIGHT}" "${RESET}" >&2
-    cat "$TMP" >&2
+    # Subordinate to the "changelog" pill above: header via log_trace (dim
+    # ↳, keeps the "[dry-run]" marker text R-DRY-2 requires), preview body
+    # as a dim, 2-space-indented block — so the whole changelog step reads
+    # as one grouped unit rather than narrative-coloured output.
+    log_trace "[dry-run] would replace CHANGELOG.md with:" >&2
+    while IFS= read -r _chlog_line || [ -n "$_chlog_line" ]; do
+      printf '  %b%s%b\n' "${S_DIM-}" "$_chlog_line" "${RESET-}" >&2
+    done < "$TMP"
     rm -f "$TMP"
   else
     mv -f "$TMP" CHANGELOG.md

@@ -54,21 +54,27 @@ already in the tree — new code should match, not invent.
 Locked in by [test/ui.bats](../test/ui.bats) — changes here require updating
 those regression tests.
 
-- **Never** reference raw colour vars (`GREEN`, `RED`, …) outside
-  [lib/styles.sh](../lib/styles.sh). Use the semantic `S_*` tokens.
+- **Never** reference raw colour vars (`GREEN`, `RED`, `WHITE`, `LIGHTGRAY`, …)
+  outside [lib/styles.sh](../lib/styles.sh). Use the semantic `S_*` tokens.
 - **Narrative text = no colour.** Colour is reserved for:
   - interpolated values → `S_VAL` (green)
-  - prompts → `S_QUESTION`
+  - emphasis → `S_NORM` (bold of the terminal's own fg — never a fixed
+    colour; the old `WHITE`/`1;37` hardcode fought light/dark themes)
+  - soft (confirmation) prompts → a coloured leading glyph (`S_PROMPT` +
+    `I_PROMPT`), then default-fg question text, the value in `S_VAL`, and
+    the choice hint (e.g. `[N/y]`) in `S_DIM` — not a whole-line colour wrap
   - warnings → `S_ATTN` / `S_WARN` + plain body
   - errors → via `fail` (uses `S_ERROR`)
-  - dim markers → `S_LIGHT` (`[dry-run]`, `Option set:`)
+  - dim markers → `S_LIGHT` (`[dry-run]`, `Option set:`) — theme-adaptive
+    dim, never the old fixed `LIGHTGRAY`/`0;37`
 - **`S_NOTICE` is deprecated** — do not use on new lines.
 - Every style variable must be gated by the `USE_COLOR` check in
   [lib/styles.sh](../lib/styles.sh) so `NO_COLOR` / piping / non-TTY strips
   ANSI (`CLICOLOR_FORCE` / `FORCE_COLOR` force it on).
 - Use `log_success` / `log_warn` / `log_error` / `log_info` / `log_trace`
   instead of ad-hoc `echo -e` with inline tokens. Reach for `section` /
-  `subsection` pills for headings, not `echo "------"`.
+  `subsection` pills for headings, not `echo "------"` — one pill per grouped
+  step (e.g. the changelog write), not a pill for every micro-step.
 
 ### Comments
 

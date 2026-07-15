@@ -45,6 +45,9 @@ already in the tree — new code should match, not invent.
   only with a comment explaining why. Never blanket-disable at file scope
   unless the suppression applies to every line (e.g. `SC2034` in
   [lib/styles.sh](../lib/styles.sh) because vars are exported for call sites).
+- **Line endings:** LF only — [`.gitattributes`](../.gitattributes) pins
+  `*.sh` / `*.bash` / `*.bats` to `eol=lf`; don't override it with
+  `core.autocrlf`, because CRLF breaks shellcheck parsing and the bats suite.
 
 ### UI / colour discipline
 

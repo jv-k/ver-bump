@@ -66,6 +66,18 @@ preid_repo() {
   assert_equal "$(bump-preid '2.1.0-beta.3+build.sha' rc)"   "2.1.0-rc.1+build.sha"
 }
 
+@test "bump-preid: compares the whole dotted id, not just the first segment" {
+  source ${profile_script}
+  # Same dotted id -> increment the trailing counter.
+  assert_equal "$(bump-preid '1.2.3-foo.bar.6' foo.bar)" "1.2.3-foo.bar.7"
+  # A prefix of the current id is DIFFERENT -> swap + reset to .1.
+  assert_equal "$(bump-preid '1.2.3-foo.bar.6' foo)" "1.2.3-foo.1"
+  # And the reverse: the current id is a prefix of the wanted id.
+  assert_equal "$(bump-preid '1.2.3-foo.6' foo.bar)" "1.2.3-foo.bar.1"
+  # Dotted id with no trailing numeric counter -> R-BUMP-1 append ".1".
+  assert_equal "$(bump-preid '1.2.3-foo.bar' foo.bar)" "1.2.3-foo.bar.1"
+}
+
 # ── process-version composition (R-PRE-1) ───────────────────────────────────
 
 @test "process-version: --major --preid rc on a stable version enters a prerelease (R-PRE-1)" {

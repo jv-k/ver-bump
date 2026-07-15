@@ -25,18 +25,23 @@ load 'test_helper'
 }
 
 @test "sourcing ver-bump's lib/errors.sh shadows fail() but leaves bats_fail() untouched" {
-  local bats_fail_before
-  bats_fail_before="$(declare -f bats_fail)"
+  # Capture bats-support's fail BEFORE any ver-bump lib is sourced — at this
+  # point `fail` is still bats-support's. We compare against this captured
+  # definition rather than matching any specific line of ver-bump's fail, so
+  # the test proves the *collision* without coupling to fail()'s internals: a
+  # contract-preserving refactor of ver-bump's fail must not break it.
+  local support_fail support_fail_body
+  support_fail="$(declare -f fail)"
+  support_fail_body="$(declare -f fail | sed '1d')" # body only; name line differs
 
   source ${profile_script}
 
-  # `fail` in this shell is now ver-bump's exit-code helper (lib/errors.sh) ...
-  local vb_fail_body
-  vb_fail_body="$(declare -f fail)"
-  [[ "$vb_fail_body" == *'exit "$code"'* ]]
+  # The shadow happened: fail's definition now DIFFERS from bats-support's.
+  assert_not_equal "$(declare -f fail)" "$support_fail"
 
-  # ... while the captured bats_fail is byte-for-byte unchanged.
-  assert_equal "$(declare -f bats_fail)" "$bats_fail_before"
+  # The capture survived: bats_fail's body still MATCHES bats-support's fail
+  # (compare bodies — the `bats_fail`/`fail` name line necessarily differs).
+  assert_equal "$(declare -f bats_fail | sed '1d')" "$support_fail_body"
 }
 
 @test "bats_fail: forces a bats-support-style failure through bats' reporter after ver-bump libs are sourced" {

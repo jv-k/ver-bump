@@ -15,6 +15,7 @@ true
 # Supported keys (1:1 with existing globals):
 #   TAG_PREFIX  REL_PREFIX  PUSH_DEST  COMMIT_MSG_PREFIX  CHANGELOG_STYLE
 #   FLAG_BRANCH  PR_BASE  FLAG_NOCHANGELOG  FLAG_CHANGELOG_PAUSE
+#   ALLOW_DIRTY (skip the clean-working-tree preflight, R-SAFE-2)
 #   FLAG_NOBRANCH (deprecated, no-op — tag-in-place is the default as of 2.0)
 #
 # Safety: shell-sourced files are code. The rc must be owned by the current
@@ -24,7 +25,8 @@ true
 # Config-able keys, in a plain indexed array so bash 3.2 is happy.
 _CONFIG_KEYS=(TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX \
               FLAG_BRANCH PR_BASE CHANGELOG_STYLE \
-              FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE)
+              FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE \
+              ALLOW_DIRTY)
 
 # Walk up from $PWD. Echoes the first .ver-bumprc found; returns 1 if none.
 # Never touches stdout on the "not found" path — load-config treats that
@@ -116,8 +118,8 @@ load-config() {
 }
 
 # Apply built-in defaults for any config key still unset after load-config.
-# FLAG_* keys intentionally default to unset (false-equivalent under
-# [ "$FLAG_X" = true ]).
+# FLAG_* keys and the boolean safety keys (ALLOW_DIRTY) intentionally
+# default to unset (false-equivalent under [ "$KEY" = true ]).
 apply-config-defaults() {
   TAG_PREFIX="${TAG_PREFIX:-v}"
   REL_PREFIX="${REL_PREFIX:-release-}"

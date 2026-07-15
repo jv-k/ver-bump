@@ -94,6 +94,19 @@ load 'test_helper'
   assert_equal "${FLAG_BRANCH}" "true"
 }
 
+@test "long options: --allow-dirty sets ALLOW_DIRTY" {
+  source ${profile_script}
+  process-arguments --allow-dirty
+  assert_equal "${ALLOW_DIRTY}" "true"
+}
+
+@test "long options: --allow-dirty=value is rejected" {
+  source ${profile_script}
+  run process-arguments --allow-dirty=yes
+  assert_failure 2
+  assert_output --partial "Option --allow-dirty doesn't take a value"
+}
+
 @test "long options: --pr implies branch + push and sets DO_PR" {
   source ${profile_script}
   process-arguments --pr

@@ -46,7 +46,7 @@ usage() {
   printf '\n%bUSAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   printf '  %b%s%b [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
-  printf '  %b%s%b [--source <file.json>] [--branch] [--pr] [--base <branch>] [--major | --minor | --patch] [--release] [--sign] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
+  printf '  %b%s%b [--source <file.json>] [--branch] [--pr] [--base <branch>] [--major | --minor | --patch] [--preid <id>] [--release] [--sign] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
 
   # Column width for label + 2-space gutter. Longest label is
@@ -126,6 +126,11 @@ usage() {
   print-opt-row ""   "--major"              ""            "Force a major bump from the current version (mutually exclusive)."
   print-opt-row ""   "--minor"              ""            "Force a minor bump from the current version (mutually exclusive)."
   print-opt-row ""   "--patch"              ""            "Force a patch bump from the current version (mutually exclusive)."
+  print-opt-cont "Without --preid, any of the three drops an existing prerelease/build and bumps the stable core (1.2.3-dev.5 --patch -> 1.2.4)."
+  print-opt-row ""   "--preid"              "<id>"        "Start or advance a prerelease line; conflicts with -v."
+  print-opt-cont "With --major/--minor/--patch: bump that level, then enter <id>.1 (1.2.3 --major --preid rc -> 2.0.0-rc.1)."
+  print-opt-cont "Alone, on a version that already has a prerelease: same id increments the counter, a different id resets it to .1."
+  print-opt-cont "Alone, on a stable version: ambiguous -> exit 2 (combine with --major/--minor/--patch)."
   print-opt-row ""   "--allow-dirty"        ""            "Skip the clean-working-tree check (untracked files never trigger it)."
   print-opt-row ""   "--allow-empty"        ""            "Release even with no new commits since the previous tag."
   print-opt-row ""   "--no-fetch"           ""            "Skip the remote-sync preflight (no fetch / behind-upstream check)."

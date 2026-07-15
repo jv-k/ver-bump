@@ -23,7 +23,7 @@ capture pattern.
 | ID | Requirement | Status |
 | --- | --- | --- |
 | R-OUT-1 | `-q`/`--quiet`: decorative output is routed off stdout; on success stdout carries exactly one line — the new version, no tag prefix, no colour codes. Errors keep going to stderr with the contract exit codes. | ✅ shipped — `test/quiet.bats` |
-| R-OUT-2 | `--quiet` and interactive prompts are incompatible by construction (a hidden prompt is a hung pipeline): `--quiet` without `--yes`, `-v`, or a forced bump level exits `2` naming the fix; `--quiet` with `-l`/`--pause-changelog` (flag or rc key) exits `2`; `--quiet --undo` without `--yes` exits `2`. | ✅ shipped — `test/quiet.bats` |
+| R-OUT-2 | `--quiet` and interactive prompts are incompatible by construction (a hidden prompt is a hung pipeline): `--quiet` without `--yes`, `-v`, a forced bump level, or `--preid` exits `2` naming the fix; `--quiet` with `-l`/`--pause-changelog` (flag or rc key) exits `2`; `--quiet --undo` without `--yes` exits `2`. | ✅ shipped — `test/quiet.bats`, `test/preid.bats` |
 | R-OUT-3 | Composes with `--dry-run`: stdout gets the would-be version; the `[dry-run]` side-effect lines target stderr (R-DRY-2), so the pipe stays clean. | ✅ shipped — `test/quiet.bats` |
 | R-OUT-4 | A quiet no-op (nothing to release, R-SAFE-14) prints **nothing** on stdout — the `no-release` token is rerouted with the rest of the decoration — and exits `0`, so `[ -z "$out" ]` is the CI branch test for "no release happened". | ✅ shipped — `test/quiet.bats` |
 

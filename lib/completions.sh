@@ -142,14 +142,14 @@ _ver_bump() {
             return 0
             ;;
         # Options that take a free-form argument — no completion
-        -v|--version|-m|--message|-p|--push|-t|--tag-prefix|-B|--branch-prefix|--undo|--base)
+        -v|--version|-m|--message|-p|--push|-t|--tag-prefix|-B|--branch-prefix|--undo|--base|--preid)
             return 0
             ;;
     esac
 
     opts="--version --message --file --source --push --tag-prefix --branch-prefix \
           --dry-run --no-commit --no-branch --no-changelog --pause-changelog \
-          --yes --quiet --undo --branch --pr --base --major --minor --patch --release \
+          --yes --quiet --undo --branch --pr --base --major --minor --patch --preid --release \
           --sign --allow-dirty --allow-empty --no-fetch --no-hooks \
           --help --completions --install-completions --about \
           -v -m -f -p -t -B -d -n -b -c -l -y -q -h"
@@ -190,6 +190,7 @@ _ver_bump() {
     '(--major --minor --patch -v --version)--major[force a major bump from the current version]' \
     '(--major --minor --patch -v --version)--minor[force a minor bump from the current version]' \
     '(--major --minor --patch -v --version)--patch[force a patch bump from the current version]' \
+    '(-v --version)--preid[start or advance a prerelease line]:id:' \
     '--release[publish a GitHub release for the new tag via gh]' \
     '--sign[create a signed tag (git tag -s) instead of annotated]' \
     '--allow-dirty[skip the clean-working-tree preflight]' \
@@ -231,6 +232,7 @@ for _cmd in ver-bump ver-bump.sh
     complete -c $_cmd      -l major          -d 'Force a major bump from the current version'
     complete -c $_cmd      -l minor          -d 'Force a minor bump from the current version'
     complete -c $_cmd      -l patch          -d 'Force a patch bump from the current version'
+    complete -c $_cmd      -l preid          -r -d 'Start or advance a prerelease line'
     complete -c $_cmd      -l release        -d 'Publish a GitHub release for the new tag via gh'
     complete -c $_cmd      -l sign           -d 'Create a signed tag (git tag -s) instead of annotated'
     complete -c $_cmd      -l allow-dirty    -d 'Skip the clean-working-tree preflight'

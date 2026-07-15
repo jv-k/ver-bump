@@ -124,6 +124,7 @@ usage() {
   print-opt-row ""   "--minor"              ""            "Force a minor bump from the current version (mutually exclusive)."
   print-opt-row ""   "--patch"              ""            "Force a patch bump from the current version (mutually exclusive)."
   print-opt-row ""   "--allow-dirty"        ""            "Skip the clean-working-tree check (untracked files never trigger it)."
+  print-opt-row ""   "--allow-empty"        ""            "Release even with no new commits since the previous tag."
   print-opt-row ""   "--no-fetch"           ""            "Skip the remote-sync preflight (no fetch / behind-upstream check)."
   print-opt-row ""   "--branch"             ""            "Cut a release-x.x.x branch (pre-2.0 default); otherwise tag in place."
   print-opt-row ""   "--pr"                 ""            "Branch + push + open a release PR via 'gh' (GitHub-only; implies push to origin)."

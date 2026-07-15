@@ -38,5 +38,23 @@ contract (R-EXIT-2) is untouched.
 | R-SAFE-12 | Detached HEAD with the guard active → exit `3` (can't match a branch you're not on). | ✅ | `release-branch-guard.bats` |
 | R-SAFE-13 | Applies to the release flow only; `--undo`, `--completions`, `--about`, `--help` are unaffected (they exit before the Verify section). | ✅ | `release-branch-guard.bats` |
 
+## Nothing-to-release no-op (#60)
+
+| ID | Requirement | Status | Tests |
+| --- | --- | --- | --- |
+| R-SAFE-14 | During Verify, when a previous tag `${TAG_PREFIX}${V_PREV}` exists and `git rev-list --count ${TAG_PREFIX}${V_PREV}..HEAD` is `0`: print a clear "nothing to release since `<tag>`" notice and exit `0` without mutating anything. | ✅ `check-releasable-commits` | `no-release.bats` |
+| R-SAFE-15 | The notice includes a stable, greppable token — a stdout line beginning `no-release` — so CI can branch on outcome. Exit code stays `0` (clean no-op = success; frozen 2.x exit contract R-EXIT-2 untouched). | ✅ | `no-release.bats` |
+| R-SAFE-16 | `--allow-empty` (boolean, long-only) forces the old behaviour for deliberate empty releases / re-tags. CLI-only — reset in `process-arguments` like `DO_RELEASE`/`BUMP_LEVEL` (R-CFG-6 pattern). | ✅ | `no-release.bats`, `args.bats` |
+| R-SAFE-17 | Applies even with `-v <version>` or `--major`/`--minor`/`--patch`: an explicit version is not evidence you meant to release zero commits; `--allow-empty` is the explicit signal. | ✅ | `no-release.bats` |
+| R-SAFE-18 | No previous matching tag (first release) → proceeds as today (R-BUMP-3 fallback unaffected). | ✅ | `no-release.bats` |
+
 Modules: `lib/git-checks.sh` (`check-worktree-clean`,
-`check-release-branch`), `lib/args.sh`, `lib/config.sh`.
+`check-release-branch`, `check-remote-sync`, `check-releasable-commits`),
+`lib/args.sh`, `lib/config.sh`.
+
+Verify-section ordering in `main()` (`ver-bump.sh`):
+`check-commits-exist` → `check-worktree-clean` → `check-release-branch` →
+`check-remote-sync` → `process-version` → `check-releasable-commits` →
+`check-branch-notexist` → `check-tag-exists` → `check-pr-deps`.
+The fetch precedes `check-tag-exists` (R-SAFE-7); the no-op check follows
+`process-version` because it needs `V_PREV` resolved (R-SAFE-14).

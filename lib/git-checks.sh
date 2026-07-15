@@ -89,8 +89,25 @@ check-remote-sync() {
   # configured remote — nothing to fetch state for, so skip silently.
   git remote get-url "$PUSH_DEST" >/dev/null 2>&1 || return 0
 
-  if ! git fetch "$PUSH_DEST" --tags --quiet 2>/dev/null; then
+  # Fetch WITHOUT --quiet — that flag suppresses git's own rejection report, so
+  # a bare failure could never say why. Capture stderr instead (stdout is
+  # discarded); on success it's thrown away, so there's no terminal noise. The
+  # most common non-network failure is local tags that diverge from the
+  # remote's (rewritten history / re-created tags): git refuses to move them
+  # ("would clobber existing tag") and the whole fetch exits non-zero even
+  # though nothing is wrong for this run — hence warn-and-continue, not fail.
+  local fetch_err reason
+  if ! fetch_err=$(git fetch "$PUSH_DEST" --tags 2>&1 1>/dev/null); then
     log_warn "Could not fetch from <${S_VAL}${PUSH_DEST}${RESET-}> — continuing with local refs only."
+    if printf '%s\n' "$fetch_err" | grep -q 'would clobber existing tag'; then
+      log_trace "local tags differ from <${PUSH_DEST}>'s — git won't overwrite them (rewritten history / re-created tags)."
+      log_trace "reconcile with 'git fetch ${PUSH_DEST} --tags --force', or pass --no-fetch to skip this preflight."
+    else
+      # Offline / auth / bad URL: surface git's own error line verbatim.
+      reason=$(printf '%s\n' "$fetch_err" | grep -Em1 '^(fatal|error):')
+      [ -z "$reason" ] && reason=$(printf '%s\n' "$fetch_err" | grep -Ev '^[[:space:]]*$' | tail -n1)
+      [ -n "$reason" ] && log_trace "${reason}"
+    fi
     return 0
   fi
 

@@ -80,6 +80,26 @@ synced_repo() {
   assert_output --partial "Could not fetch"
 }
 
+@test "remote-sync: diverged local tag -> warning explains the clobber, run proceeds" {
+  synced_repo
+  # Same tag name on both sides but pointing at different commits: v1.0.1 on
+  # the remote, then moved locally to a newer commit. A --tags fetch would have
+  # to overwrite the local tag, which git refuses ("would clobber existing
+  # tag") and the whole fetch exits non-zero.
+  git tag v1.0.1
+  git push -q origin v1.0.1
+  git commit -q --allow-empty -m "feat: newer work"
+  git push -q origin HEAD
+  git tag -f v1.0.1 >/dev/null   # local v1.0.1 now differs from the remote's
+
+  run ${profile_script} -d -b -c -p origin -v 1.0.2
+  assert_success
+  strip_ansi_output
+  assert_output --partial "Could not fetch"
+  assert_output --partial "local tags differ"
+  assert_output --partial "git fetch origin --tags --force"
+}
+
 @test "remote-sync: --no-fetch skips the preflight — remote-only collision undetected (R-SAFE-8)" {
   synced_repo
   git tag v1.0.1

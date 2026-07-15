@@ -29,7 +29,7 @@
     "release": "gh release create --notes \"$(npx jv-k/releasetool)\"",
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/*.bats",
-    "lint": "shellcheck -x -e SC1017 ./ver-bump.sh ./lib/*.sh",
+    "lint": "shellcheck -x -e SC1017 ./ver-bump.sh ./install.sh ./lib/*.sh",
     "screenshots": "./dev/capture-freeze.sh",
     "screenshots:help": "./dev/capture-freeze.sh help",
     "screenshots:demo": "./dev/screenshots.sh demo",

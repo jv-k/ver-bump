@@ -58,8 +58,10 @@ json_set_version() {
   local re='^([[:space:]]*"version"[[:space:]]*:[[:space:]]*")([^"]*)("[[:space:]]*,?[[:space:]]*)$'
 
   # Current top-level value anchors the surgical match. Unparseable files or
-  # a missing/non-string .version yield "" and take the fallback below.
-  old=$(jq -r '.version // empty' "$file" 2>/dev/null)
+  # a missing/non-string .version yield "" and take the fallback below —
+  # select(type) keeps numeric/boolean values (e.g. "version": 1) out of the
+  # surgical scan entirely.
+  old=$(jq -r '.version | select(type == "string")' "$file" 2>/dev/null)
 
   if [ -n "$old" ]; then
     while [ "$eof" = false ]; do
@@ -85,8 +87,13 @@ json_set_version() {
         # file parses AND carries the new version (R-FMT-2).
         # shellcheck disable=SC2016 # $V is a jq variable, not a bash expansion
         if jq -e --arg V "$new" '.version == $V' "$tmp" >/dev/null 2>&1; then
-          mv -f "$tmp" "$file"
-          return 0
+          # mv can still fail (immutable target, permissions). Report it
+          # rather than falling through — the fallback's mv would fail too.
+          if mv -f "$tmp" "$file"; then
+            return 0
+          fi
+          rm -f "$tmp"
+          return 1
         fi
       fi
       rm -f "$tmp"

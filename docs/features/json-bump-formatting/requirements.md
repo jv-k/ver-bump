@@ -16,12 +16,14 @@ delegated to `npm version` (B-3 side effect). IDs backfilled per
 
 Design notes:
 
-- The surgical match is anchored on the **current** top-level value
-  (`jq -r '.version'`), so nested `version` members with other values
-  (lockfile entries, config blobs) never count as candidates. Anything
-  other than exactly one candidate line — minified file, duplicate keys,
-  a nested member holding the same value, the member sharing its line,
-  or no member yet — takes the logged fallback. A wrong-line rewrite
+- The surgical match is anchored on the **current** top-level value,
+  strings only (`jq -r '.version | select(type == "string")'`), so nested
+  `version` members with other values (lockfile entries, config blobs)
+  never count as candidates and non-string values (`"version": 1`) skip
+  the surgical scan entirely. Anything other than exactly one candidate
+  line — minified file, duplicate keys, a nested member holding the same
+  value, the member sharing its line, or no member yet — takes the
+  logged fallback. A wrong-line rewrite
   (same-value nested member while the top-level one is inline) is caught
   by the R-FMT-2 postcondition and also falls back.
 - Preserved byte-for-byte on the surgical path: indentation (spaces or
@@ -37,4 +39,4 @@ Design notes:
 
 Modules: `lib/json.sh` (`json_set_version`, `jq_inplace`); call sites in
 `lib/version.sh` (`do-packagefile-bump`, `bump-json-files`). Tests:
-`test/json.bats` (15), `test/bumpfile.bats`.
+`test/json.bats` (17), `test/bumpfile.bats`.

@@ -177,6 +177,23 @@ load 'test_helper'
   assert_output "1.2.3"
 }
 
+@test "json_set_version: non-string version value takes the logged fallback" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  printf '{\n  "version": 1,\n  "name": "demo"\n}\n' > in.json
+
+  run json_set_version in.json 2.0.0
+  strip_ansi_output
+  assert_success
+  assert_output --partial "falling back to a full jq rewrite"
+
+  run jq -r '.version | type' in.json
+  assert_output "string"
+  run jq -r '.version' in.json
+  assert_output "2.0.0"
+}
+
 @test "json_set_version: version member sharing its line takes the fallback" {
   source ${profile_script}
   cd "$(scratch_repo)"
@@ -206,6 +223,31 @@ load 'test_helper'
 
   run cmp in.json before.json
   assert_success
+}
+
+@test "json_set_version: surgical mv failure cleans up the tmp and returns non-zero" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  # Simulate a rename(2) failure on the target while the directory stays
+  # writable (so mktemp + the postcondition probe still succeed): macOS
+  # user-immutable flag. Skip where chflags is unavailable (Linux CI).
+  command -v chflags >/dev/null 2>&1 || skip "requires chflags (macOS immutable flag)"
+
+  printf '{\n  "version": "1.2.3"\n}\n' > in.json
+  cp in.json before.json
+  chflags uchg in.json 2>/dev/null || skip "cannot set immutable flag here"
+
+  run json_set_version in.json 2.0.0
+  chflags nouchg in.json # always unlock before asserting so teardown can clean up
+
+  assert_failure
+
+  run cmp in.json before.json
+  assert_success
+  # No stray tmp files left behind next to the target.
+  run bash -c 'ls in.json.* 2>/dev/null'
+  assert_output ""
 }
 
 # ── call-site integration ───────────────────────────────────────────────

@@ -94,6 +94,52 @@ load 'test_helper'
   assert_equal "${FLAG_BRANCH}" "true"
 }
 
+@test "long options: --allow-dirty sets ALLOW_DIRTY" {
+  source ${profile_script}
+  process-arguments --allow-dirty
+  assert_equal "${ALLOW_DIRTY}" "true"
+}
+
+@test "long options: --allow-dirty=value is rejected" {
+  source ${profile_script}
+  run process-arguments --allow-dirty=yes
+  assert_failure 2
+  assert_output --partial "Option --allow-dirty doesn't take a value"
+}
+
+@test "long options: --allow-empty sets ALLOW_EMPTY" {
+  source ${profile_script}
+  process-arguments --allow-empty
+  assert_equal "${ALLOW_EMPTY}" "true"
+}
+
+@test "long options: --allow-empty=value is rejected" {
+  source ${profile_script}
+  run process-arguments --allow-empty=yes
+  assert_failure 2
+  assert_output --partial "Option --allow-empty doesn't take a value"
+}
+
+@test "process-arguments: resets a stale ALLOW_EMPTY from the environment" {
+  source ${profile_script}
+  ALLOW_EMPTY=true
+  process-arguments -d
+  assert_equal "${ALLOW_EMPTY}" "false"
+}
+
+@test "long options: --no-fetch sets NO_FETCH" {
+  source ${profile_script}
+  process-arguments --no-fetch
+  assert_equal "${NO_FETCH}" "true"
+}
+
+@test "long options: --no-fetch=value is rejected" {
+  source ${profile_script}
+  run process-arguments --no-fetch=yes
+  assert_failure 2
+  assert_output --partial "Option --no-fetch doesn't take a value"
+}
+
 @test "long options: --pr implies branch + push and sets DO_PR" {
   source ${profile_script}
   process-arguments --pr

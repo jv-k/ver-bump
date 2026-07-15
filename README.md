@@ -253,6 +253,7 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
            [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-h|--help] \
            [--branch] [--pr] [--base <branch>] \
+           [--allow-dirty] [--allow-empty] [--no-fetch] \
            [--undo [<version>]] [--major | --minor | --patch] [--release] \
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
 ```
@@ -285,6 +286,9 @@ Supported keys (each maps 1:1 to an existing global):
 | `PR_BASE` | `--base` | *(auto-detect)* |
 | `FLAG_NOCHANGELOG` | `-c` / `--no-changelog` | *unset* |
 | `FLAG_CHANGELOG_PAUSE` | `-l` / `--pause-changelog` | *unset* |
+| `ALLOW_DIRTY` | `--allow-dirty` | *unset* (dirty tree refuses) |
+| `NO_FETCH` | `--no-fetch` | *unset* (fetch + behind-upstream check) |
+| `RELEASE_BRANCHES` | *(no flag)* | *unset* (release from any branch) |
 
 Example:
 
@@ -295,6 +299,17 @@ REL_PREFIX="hotfix-"
 PUSH_DEST="upstream"
 COMMIT_MSG_PREFIX="release: "
 FLAG_NOCHANGELOG=true
+RELEASE_BRANCHES="main develop release/*"
+```
+
+`RELEASE_BRANCHES` is a space-separated list of glob patterns naming the
+branches a release may be cut from. When set, running ver-bump from any
+other branch (or from a detached HEAD) exits with code 3 — it is a guard,
+not a prompt, so `--yes` does not bypass it. Clear it for a single run
+with an empty environment override (env beats the file):
+
+```sh
+RELEASE_BRANCHES= ver-bump …
 ```
 
 **Precedence** — highest to lowest: **CLI flag** > **environment variable**
@@ -369,6 +384,19 @@ output stays byte-identical to previous releases.
                               before bumping the stable component.
     --minor                   Force a minor bump (see --major for semantics).
     --patch                   Force a patch bump (see --major for semantics).
+    --allow-dirty             Skip the clean-working-tree check and release with
+                              uncommitted changes to tracked files. Untracked files
+                              never trigger the check. Also available as the
+                              ALLOW_DIRTY config/env key.
+    --allow-empty             Release even when there are no new commits since the
+                              previous tag. Without it, such a run prints a notice
+                              (a stdout line starting with "no-release") and exits 0
+                              without changing anything — safe to run unconditionally
+                              in CI.
+    --no-fetch                Skip the remote-sync preflight: no 'git fetch <remote>
+                              --tags' and no behind-upstream check before releasing.
+                              Remote-only tag collisions then surface at push time
+                              instead. Also available as the NO_FETCH config/env key.
     --branch                  Cut a release-<version> branch (the pre-2.0 default).
                               Otherwise ver-bump tags the current branch in place.
     --pr                      Create the release branch, push it, then open a pull

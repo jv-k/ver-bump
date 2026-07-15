@@ -55,7 +55,12 @@ ui_repo() {
   # tokens S_NORM/S_LIGHT used to hardcode — they fought the terminal's own
   # theme. S_NORM/S_LIGHT now alias BOLD/DIM instead; guard against a raw
   # fixed-fg reference creeping back into a call site.
-  run bash -c "grep -rlnE --include='*.sh' '\\bWHITE\\b|\\bLIGHTGRAY\\b' '${repo_dir}/lib' '${repo_dir}/ver-bump.sh' | grep -v '/lib/styles.sh\$'"
+  #
+  # -w (whole-word), NOT '\b': \b is not a POSIX ERE metacharacter, so its
+  # meaning varies by grep (GNU vs BSD) — a guard built on it can silently
+  # stop matching. -w matches WHITE/LIGHTGRAY only as complete identifiers,
+  # so ${WHITE} is caught while a longer name like LIGHTWHITE is not.
+  run bash -c "grep -rlnwE --include='*.sh' 'WHITE|LIGHTGRAY' '${repo_dir}/lib' '${repo_dir}/ver-bump.sh' | grep -v '/lib/styles.sh\$'"
   assert_failure
 }
 
@@ -85,8 +90,11 @@ ui_repo() {
 @test "UI: fail() emphasises the message in bold, not fixed-white (1;37)" {
   run env CLICOLOR_FORCE=1 "${profile_script}" --release=yes
   assert_failure 2
-  # S_ERROR icon+"Error:", then S_NORM (bold, \e[1m) wraps the message body.
-  assert_output --partial $'\033[0;31m\xe2\x9c\x96 Error:\033[1m Option --release doesn\'t take a value.\033[0m'
+  # Assert the STYLING only, not the wording: the "Error:" label is followed
+  # immediately by S_NORM = bold (\e[1m), and the body is never wrapped in
+  # the old fixed bold-white (\e[1;37m). Unrelated copy changes to the
+  # message must not break this guard.
+  assert_output --partial $'Error:\033[1m'
   refute_output --partial $'\033[1;37m'
 }
 

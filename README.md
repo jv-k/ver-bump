@@ -1,6 +1,6 @@
 # ver-bump
 
-An opinionated release tool for Git projects with a `package.json` (Node / JS / TS, or any repo that follows SemVer via `-f <file>.json`). Automates SemVer bumps, CHANGELOG updates, tagging, and pushing — driven by Conventional Commits. Tags in place by default, or cut a release branch (`--branch`) and open a pull request (`--pr`). The core flow — bump, changelog, tag, push — works on any Git remote; `--pr` and `--release` are GitHub-specific and require the [`gh`](https://cli.github.com) CLI. Single-file bash at runtime; `git` + `jq` only.
+An opinionated release tool for Git projects with a `package.json` (Node / JS / TS, or any repo that follows SemVer via `-f <file>.json`). Automates SemVer bumps, CHANGELOG updates, tagging, and pushing — driven by Conventional Commits. Tags in place by default, or cut a release branch (`--branch`) and open a pull request (`--pr`). The core flow — bump, changelog, tag, push — works on any Git remote and needs only `git` + `jq`; `--pr` and `--release` are GitHub-specific and require the optional [`gh`](https://cli.github.com) CLI. Single-file bash at runtime.
 
 <p>
   <img src="https://raw.githubusercontent.com/jv-k/ver-bump/main/img/demo.gif?raw=true" alt="Animated demo: ver-bump reads commits, suggests a SemVer bump, updates package.json + CHANGELOG, creates a release branch, tags, and pushes.">
@@ -302,8 +302,8 @@ world-writable rc and exits with code 3; `chmod 644 .ver-bumprc` fixes it.
                               request (GitHub-only, requires the `gh` CLI). Implies a
                               push to origin (override the remote with -p). Base
                               resolves to --base, else the branch you ran ver-bump from.
-    --base <branch>           Base branch for the --pr pull request (GitHub-only,
-                              requires `gh`).
+    --base <branch>           Base branch for the --pr pull request (GitHub-only;
+                              only used with --pr, which requires `gh`).
     --release                 After pushing, publish a GitHub release for the new tag
                               (GitHub-only, requires `gh` and -p / --push <remote>).
                               Notes are read from $VER_BUMP_RELEASE_NOTES_CMD (default

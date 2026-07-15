@@ -40,18 +40,25 @@ do-branch() {
 do-commit() {
   [ "$FLAG_NOCOMMIT" = true ] && return
 
-  local COMMIT_MSG COMMIT_RC
+  local COMMIT_MSG COMMIT_RC FINAL_MSG
 
-  GIT_MSG+="$(get-commit-msg)"
+  # ONE renderer, shared with do-changelog's manual bump entry, so the
+  # CHANGELOG and the commit can't disagree — see render-commit-msg in
+  # lib/changelog.sh (R-TPL-1..3). Applies to this bump commit only; the
+  # tag message has its own knob, -m/--message (R-TPL-4).
+  FINAL_MSG=$(render-commit-msg "$GIT_MSG")
   echo -e "\nCommitting..."
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git commit -m '${S_VAL}${COMMIT_MSG_PREFIX}${GIT_MSG}${RESET}'" >&2
+    # %q shell-quotes the message so the preview stays copy-pasteable even
+    # when a template carries quotes, backslashes, or $(...) text.
+    printf '%b[dry-run]%b would run: git commit -m %b%q%b\n' \
+      "${S_LIGHT}" "${RESET}" "${S_VAL}" "${FINAL_MSG}" "${RESET}" >&2
     log_success "(dry-run) commit prepared"
     return
   fi
 
-  COMMIT_MSG=$( git commit -m "${COMMIT_MSG_PREFIX}${GIT_MSG}" 2>&1 ); COMMIT_RC=$?
+  COMMIT_MSG=$( git commit -m "${FINAL_MSG}" 2>&1 ); COMMIT_RC=$?
   if [ "$COMMIT_RC" -ne 0 ]; then
     fail 1 \
       "git commit failed: ${COMMIT_MSG}" \

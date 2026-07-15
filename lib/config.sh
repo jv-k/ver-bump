@@ -13,7 +13,7 @@ true
 #   3. process-arguments     — CLI flags overwrite anything above
 #
 # Supported keys (1:1 with existing globals):
-#   TAG_PREFIX  REL_PREFIX  PUSH_DEST  COMMIT_MSG_PREFIX
+#   TAG_PREFIX  REL_PREFIX  PUSH_DEST  COMMIT_MSG_PREFIX  CHANGELOG_STYLE
 #   FLAG_BRANCH  PR_BASE  FLAG_NOCHANGELOG  FLAG_CHANGELOG_PAUSE
 #   FLAG_NOBRANCH (deprecated, no-op — tag-in-place is the default as of 2.0)
 #
@@ -23,7 +23,7 @@ true
 
 # Config-able keys, in a plain indexed array so bash 3.2 is happy.
 _CONFIG_KEYS=(TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX \
-              FLAG_BRANCH PR_BASE \
+              FLAG_BRANCH PR_BASE CHANGELOG_STYLE \
               FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE)
 
 # Walk up from $PWD. Echoes the first .ver-bumprc found; returns 1 if none.
@@ -123,4 +123,7 @@ apply-config-defaults() {
   REL_PREFIX="${REL_PREFIX:-release-}"
   PUSH_DEST="${PUSH_DEST:-origin}"
   COMMIT_MSG_PREFIX="${COMMIT_MSG_PREFIX:-chore: }"
+  # "flat" (default, 1.x-identical) or "grouped" (R-CHLOG-1). Any other
+  # value behaves as flat — same lenient contract as the FLAG_* keys.
+  CHANGELOG_STYLE="${CHANGELOG_STYLE:-flat}"
 }

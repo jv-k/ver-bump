@@ -221,7 +221,7 @@ Each requirement has an ID so tests and PRs can reference it.
 | ID | Requirement |
 | --- | --- |
 | **R-CFG-1** | `.ver-bumprc` is discovered by walking up from `$PWD` to `/`. First match wins; absence is not an error. |
-| **R-CFG-2** | Supported keys: `TAG_PREFIX`, `REL_PREFIX`, `PUSH_DEST`, `COMMIT_MSG_PREFIX`, `FLAG_BRANCH`, `PR_BASE`, `FLAG_NOCHANGELOG`, `FLAG_CHANGELOG_PAUSE`, plus deprecated `FLAG_NOBRANCH` (back-compat; superseded by `FLAG_BRANCH`). Only these participate in the precedence contract (R-CFG-3); other assignments in the file execute as plain shell (R-CFG-5) but are unsupported and carry no precedence or compatibility guarantee. |
+| **R-CFG-2** | Supported keys: `TAG_PREFIX`, `REL_PREFIX`, `PUSH_DEST`, `COMMIT_MSG_PREFIX`, `CHANGELOG_STYLE`, `FLAG_BRANCH`, `PR_BASE`, `FLAG_NOCHANGELOG`, `FLAG_CHANGELOG_PAUSE`, plus deprecated `FLAG_NOBRANCH` (back-compat; superseded by `FLAG_BRANCH`). Only these participate in the precedence contract (R-CFG-3); other assignments in the file execute as plain shell (R-CFG-5) but are unsupported and carry no precedence or compatibility guarantee. |
 | **R-CFG-3** | Precedence end-to-end: CLI > environment > `.ver-bumprc` > built-in default. |
 | **R-CFG-4** | `.ver-bumprc` is refused (exit `3`) if world-writable, group-writable, or not owned by the invoking user. |
 | **R-CFG-5** | `.ver-bumprc` is shell-sourced, not parsed. Failures in sourcing exit `3` with the shell error as context. |
@@ -354,7 +354,7 @@ All resolved for 2.0:
 
 ## 13. Future work (post-2.0)
 
-- **Grouped CHANGELOG** from Conventional Commits (the other major friction point vs. modern tools).
+- **Grouped CHANGELOG** from Conventional Commits (the other major friction point vs. modern tools). *Shipped post-2.0 as opt-in `CHANGELOG_STYLE=grouped` (issue #61; R-CHLOG-1..5 in [docs/features/changelog/requirements.md](features/changelog/requirements.md)); the flat default is unchanged — flipping it is a 3.0 decision.*
 - **Hook system** (exit code `4` is reserved): `pre-bump`, `post-tag`, `post-push`.
 - **Non-npm install paths** — Homebrew formula (deferred from 2.0; issue [#24](https://github.com/jv-k/ver-bump/issues/24)), `basher` ([#39](https://github.com/jv-k/ver-bump/issues/39)).
 - **GitHub Packages publishing docs** ([#40](https://github.com/jv-k/ver-bump/issues/40)).

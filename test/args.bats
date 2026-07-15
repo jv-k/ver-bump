@@ -127,6 +127,19 @@ load 'test_helper'
   assert_equal "${ALLOW_EMPTY}" "false"
 }
 
+@test "long options: --sign sets TAG_SIGN" {
+  source ${profile_script}
+  process-arguments --sign
+  assert_equal "${TAG_SIGN}" "true"
+}
+
+@test "long options: --sign=value is rejected" {
+  source ${profile_script}
+  run process-arguments --sign=yes
+  assert_failure 2
+  assert_output --partial "Option --sign doesn't take a value"
+}
+
 @test "long options: --no-fetch sets NO_FETCH" {
   source ${profile_script}
   process-arguments --no-fetch

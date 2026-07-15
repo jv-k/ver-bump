@@ -262,7 +262,7 @@ becomes both the version source and the file that gets bumped.
 $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... \
            [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
-           [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-h|--help] \
+           [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-q|--quiet] [-h|--help] \
            [--source <file.json>] [--branch] [--pr] [--base <branch>] \
            [--allow-dirty] [--allow-empty] [--no-fetch] \
            [--undo [<version>]] [--major | --minor | --patch] [--release] \
@@ -293,6 +293,7 @@ Supported keys (each maps 1:1 to an existing global):
 | `PUSH_DEST` | `-p` / `--push` | `origin` |
 | `SOURCE_FILE` | `--source` | `package.json` |
 | `COMMIT_MSG_PREFIX` | *(no flag)* | `"chore: "` |
+| `COMMIT_MSG_TEMPLATE` | *(no flag)* | *unset* (prefix + generated file list) |
 | `CHANGELOG_STYLE` | *(no flag)* | `flat` |
 | `FLAG_BRANCH` | `--branch` | *unset* (tag in place) |
 | `PR_BASE` | `--base` | *(auto-detect)* |
@@ -301,6 +302,7 @@ Supported keys (each maps 1:1 to an existing global):
 | `ALLOW_DIRTY` | `--allow-dirty` | *unset* (dirty tree refuses) |
 | `NO_FETCH` | `--no-fetch` | *unset* (fetch + behind-upstream check) |
 | `RELEASE_BRANCHES` | *(no flag)* | *unset* (release from any branch) |
+| `TAG_SIGN` | `--sign` | `false` (annotated, unsigned tag) |
 
 Example:
 
@@ -371,6 +373,43 @@ non-GitHub remote (or no remote) the same grouping renders as plain text
 without links. Any other `CHANGELOG_STYLE` value behaves as `flat`, whose
 output stays byte-identical to previous releases.
 
+#### Commit message template (`COMMIT_MSG_TEMPLATE`)
+
+By default the bump commit's message is `COMMIT_MSG_PREFIX` plus a
+generated list of what changed:
+
+```text
+chore: updated package.json, updated CHANGELOG.md, bumped 1.1.7 -> 1.1.8
+```
+
+Set `COMMIT_MSG_TEMPLATE` — in `.ver-bumprc` or as an environment
+variable; there is no CLI flag — to replace the **whole** message with
+your own template. When it is set, `COMMIT_MSG_PREFIX` is **ignored**:
+the template owns the entire message, prefix included.
+
+```sh
+# .ver-bumprc — single quotes are required so your shell / the rc loader
+# doesn't expand the placeholders before ver-bump sees them
+COMMIT_MSG_TEMPLATE='chore(release): v${version}'
+```
+
+Available placeholders:
+
+| Placeholder | Replaced with | Example |
+| --- | --- | --- |
+| `${version}` | the new version | `1.1.8` |
+| `${prev_version}` | the previous version | `1.1.7` |
+| `${tag}` | the new tag (`TAG_PREFIX` + version) | `v1.1.8` |
+| `${files}` | the generated changed-file list | `updated package.json, updated CHANGELOG.md` |
+
+Substitution is a literal string replacement — the template is **never**
+evaluated as shell, so `$(...)`, backticks, and unknown `${...}`
+placeholders pass through as literal text. The CHANGELOG's entry for the
+bump commit uses the same rendered message (first line, in both `flat`
+and `grouped` styles), so the two never drift apart. The template applies
+to the bump commit only; the annotated tag's message keeps its own knob,
+`-m` / `--message`.
+
 ```text
 -v, --version [<version>]     Without a value: print tool version and exit.
                               With a value: set manual SemVer (validated against 2.0).
@@ -387,6 +426,14 @@ output stays byte-identical to previous releases.
 -c, --no-changelog            Disable updating CHANGELOG.md automatically.
 -l, --pause-changelog         Pause before commit so CHANGELOG.md can be hand-edited.
 -y, --yes                     Skip interactive confirmation prompts.
+-q, --quiet                   Suppress decorative output — on success stdout carries
+                              exactly one line: the new version (no tag prefix, no
+                              colour); everything else goes to stderr. Errors keep
+                              the usual exit codes; a no-op run (nothing to release)
+                              prints nothing and exits 0. Requires --yes, -v, or
+                              --major/--minor/--patch, and refuses -l/--pause-changelog
+                              (a hidden prompt would hang the pipeline). CI capture:
+                                NEW_VERSION=$(ver-bump --yes --quiet -p origin)
 -h, --help                    Show help message.
     --source <file.json>      Version source + primary bump target (default:
                               package.json). Replaces package.json for reading the
@@ -431,6 +478,11 @@ output stays byte-identical to previous releases.
                               (GitHub-only, requires `gh` and -p / --push <remote>).
                               Notes are read from $VER_BUMP_RELEASE_NOTES_CMD (default
                               `npx jv-k/releasetool`).
+    --sign                    Create a signed tag (git tag -s) instead of an annotated
+                              one. The signing key and program come from your git
+                              config (user.signingkey, gpg.format) — ver-bump does no
+                              key management. Also available as the TAG_SIGN
+                              config/env key.
     --about                   Print name, version, author, and homepage; then exit.
     --completions <shell>     Emit completion script for bash, zsh, or fish to stdout.
     --install-completions [=<shell>]

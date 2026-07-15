@@ -17,8 +17,13 @@ true
 #   FLAG_BRANCH  PR_BASE  FLAG_NOCHANGELOG  FLAG_CHANGELOG_PAUSE
 #   ALLOW_DIRTY (skip the clean-working-tree preflight, R-SAFE-2)
 #   NO_FETCH (skip the remote-sync preflight, R-SAFE-8)
+#   TAG_SIGN (create a signed tag via `git tag -s`, R-SIGN-1)
 #   RELEASE_BRANCHES (space-separated glob allowlist of branches a release
 #                     may be cut from; empty = no guard, R-SAFE-10)
+#   COMMIT_MSG_TEMPLATE (whole bump-commit message template with literal
+#                        ${version}/${prev_version}/${tag}/${files}
+#                        placeholders; when set COMMIT_MSG_PREFIX is
+#                        ignored; empty = legacy prefix+list, R-TPL-1/2)
 #   SOURCE_FILE (version source + primary bump target, mirrors --source;
 #                default package.json, R-SRC-1/5)
 #   FLAG_NOBRANCH (deprecated, no-op — tag-in-place is the default as of 2.0)
@@ -29,9 +34,9 @@ true
 
 # Config-able keys, in a plain indexed array so bash 3.2 is happy.
 _CONFIG_KEYS=(TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX \
-              FLAG_BRANCH PR_BASE CHANGELOG_STYLE \
+              COMMIT_MSG_TEMPLATE FLAG_BRANCH PR_BASE CHANGELOG_STYLE \
               FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE \
-              ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES SOURCE_FILE)
+              ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES TAG_SIGN SOURCE_FILE)
 
 # Walk up from $PWD. Echoes the first .ver-bumprc found; returns 1 if none.
 # Never touches stdout on the "not found" path — load-config treats that
@@ -125,7 +130,9 @@ load-config() {
 # Apply built-in defaults for any config key still unset after load-config.
 # FLAG_* keys and the boolean safety keys (ALLOW_DIRTY, NO_FETCH)
 # intentionally default to unset (false-equivalent under [ "$KEY" = true ]);
-# RELEASE_BRANCHES defaults to unset/empty = guard off (R-SAFE-10).
+# RELEASE_BRANCHES defaults to unset/empty = guard off (R-SAFE-10);
+# COMMIT_MSG_TEMPLATE defaults to unset/empty = the legacy
+# COMMIT_MSG_PREFIX + generated-list message (R-TPL-1).
 apply-config-defaults() {
   TAG_PREFIX="${TAG_PREFIX:-v}"
   REL_PREFIX="${REL_PREFIX:-release-}"
@@ -134,6 +141,9 @@ apply-config-defaults() {
   # "flat" (default, 1.x-identical) or "grouped" (R-CHLOG-1). Any other
   # value behaves as flat — same lenient contract as the FLAG_* keys.
   CHANGELOG_STYLE="${CHANGELOG_STYLE:-flat}"
+  # Signed tags are opt-in (R-SIGN-1). Explicit false default; false and
+  # unset behave identically under [ "$TAG_SIGN" = true ].
+  TAG_SIGN="${TAG_SIGN:-false}"
   # Version source + primary bump target (R-SRC-1/5). VER_FILE derives from
   # it in main() after process-arguments, so --source (CLI) wins per R-CFG-3.
   SOURCE_FILE="${SOURCE_FILE:-package.json}"

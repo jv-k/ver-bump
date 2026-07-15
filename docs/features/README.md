@@ -19,11 +19,13 @@ contract); IDs added after the PRD are backfilled here first.
 | [config-file](./config-file/requirements.md) | R-CFG | `config.bats`, `config-env.bats` |
 | [completions](./completions/requirements.md) | R-COMP | `args.bats`, `completions-syntax.bats`, `install-completions.bats` |
 | [changelog](./changelog/requirements.md) | R-LOG | `changelog.bats` |
+| [commit-template](./commit-template/requirements.md) | R-TPL | `commit-template.bats` |
 | [release-flow](./release-flow/requirements.md) | R-FLOW | `git-ops.bats`, `pr.bats`, `prefixes.bats`, `e2e-live.bats` |
+| [signed-tags](./signed-tags/requirements.md) | R-SIGN | `signed-tags.bats`, `args.bats` |
 | [github-release](./github-release/requirements.md) | R-REL | `release.bats` |
 | [undo](./undo/requirements.md) | R-UNDO | `undo.bats` |
 | [safety-preflights](./safety-preflights/requirements.md) | R-SAFE | `worktree-clean.bats`, `release-branch-guard.bats`, `remote-sync.bats`, `no-release.bats` |
-| [ui-output](./ui-output/requirements.md) | R-UI | `ui.bats`, `color.bats`, `about.bats` |
+| [ui-output](./ui-output/requirements.md) | R-UI, R-OUT | `ui.bats`, `color.bats`, `about.bats`, `quiet.bats` |
 | [dev-sandbox](./dev-sandbox/requirements.md) | R-DEV | `sandbox.bats` |
 | [json-bump-formatting](./json-bump-formatting/requirements.md) | R-FMT | `json.bats`, `bumpfile.bats` |
 | [installer](./installer/requirements.md) | R-DIST | `install.bats` |

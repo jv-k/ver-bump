@@ -102,12 +102,25 @@ normalize-long-opts() {
         case "$undo_a" in
           --dry-run|-d)       FLAG_DRYRUN=true ;;
           --yes|-y)           FLAG_YES=true ;;
+          --quiet|-q)         FLAG_QUIET=true ;;
           -t|--tag-prefix)    undo_capture=t ;;
           -B|--branch-prefix) undo_capture=B ;;
           --tag-prefix=*)     TAG_PREFIX="${undo_a#*=}" ;;
           --branch-prefix=*)  REL_PREFIX="${undo_a#*=}" ;;
         esac
       done
+      # --quiet + --undo (R-OUT-2): do-undo's confirmation prompt is
+      # interactive, so --yes is mandatory. There is no "new version" to
+      # report for an undo, so stdout stays completely empty: route all
+      # decoration to stderr and print nothing.
+      if [ "${FLAG_QUIET:-false}" = true ]; then
+        if [ "${FLAG_YES:-false}" != true ]; then
+          fail 2 \
+            "--quiet with --undo requires --yes (the undo confirmation prompt is interactive)." \
+            "Add --yes to auto-confirm the undo, or drop --quiet."
+        fi
+        exec 1>&2
+      fi
       if [[ "$arg" == "--undo="* ]]; then
         undo_ver="${arg#--undo=}"
         [ -z "$undo_ver" ] && fail 2 \
@@ -233,6 +246,20 @@ normalize-long-opts() {
       continue
     fi
 
+    # --sign — long-only boolean: create a signed release tag (`git tag -s`,
+    # R-SIGN-1). Sets the TAG_SIGN config key directly, so the CLI wins over
+    # env / .ver-bumprc per R-CFG-3 (process-arguments runs last). Key and
+    # signing program stay in git's own config (user.signingkey, gpg.format) —
+    # ver-bump adds no key management; git's own error is the error surface.
+    if [ "$arg" = "--sign" ]; then
+      TAG_SIGN=true
+      continue
+    elif [[ "$arg" == "--sign="* ]]; then
+      fail 2 \
+        "Option --sign doesn't take a value." \
+        "Drop the '=<value>' — --sign is a boolean flag."
+    fi
+
     # --base <branch> / --base=<branch> — explicit base branch for --pr. Long-only
     # value flag (no short form), captured here like --undo so it needs no getopts slot.
     if [ "$arg" = "--base" ] || [[ "$arg" == "--base="* ]]; then
@@ -300,6 +327,7 @@ normalize-long-opts() {
       pause-changelog) short="-l"; needs_arg=0 ;;
       help)            short="-h"; needs_arg=0 ;;
       yes)             short="-y"; needs_arg=0 ;;
+      quiet)           short="-q"; needs_arg=0 ;;
       *)
         fail 2 \
           "Invalid option: --${name}" \
@@ -337,21 +365,47 @@ normalize-long-opts() {
 process-arguments() {
   local OPTIONS OPTIND OPTARG
 
-  # DO_RELEASE, BUMP_LEVEL, and ALLOW_EMPTY are CLI-only switches with no
-  # env / .ver-bumprc contract. Reset them before parsing so an inherited
-  # exported var — or a .ver-bumprc assignment (load-config sources the rc as
-  # raw shell) — can't silently force a bump, publish a release, or push an
-  # empty release with no flag on the command line.
+  # DO_RELEASE, BUMP_LEVEL, ALLOW_EMPTY, and FLAG_QUIET are CLI-only switches
+  # with no env / .ver-bumprc contract. Reset them before parsing so an
+  # inherited exported var — or a .ver-bumprc assignment (load-config sources
+  # the rc as raw shell) — can't silently force a bump, publish a release,
+  # push an empty release, or hide the run's output with no flag on the
+  # command line. FLAG_QUIET follows the FLAG_YES rationale (R-YES-3): a
+  # hidden-output mode must be an explicit per-invocation choice.
   DO_RELEASE=false
   DO_PR=false
   BUMP_LEVEL=
   ALLOW_EMPTY=false
+  FLAG_QUIET=false
 
   normalize-long-opts "$@"
   set -- ${NORMALIZED_ARGV[@]+"${NORMALIZED_ARGV[@]}"}
 
+  # -q/--quiet stream discipline (R-OUT-1): redirect BEFORE getopts runs,
+  # otherwise the "Option set:" echoes below would leak to stdout whenever
+  # another flag precedes -q in argv. FD 3 keeps a handle on the real stdout
+  # for the single bare-version line main() prints at the end; everything
+  # else — decoration, prompts, dry-run previews — lands on stderr. One
+  # redirect here beats guarding every log_*/echo call site: no current or
+  # future decoration line can ever leak into the captured pipeline.
+  # Like the --undo pre-scan, this scan reads flag positions approximately:
+  # an option *value* that begins with '-' and contains a 'q' (e.g.
+  # -m "-quote") is a false positive — same accepted trade-off as the other
+  # pre-scans in this file. --quiet has already been normalized to -q, and
+  # clustered shorts (-yq) are matched too.
+  local _qscan
+  for _qscan in "$@"; do
+    case "$_qscan" in
+      --) break ;;
+      -q*|-[!-]*q*) FLAG_QUIET=true; break ;;
+    esac
+  done
+  if [ "$FLAG_QUIET" = true ]; then
+    exec 3>&1 1>&2
+  fi
+
   # Get positional parameters
-  while getopts ":v:p:m:f:t:B:hbncdly" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
+  while getopts ":v:p:m:f:t:B:hbncdlyq" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
     case "$OPTIONS" in
       h )
         # Show help
@@ -419,6 +473,12 @@ process-arguments() {
       y )
         FLAG_YES=true
       ;;
+      q )
+        # Already set by the pre-scan above (which also performed the FD
+        # redirect); kept here so getopts accepts the flag and direct unit
+        # calls remain honest.
+        FLAG_QUIET=true
+      ;;
       \? )
         fail 2 \
           "Invalid option: -$OPTARG" \
@@ -431,4 +491,22 @@ process-arguments() {
       ;;
     esac
   done
+
+  # --quiet and interactive prompts are incompatible by construction — a
+  # hidden prompt is a hung pipeline (R-OUT-2). Fail fast at parse time
+  # rather than mid-release. FLAG_CHANGELOG_PAUSE is checked here (not in
+  # the -l getopts case) so a .ver-bumprc-set pause is caught too — the rc
+  # was already sourced by load-config before process-arguments ran.
+  if [ "$FLAG_QUIET" = true ]; then
+    if [ "${FLAG_CHANGELOG_PAUSE:-false}" = true ]; then
+      fail 2 \
+        "--quiet is incompatible with -l/--pause-changelog (an interactive pause would hang a captured pipeline)." \
+        "Drop -l/--pause-changelog (or unset FLAG_CHANGELOG_PAUSE in .ver-bumprc), or drop --quiet."
+    fi
+    if [ "${FLAG_YES:-false}" != true ] && [ -z "${V_USR_SUPPLIED-}" ] && [ -z "${BUMP_LEVEL-}" ]; then
+      fail 2 \
+        "--quiet would hide the interactive version prompt (a hidden prompt is a hung pipeline)." \
+        "Add --yes to accept the suggested version, pass -v <version>, or force a level with --major/--minor/--patch."
+    fi
+  fi
 }

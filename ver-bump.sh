@@ -48,6 +48,7 @@ V_SUGGEST="0.1.0" # This is suggested in case VERSION file or user supplied vers
 GIT_MSG=""
 REL_NOTE=""
 FLAG_DRYRUN=false
+FLAG_QUIET=false # -q/--quiet: decoration to stderr, bare new version on stdout (R-OUT-1). CLI-only; reset in process-arguments.
 
 # Config-keyed defaults use `:=` so exported env values survive. An
 # unconditional assignment (e.g. `TAG_PREFIX="v"`) would clobber
@@ -111,6 +112,16 @@ main() {
   section "Done"
   log_success "$( capitalise "$( get-commit-msg )" )"
   echo
+
+  # Machine-readable success line (R-OUT-1): under --quiet, FD 3 is the real
+  # stdout saved by process-arguments (everything else was rerouted to
+  # stderr), and it receives exactly one line — the new version, bare: no
+  # tag prefix, no colour. A no-op run never reaches this point
+  # (check-releasable-commits exits 0 first), so quiet stdout stays empty
+  # for "no release happened" (R-OUT-4).
+  if [ "$FLAG_QUIET" = true ]; then
+    printf '%s\n' "$V_NEW" >&3
+  fi
 }
 
 # Execute script when it is executed as a script, and when it is brought into the environment with source (so it can be tested)

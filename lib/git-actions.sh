@@ -40,7 +40,7 @@ do-branch() {
 do-commit() {
   [ "$FLAG_NOCOMMIT" = true ] && return
 
-  local COMMIT_MSG COMMIT_RC
+  local COMMIT_MSG COMMIT_RC FINAL_MSG
 
   # Tag-only release (R-SRC-3): when this run staged nothing — tag-derived
   # source (nothing to write), -c, no -f extras — `git commit` would die
@@ -58,16 +58,23 @@ do-commit() {
     fi
   fi
 
-  GIT_MSG+="$(get-commit-msg)"
+  # ONE renderer, shared with do-changelog's manual bump entry, so the
+  # CHANGELOG and the commit can't disagree — see render-commit-msg in
+  # lib/changelog.sh (R-TPL-1..3). Applies to this bump commit only; the
+  # tag message has its own knob, -m/--message (R-TPL-4).
+  FINAL_MSG=$(render-commit-msg "$GIT_MSG")
   echo -e "\nCommitting..."
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git commit -m '${S_VAL}${COMMIT_MSG_PREFIX}${GIT_MSG}${RESET}'" >&2
+    # %q shell-quotes the message so the preview stays copy-pasteable even
+    # when a template carries quotes, backslashes, or $(...) text.
+    printf '%b[dry-run]%b would run: git commit -m %b%q%b\n' \
+      "${S_LIGHT}" "${RESET}" "${S_VAL}" "${FINAL_MSG}" "${RESET}" >&2
     log_success "(dry-run) commit prepared"
     return
   fi
 
-  COMMIT_MSG=$( git commit -m "${COMMIT_MSG_PREFIX}${GIT_MSG}" 2>&1 ); COMMIT_RC=$?
+  COMMIT_MSG=$( git commit -m "${FINAL_MSG}" 2>&1 ); COMMIT_RC=$?
   if [ "$COMMIT_RC" -ne 0 ]; then
     fail 1 \
       "git commit failed: ${COMMIT_MSG}" \
@@ -83,11 +90,20 @@ do-tag() {
   # would point at the wrong (pre-bump) commit. Skip the tag too.
   [ "$FLAG_NOCOMMIT" = true ] && return
 
-  local tag_msg
+  local tag_msg tag_opt
   tag_msg="${REL_NOTE:-Tag version ${V_NEW}.}"
+  # -a (annotated, default) vs -s (signed, R-SIGN-1): --sign / TAG_SIGN=true
+  # opts into `git tag -s`. Key + program selection stays entirely in git's
+  # own config (user.signingkey, gpg.format) — no preflight here; a signing
+  # failure surfaces git's own error via the abort path below (R-SIGN-2).
+  tag_opt="-a"
+  [ "${TAG_SIGN:-false}" = true ] && tag_opt="-s"
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git tag -a ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET} -m '${tag_msg}'" >&2
+    # printf, not echo -e: tag_msg is user-supplied (-m/REL_NOTE) and must
+    # print verbatim — %s never interprets backslash escapes.
+    printf "%b[dry-run]%b would run: git tag %s %b%s%b -m '%s'\n" \
+      "${S_LIGHT-}" "${RESET-}" "$tag_opt" "${S_VAL-}" "${TAG_PREFIX}${V_NEW}" "${RESET-}" "$tag_msg" >&2
     log_success "Tagged ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET}"
     return
   fi
@@ -95,7 +111,7 @@ do-tag() {
   # A failed `git tag` (e.g. bad object, signing failure, or a tag that
   # slipped past check-tag-exists) must abort — otherwise we'd report a false
   # "Tagged" success and push a branch whose tag was never created.
-  if ! git tag -a "${TAG_PREFIX}${V_NEW}" -m "${tag_msg}"; then
+  if ! git tag "$tag_opt" "${TAG_PREFIX}${V_NEW}" -m "${tag_msg}"; then
     fail 1 \
       "Failed to create git tag ${TAG_PREFIX}${V_NEW} (see git output above)." \
       "If a previous run left a partial release, check 'git tag -l ${TAG_PREFIX}${V_NEW}' and your release branch, then retry."

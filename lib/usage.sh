@@ -3,6 +3,28 @@
 # shellcheck disable=SC2288
 true
 
+# _help_wrap <width> <text> — word-wrap <text> to <width> columns, one physical
+# line per output line, breaking only at spaces. A single word longer than
+# <width> is left to overflow its own line rather than hard-cut (URLs, paths).
+# Splitting goes through `read -ra` so no globbing/brace expansion touches the
+# text. Callers own indentation (hanging indent under the description column).
+_help_wrap() {
+  local width="$1" text="$2" line="" word
+  local -a words
+  read -ra words <<< "$text"
+  for word in "${words[@]}"; do
+    if [ -z "$line" ]; then
+      line="$word"
+    elif (( ${#line} + 1 + ${#word} <= width )); then
+      line="$line $word"
+    else
+      printf '%s\n' "$line"
+      line="$word"
+    fi
+  done
+  [ -n "$line" ] && printf '%s\n' "$line"
+}
+
 # Show --help.
 usage() {
   local SCRIPT_VER SCRIPT_NAME SCRIPT_AUTH SCRIPT_HOME env_var env_var_val
@@ -54,6 +76,32 @@ usage() {
   # comfortable description column start.
   local OPT_COL=40
 
+  # Fluid layout: when writing to a real terminal, wrap descriptions to the
+  # actual width and hang wrapped lines under the description column so a long
+  # description no longer overflows flush-left. TERM_COLS=0 means "don't wrap"
+  # — piped/redirected output (tests, `| less`, files) keeps one description per
+  # line, stable for grepping and byte-identical to the historic layout.
+  # COLUMNS is rarely exported into a script, so `tput cols` is the real source;
+  # COLUMNS wins when set, and 80 is the last resort.
+  local TERM_COLS=0
+  if [ -t 1 ]; then
+    if [ -n "${COLUMNS:-}" ] && [ -z "${COLUMNS//[0-9]/}" ]; then
+      TERM_COLS="$COLUMNS"
+    elif command -v tput >/dev/null 2>&1; then
+      TERM_COLS=$(tput cols 2>/dev/null)
+    fi
+    case "$TERM_COLS" in ''|*[!0-9]*) TERM_COLS=80 ;; esac
+  fi
+
+  # _help_desc_avail — columns available for the description/continuation text
+  # to the right of OPT_COL, floored so a very narrow terminal still wraps
+  # somewhere sane rather than at 0.
+  _help_desc_avail() {
+    local avail=$(( TERM_COLS - OPT_COL ))
+    (( avail < 20 )) && avail=20
+    printf '%s' "$avail"
+  }
+
   # print-opt-row <short> <long> <arg-or-empty> <description>
   # 2-space left gutter on every row. Flag names are bold + default colour
   # (no red/pink accent). Long-only rows align under the long-flag column.
@@ -80,13 +128,39 @@ usage() {
     else
       printf -v pad '%*s' $((OPT_COL - ${#plain})) ''
     fi
-    echo -e "${label}${pad}${desc}"
+    # Fluid: wrap the description and hang continuations under OPT_COL. Rows
+    # with runs of 2+ spaces are pre-aligned (never reflowed); descriptions are
+    # plain single-spaced prose so they always wrap cleanly.
+    if (( TERM_COLS > 0 )) && [ -n "$desc" ] && [[ "$desc" != *"  "* ]]; then
+      local wline first=1
+      while IFS= read -r wline; do
+        if (( first )); then
+          echo -e "${label}${pad}${wline}"
+          first=0
+        else
+          print-opt-cont "$wline"
+        fi
+      done < <(_help_wrap "$(_help_desc_avail)" "$desc")
+    else
+      echo -e "${label}${pad}${desc}"
+    fi
   }
 
-  # print-opt-cont <text> — continuation row, aligned under the description column
+  # print-opt-cont <text> — continuation row, aligned under the description
+  # column. Free prose is word-wrapped to the terminal width; rows with runs of
+  # 2+ spaces are pre-aligned inner tables (e.g. the --bump spec list) and are
+  # emitted verbatim so their own columns survive.
   print-opt-cont() {
-    printf '%*s' "$OPT_COL" ''
-    echo -e "$1"
+    if (( TERM_COLS > 0 )) && [[ "$1" != *"  "* ]]; then
+      local wline
+      while IFS= read -r wline; do
+        printf '%*s' "$OPT_COL" ''
+        echo -e "$wline"
+      done < <(_help_wrap "$(_help_desc_avail)" "$1")
+    else
+      printf '%*s' "$OPT_COL" ''
+      echo -e "$1"
+    fi
   }
 
   # print-example-row <command> <description> — 2-space gutter, bold command,
@@ -103,7 +177,21 @@ usage() {
     else
       printf -v pad '%*s' $((OPT_COL - ${#plain})) ''
     fi
-    printf '  %b%s%b%s%s\n' "${BOLD-}" "${cmd}" "${RESET-}" "${pad# }" "${desc}"
+    # Fluid: wrap the description, hanging continuations under OPT_COL.
+    if (( TERM_COLS > 0 )) && [ -n "$desc" ] && [[ "$desc" != *"  "* ]]; then
+      local wline first=1
+      while IFS= read -r wline; do
+        if (( first )); then
+          printf '  %b%s%b%s%s\n' "${BOLD-}" "${cmd}" "${RESET-}" "${pad# }" "${wline}"
+          first=0
+        else
+          printf '%*s' "$OPT_COL" ''
+          echo -e "$wline"
+        fi
+      done < <(_help_wrap "$(_help_desc_avail)" "$desc")
+    else
+      printf '  %b%s%b%s%s\n' "${BOLD-}" "${cmd}" "${RESET-}" "${pad# }" "${desc}"
+    fi
   }
 
   # OPTIONS section pill (the "long forms accept ..." note moved to the bottom).

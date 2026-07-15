@@ -212,6 +212,20 @@ normalize-long-opts() {
         "Drop the '=<value>' — --no-fetch is a boolean flag."
     fi
 
+    # --no-hooks — long-only boolean: skip both release hooks (PRE_BUMP_CMD /
+    # POST_TAG_CMD) for this run (R-HOOK-5) — git's --no-verify convention.
+    # CLI-only like --allow-empty (reset in process-arguments): an rc or env
+    # assignment must never silently disable hooks the team relies on. The
+    # one-shot env bypass is emptying the key itself (PRE_BUMP_CMD= ver-bump …).
+    if [ "$arg" = "--no-hooks" ]; then
+      FLAG_NOHOOKS=true
+      continue
+    elif [[ "$arg" == "--no-hooks="* ]]; then
+      fail 2 \
+        "Option --no-hooks doesn't take a value." \
+        "Drop the '=<value>' — --no-hooks is a boolean flag."
+    fi
+
     # --base <branch> / --base=<branch> — explicit base branch for --pr. Long-only
     # value flag (no short form), captured here like --undo so it needs no getopts slot.
     if [ "$arg" = "--base" ] || [[ "$arg" == "--base="* ]]; then
@@ -316,15 +330,17 @@ normalize-long-opts() {
 process-arguments() {
   local OPTIONS OPTIND OPTARG
 
-  # DO_RELEASE, BUMP_LEVEL, and ALLOW_EMPTY are CLI-only switches with no
-  # env / .ver-bumprc contract. Reset them before parsing so an inherited
-  # exported var — or a .ver-bumprc assignment (load-config sources the rc as
-  # raw shell) — can't silently force a bump, publish a release, or push an
-  # empty release with no flag on the command line.
+  # DO_RELEASE, BUMP_LEVEL, ALLOW_EMPTY, and FLAG_NOHOOKS are CLI-only
+  # switches with no env / .ver-bumprc contract. Reset them before parsing so
+  # an inherited exported var — or a .ver-bumprc assignment (load-config
+  # sources the rc as raw shell) — can't silently force a bump, publish a
+  # release, push an empty release, or disable the release hooks with no flag
+  # on the command line.
   DO_RELEASE=false
   DO_PR=false
   BUMP_LEVEL=
   ALLOW_EMPTY=false
+  FLAG_NOHOOKS=false
 
   normalize-long-opts "$@"
   set -- ${NORMALIZED_ARGV[@]+"${NORMALIZED_ARGV[@]}"}

@@ -150,7 +150,7 @@ _ver_bump() {
     opts="--version --message --file --push --tag-prefix --branch-prefix \
           --dry-run --no-commit --no-branch --no-changelog --pause-changelog \
           --yes --undo --branch --pr --base --major --minor --patch --release \
-          --allow-dirty --allow-empty --no-fetch \
+          --allow-dirty --allow-empty --no-fetch --no-hooks \
           --help --completions --install-completions --about \
           -v -m -f -p -t -B -d -n -b -c -l -y -h"
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
@@ -192,6 +192,7 @@ _ver_bump() {
     '--allow-dirty[skip the clean-working-tree preflight]' \
     '--allow-empty[release even with no new commits since the previous tag]' \
     '--no-fetch[skip the remote-sync preflight]' \
+    '--no-hooks[skip the PRE_BUMP_CMD / POST_TAG_CMD release hooks]' \
     '--completions[emit completion script]:shell:(bash zsh fish)' \
     '--install-completions[install completion script for detected / specified shell]::shell:(bash zsh fish)' \
     '--about[print branded version info and exit]'
@@ -229,6 +230,7 @@ for _cmd in ver-bump ver-bump.sh
     complete -c $_cmd      -l allow-dirty    -d 'Skip the clean-working-tree preflight'
     complete -c $_cmd      -l allow-empty    -d 'Release even with no new commits since the previous tag'
     complete -c $_cmd      -l no-fetch       -d 'Skip the remote-sync preflight'
+    complete -c $_cmd      -l no-hooks       -d 'Skip the PRE_BUMP_CMD / POST_TAG_CMD release hooks'
     complete -c $_cmd      -l completions    -x -a 'bash zsh fish' -d 'Emit completion script'
     complete -c $_cmd      -l install-completions -a 'bash zsh fish' -d 'Install completions for detected/specified shell'
     complete -c $_cmd      -l about          -d 'Print branded version info and exit'

@@ -19,6 +19,8 @@ true
 #   NO_FETCH (skip the remote-sync preflight, R-SAFE-8)
 #   RELEASE_BRANCHES (space-separated glob allowlist of branches a release
 #                     may be cut from; empty = no guard, R-SAFE-10)
+#   PRE_BUMP_CMD (release hook before any mutation; empty = no hook, R-HOOK-1)
+#   POST_TAG_CMD (release hook after tag, before push; empty = no hook, R-HOOK-2)
 #   FLAG_NOBRANCH (deprecated, no-op — tag-in-place is the default as of 2.0)
 #
 # Safety: shell-sourced files are code. The rc must be owned by the current
@@ -29,7 +31,8 @@ true
 _CONFIG_KEYS=(TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX \
               FLAG_BRANCH PR_BASE CHANGELOG_STYLE \
               FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE \
-              ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES)
+              ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES \
+              PRE_BUMP_CMD POST_TAG_CMD)
 
 # Walk up from $PWD. Echoes the first .ver-bumprc found; returns 1 if none.
 # Never touches stdout on the "not found" path — load-config treats that
@@ -123,7 +126,8 @@ load-config() {
 # Apply built-in defaults for any config key still unset after load-config.
 # FLAG_* keys and the boolean safety keys (ALLOW_DIRTY, NO_FETCH)
 # intentionally default to unset (false-equivalent under [ "$KEY" = true ]);
-# RELEASE_BRANCHES defaults to unset/empty = guard off (R-SAFE-10).
+# RELEASE_BRANCHES defaults to unset/empty = guard off (R-SAFE-10);
+# PRE_BUMP_CMD / POST_TAG_CMD default to unset/empty = no hook (R-HOOK-1/2).
 apply-config-defaults() {
   TAG_PREFIX="${TAG_PREFIX:-v}"
   REL_PREFIX="${REL_PREFIX:-release-}"

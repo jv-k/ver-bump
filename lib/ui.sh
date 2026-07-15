@@ -4,27 +4,36 @@
 true
 
 # ── Log helpers ────────────────────────────────────────────────────────────
-# Every status line uses a 2-space gutter so messages read as subordinate to
-# section headers. Pass the message without colour codes; helpers apply the
-# icon, colour, and reset. Every colour variable is gated by USE_COLOR in
-# lib/styles.sh, so piping / NO_COLOR / non-TTY strips ANSI automatically.
+# Every status line is prefixed by a gutter of LOG_GUTTER_WIDTH spaces so
+# messages read as subordinate to section headers. Pass the message without
+# colour codes; helpers apply the icon, colour, and reset. Every colour
+# variable is gated by USE_COLOR in lib/styles.sh, so piping / NO_COLOR /
+# non-TTY strips ANSI automatically.
+
+# Single source of truth for the status-line indent. Set to 0 to flush status
+# lines to the margin. _LOG_GUTTER is the base prefix; log_trace nests one
+# level deeper (gutter + 2) so subordinate ↳ lines still hang under their
+# parent regardless of the base width.
+LOG_GUTTER_WIDTH=0
+printf -v _LOG_GUTTER       '%*s' "${LOG_GUTTER_WIDTH}"        ''
+printf -v _LOG_TRACE_GUTTER '%*s' "$((LOG_GUTTER_WIDTH + 2))"  ''
 
 # log_success <msg> — green ✔ + plain body. %b on body interprets inline ANSI
 # (e.g. ${S_OK}value${RESET}) without forcing every call site to printf.
-log_success() { printf '  %b%s%b %b\n' "${S_OK-}" "${I_OK-}" "${RESET-}" "$1"; }
+log_success() { printf '%s%b%s%b %b\n' "${_LOG_GUTTER}" "${S_OK-}" "${I_OK-}" "${RESET-}" "$1"; }
 
 # log_warn <msg> — yellow ! + body
-log_warn() { printf '  %b%s%b %b\n' "${S_ATTN-}" "${I_WARN-}" "${RESET-}" "$1"; }
+log_warn() { printf '%s%b%s%b %b\n' "${_LOG_GUTTER}" "${S_ATTN-}" "${I_WARN-}" "${RESET-}" "$1"; }
 
 # log_error <msg> — red ✖ + body, to stderr
-log_error() { printf '  %b%s%b %b\n' "${S_ERROR-}" "${I_ERROR-}" "${RESET-}" "$1" >&2; }
+log_error() { printf '%s%b%s%b %b\n' "${_LOG_GUTTER}" "${S_ERROR-}" "${I_ERROR-}" "${RESET-}" "$1" >&2; }
 
 # log_info <msg> — cyan ℹ + body
-log_info() { printf '  %b%s%b %b\n' "${S_INFO-}" "${I_INFO-}" "${RESET-}" "$1"; }
+log_info() { printf '%s%b%s%b %b\n' "${_LOG_GUTTER}" "${S_INFO-}" "${I_INFO-}" "${RESET-}" "$1"; }
 
-# log_trace <detail> — 4-space indent, dim ↳ + dim body (subordinate line)
+# log_trace <detail> — gutter+2 indent, dim ↳ + dim body (subordinate line)
 log_trace() {
-  printf '    %b%s %b%b\n' "${S_DIM-}" "${I_TRACE-}" "$1" "${RESET-}"
+  printf '%s%b%s %b%b\n' "${_LOG_TRACE_GUTTER}" "${S_DIM-}" "${I_TRACE-}" "$1" "${RESET-}"
 }
 
 # ── Section headers — inverted-video bold pills ────────────────────────────

@@ -132,6 +132,12 @@ pipe them cleanly.
   after `run` so ANSI escapes don't break `--partial` matches.
 - Test the **error path with the hint** when `fail` is involved —
   regressions in hints are the easiest way to degrade UX silently.
+- Inside a test body, use `bats_fail "<message>"` to force a failure
+  through bats' reporter — not bare `fail`. Once a test `source`s
+  ver-bump's libs, `fail` is ver-bump's own `<code> <msg> [<hint>]`
+  error helper (asserted via `run`), which shadows bats-support's
+  `fail <message>`. `test_helper.bash` captures bats-support's original
+  as `bats_fail` before that can happen (see `test/fail-shadowing.bats`).
 
 ### What requires tests
 

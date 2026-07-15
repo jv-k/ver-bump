@@ -14,6 +14,16 @@ setup() {
   load './test_helper/bats-support/load'
   load './test_helper/bats-assert/load'
 
+  # Capture bats-support's fail() under a test-only name right after it's
+  # loaded, before any test can `source ${profile_script}` and pull in
+  # ver-bump's own `fail` from lib/errors.sh (signature: `fail <code> <msg>
+  # [<hint>]`), which would otherwise shadow bats-support's `fail <message>`
+  # (used to force a failure through bats's reporter). Tests that need to
+  # force a failure call `bats_fail "message"` instead of bare `fail`, so the
+  # forced-failure path keeps working regardless of load order within the
+  # test body. See docs/CODE_STYLE.md §Testing.
+  eval "bats_fail() $(declare -f fail | sed '1d')"
+
   repo_dir=$PWD
   profile_script="$repo_dir/ver-bump.sh"
 

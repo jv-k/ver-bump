@@ -1,19 +1,25 @@
 name: Screenshots
 
-# Regenerates CLI visuals (manual dispatch). Static panels render via
-# charmbracelet/freeze — deterministic PNGs of REAL --help / --dry-run /
-# completions output (ver-bump honours CLICOLOR_FORCE, so no PTY trick is
-# needed). ONE animated demo renders via vhs. terminalizer is removed: it
-# duplicated the vhs demo and rendered from a git-ignored demo/ dir that does
-# not exist on a fresh checkout (the job failed on every release).
+# Regenerates the CLI visuals and commits them to main. Everything renders
+# via charmbracelet/vhs, which drives a REAL terminal emulator — so the
+# inverted-video section pills (VERIFY / RELEASE / …), the dim [dry-run]
+# markers, and the soft prompts all render faithfully. (freeze was dropped:
+# it flattens inverse-video and ignores SGR-faint, so it could not show the
+# restyled output correctly.)
 #
-#   img/help.png         — freeze, `ver-bump --help`
-#   img/dry-run.png      — freeze, sandbox `--dry-run` bump
-#   img/completions.png  — freeze, `--completions zsh`
-#   img/demo.gif         — vhs, sandbox-driven bump recording (optimized)
+#   img/screenshot.png   — vhs, `ver-bump --help`
+#   img/dry-run.png      — vhs, sandbox `--dry-run` bump
+#   img/completions.png  — vhs, `--completions zsh`
+#   img/demo.gif         — vhs, sandbox-driven real bump recording
+#
+# Triggers: cut a release (auto — visuals track the shipped version) or run
+# it by hand. Locally: `pnpm screenshots` (or `:help` / `:dry-run` /
+# `:completions` / `:demo`) — see dev/screenshots.sh.
 
 on:
   workflow_dispatch:
+  release:
+    types: [published]
 
 concurrency:
   group: screenshots-${{ github.ref }}
@@ -23,10 +29,10 @@ permissions:
   contents: read
 
 jobs:
-  freeze:
-    name: Render static panels via freeze
+  render:
+    name: Render panels + demo via vhs
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout main
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -35,74 +41,56 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Install jq + freeze + JetBrains Mono (.ttf) + pngquant
+      - name: Install JetBrains Mono + gifsicle
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y jq fonts-jetbrains-mono pngquant
-          fc-cache -f
-          FZ=https://github.com/charmbracelet/freeze/releases/download/v0.2.2/freeze_0.2.2_Linux_x86_64.tar.gz
-          curl -fsSL "$FZ" | sudo tar -xz -C /usr/local/bin --strip-components=1 --wildcards '*/freeze'
-          freeze --version
-
-      - name: Render freeze panels
-        env:
-          FONT_FILE: /usr/share/fonts/truetype/jetbrains-mono/JetBrainsMono-Regular.ttf
-        run: ./dev/capture-freeze.sh all
-
-      - name: Optimize PNGs (lossless-ish, keeps the repo lean)
-        run: pngquant --force --skip-if-larger --ext .png -- img/help.png img/dry-run.png img/completions.png || true
-
-      - name: Upload freeze artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: freeze-panels
-          path: |
-            img/help.png
-            img/dry-run.png
-            img/completions.png
-          retention-days: 7
-          if-no-files-found: error
-
-  vhs:
-    name: Render animated demo via vhs
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout main
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          ref: main
-          fetch-depth: 1
-          persist-credentials: false
-
-      - name: Install jq + JetBrains Mono + gifsicle
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y jq fonts-jetbrains-mono gifsicle
+          sudo apt-get install -y fonts-jetbrains-mono gifsicle
           fc-cache -f
 
-      - name: Render demo.tape
+      - name: Ensure throwaway gif dir exists
+        run: mkdir -p img/tmp
+
+      - name: Render help panel
+        uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
+        with:
+          path: dev/help.tape
+
+      - name: Render dry-run panel
+        uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
+        with:
+          path: dev/dry-run.tape
+
+      - name: Render completions panel
+        uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
+        with:
+          path: dev/completions.tape
+
+      - name: Render demo gif
         uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
         with:
           path: dev/demo.tape
 
-      - name: Optimize demo.gif (keep history lean)
+      - name: Optimize demo.gif (lossless — no colour/quality reduction)
         run: |
           before=$(wc -c < img/demo.gif)
-          gifsicle -O3 --lossy=80 --colors 128 img/demo.gif -o img/demo.gif
+          gifsicle -O3 img/demo.gif -o img/demo.gif
           echo "demo.gif: ${before} -> $(wc -c < img/demo.gif) bytes"
 
-      - name: Upload vhs artifact
+      - name: Upload rendered artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: vhs-demo
-          path: img/demo.gif
+          name: screenshots
+          path: |
+            img/screenshot.png
+            img/dry-run.png
+            img/completions.png
+            img/demo.gif
           retention-days: 7
           if-no-files-found: error
 
   commit:
     name: Commit updated screenshots to main
-    needs: [freeze, vhs]
+    needs: [render]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -115,23 +103,17 @@ jobs:
           fetch-depth: 1
           persist-credentials: true
 
-      - name: Download freeze panels
+      - name: Download rendered artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: freeze-panels
-          path: img
-
-      - name: Download vhs demo
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: vhs-demo
+          name: screenshots
           path: img
 
       - name: Commit updated screenshots
         uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5.2.0
         with:
           branch: main
-          file_pattern: img/help.png img/dry-run.png img/completions.png img/demo.gif
+          file_pattern: img/screenshot.png img/dry-run.png img/completions.png img/demo.gif
           commit_message: "docs(img): regenerate screenshots [skip ci]"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"

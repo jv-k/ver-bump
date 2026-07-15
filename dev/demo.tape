@@ -28,7 +28,7 @@ Set PlaybackSpeed 1.0
 Hide
 Type "clear" Enter
 Sleep 300ms
-Type "./dev/sandbox.sh -q -v 2.0.0 -y"
+Type "./dev/sandbox.sh -q --remote -v 2.0.0 -y -p origin"
 Enter
 Sleep 250ms
 Show

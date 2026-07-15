@@ -30,8 +30,10 @@
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/*.bats",
     "lint": "shellcheck -x -e SC1017 ./ver-bump.sh ./install.sh ./lib/*.sh",
-    "screenshots": "./dev/capture-freeze.sh",
-    "screenshots:help": "./dev/capture-freeze.sh help",
+    "screenshots": "./dev/screenshots.sh all",
+    "screenshots:help": "./dev/screenshots.sh help",
+    "screenshots:dry-run": "./dev/screenshots.sh dry-run",
+    "screenshots:completions": "./dev/screenshots.sh completions",
     "screenshots:demo": "./dev/screenshots.sh demo",
     "prepublishOnly": "bash dev/prepublish-version-guard.sh"
   },

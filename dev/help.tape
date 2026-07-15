@@ -10,8 +10,8 @@ Output img/tmp/help.gif
 Set Shell "zsh"
 Set FontFamily "JetBrains Mono"
 Set FontSize 15
-Set Width 1000
-Set Height 1200
+Set Width 1900
+Set Height 1560
 # Monokai Pro palette with a Carbon (#191816) background for the terminal itself.
 Set Theme { "background": "#191816", "foreground": "#FCFCFA", "cursor": "#FCFCFA", "black": "#2D2A2E", "red": "#FF6188", "green": "#A9DC76", "yellow": "#FFD866", "blue": "#FC9867", "magenta": "#AB9DF2", "cyan": "#78DCE8", "white": "#FCFCFA", "brightBlack": "#727072", "brightRed": "#FF6188", "brightGreen": "#A9DC76", "brightYellow": "#FFD866", "brightBlue": "#FC9867", "brightMagenta": "#AB9DF2", "brightCyan": "#78DCE8", "brightWhite": "#FCFCFA", "selection": "#5B595C" }
 Set Padding 24

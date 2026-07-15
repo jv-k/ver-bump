@@ -623,6 +623,10 @@ $ ver-bump --dry-run
 [dry-run] would run: git tag -a v1.0.1 -m 'Tag version 1.0.1.'
 ```
 
+<p>
+  <img src="https://raw.githubusercontent.com/jv-k/ver-bump/main/img/dry-run.png?raw=true" alt="ver-bump --dry-run output: VERIFY / RELEASE / CHANGELOG / DONE section headers, a version bump, CHANGELOG, commit, tag, and push — every step previewed, none executed.">
+</p>
+
 Combine with `--no-branch` / `--no-commit` / `--no-changelog` to narrow the
 preview down to just the steps you want to see.
 

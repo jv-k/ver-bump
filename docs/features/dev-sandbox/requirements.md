@@ -16,8 +16,11 @@ Ctrl-C from a non-interactive test (a real Ctrl-C signals the whole
 foreground process group; bash defers traps until the foreground child
 exits, so both processes are signalled explicitly).
 
-Also in `dev/` (unspecced tooling, no requirements): `screenshots.sh` +
-`capture-freeze.sh` (deterministic README panels), `prepublish-version-guard.sh`,
-VHS tapes for the demo GIF.
+Also in `dev/` (unspecced tooling, no requirements): `screenshots.sh` drives
+the VHS tapes (`help`, `dry-run`, `completions`, `demo`) that render the README
+panels + demo GIF — VHS runs a real terminal emulator, so the inverted-video
+section pills and dim markers render faithfully; and `prepublish-version-guard.sh`.
+`sandbox.sh --remote` adds a throwaway bare `origin` so a real `-p origin`
+push path can be exercised (used by the demo tape).
 
 Modules: `dev/sandbox.sh`.

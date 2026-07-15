@@ -36,17 +36,29 @@ case "$target" in
     clean img/screenshot.png img/tmp/help.gif
     vhs dev/help.tape
   ;;
+  dry-run)
+    clean img/dry-run.png img/tmp/dry-run.gif
+    vhs dev/dry-run.tape
+  ;;
+  completions)
+    clean img/completions.png img/tmp/completions.gif
+    vhs dev/completions.tape
+  ;;
   demo)
     clean img/demo.gif
     vhs dev/demo.tape
   ;;
   all)
-    clean img/screenshot.png img/tmp/help.gif img/demo.gif
+    clean img/screenshot.png img/dry-run.png img/completions.png img/demo.gif \
+          img/tmp/help.gif img/tmp/dry-run.gif img/tmp/completions.gif
     vhs dev/help.tape
+    vhs dev/dry-run.tape
+    vhs dev/completions.tape
     vhs dev/demo.tape
   ;;
   *)
-    echo "screenshots: unknown target '$target' (expected: help | demo | all)" >&2
+    echo "screenshots: unknown target '$target'" >&2
+    echo "  expected: help | dry-run | completions | demo | all" >&2
     exit 2
   ;;
 esac

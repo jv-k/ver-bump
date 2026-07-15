@@ -252,7 +252,8 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
            [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
            [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-h|--help] \
-           [--branch] [--pr] [--base <branch>] [--allow-dirty] [--no-fetch] \
+           [--branch] [--pr] [--base <branch>] \
+           [--allow-dirty] [--allow-empty] [--no-fetch] \
            [--undo [<version>]] [--major | --minor | --patch] [--release] \
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
 ```
@@ -387,6 +388,11 @@ output stays byte-identical to previous releases.
                               uncommitted changes to tracked files. Untracked files
                               never trigger the check. Also available as the
                               ALLOW_DIRTY config/env key.
+    --allow-empty             Release even when there are no new commits since the
+                              previous tag. Without it, such a run prints a notice
+                              (a stdout line starting with "no-release") and exits 0
+                              without changing anything — safe to run unconditionally
+                              in CI.
     --no-fetch                Skip the remote-sync preflight: no 'git fetch <remote>
                               --tags' and no behind-upstream check before releasing.
                               Remote-only tag collisions then surface at push time

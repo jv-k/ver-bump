@@ -116,6 +116,36 @@ check-commits-exist() {
   fi
 }
 
+# Nothing-to-release no-op (R-SAFE-14..18). When the previous version's tag
+# exists and HEAD has no commits since it, cutting a release would produce an
+# empty one — patch+1 with an empty changelog range. Print a notice and exit 0
+# instead: a clean no-op is success (semantic-release semantics), which makes
+# the release step safe to run unconditionally in CI. The notice includes a
+# stable stdout line beginning `no-release` so scripts can branch on outcome
+# without parsing prose. Applies even with -v/--major/--minor/--patch — an
+# explicit version is not evidence you meant to release zero commits;
+# --allow-empty is the explicit signal (deliberate re-tags / empty releases).
+# Must run AFTER process-version (needs V_PREV read from VER_FILE). No
+# previous matching tag (first release) → proceeds as today (R-BUMP-3).
+check-releasable-commits() {
+  [ "${ALLOW_EMPTY:-false}" = true ] && return 0
+  # With -v and no readable VER_FILE, V_PREV may be empty — no previous tag
+  # can be derived, so there is nothing to compare against.
+  [ -n "${V_PREV:-}" ] || return 0
+
+  local prev_tag count
+  prev_tag="${TAG_PREFIX}${V_PREV}"
+  git rev-parse --verify --quiet "refs/tags/${prev_tag}" >/dev/null || return 0
+
+  count=$(git rev-list --count "${prev_tag}..HEAD" 2>/dev/null) || return 0
+  [ "${count:-1}" -gt 0 ] && return 0
+
+  log_info "Nothing to release — no new commits since ${S_VAL}${prev_tag}${RESET-}."
+  # Stable, greppable outcome token (R-SAFE-15): line begins `no-release`.
+  printf 'no-release: no commits since %s\n' "${prev_tag}"
+  exit 0
+}
+
 #
 check-branch-notexist() {
   [ "$FLAG_BRANCH" = true ] || return 0

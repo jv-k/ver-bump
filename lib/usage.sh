@@ -46,7 +46,7 @@ usage() {
   printf '\n%bUSAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   printf '  %b%s%b [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
-  printf '  %b%s%b [--branch] [--pr] [--base <branch>] [--major | --minor | --patch] [--release] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
+  printf '  %b%s%b [--branch] [--pr] [--base <branch>] [--major | --minor | --patch] [--release] [--sign] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
     "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
 
   # Column width for label + 2-space gutter. Longest label is
@@ -130,6 +130,7 @@ usage() {
   print-opt-row ""   "--pr"                 ""            "Branch + push + open a release PR via 'gh' (GitHub-only; implies push to origin)."
   print-opt-row ""   "--base"               "<branch>"    "Base branch for --pr (GitHub-only; default: the branch you ran ver-bump from)."
   print-opt-row ""   "--release"            ""            "Publish a GitHub release for the new tag (GitHub-only; requires -p, uses 'gh')."
+  print-opt-row ""   "--sign"               ""            "Create a signed tag (git tag -s; uses your git signing config)."
   print-opt-row ""   "--about"              ""            "Print name, version, author, and homepage; then exit."
   print-opt-row ""   "--completions"        "<shell>"     "Emit completion script for bash, zsh, or fish."
   print-opt-row ""   "--install-completions" "[=<shell>]" "Install completion script (auto-detects shell)."

@@ -14,7 +14,7 @@ Prompt UX (shipped in 2.0, backfilled requirements):
 | ID | Requirement | Status |
 | --- | --- | --- |
 | R-VER-4 | The version prompt pre-fills the suggestion as an editable default. | ✅ shipped (`cd87052`) |
-| R-VER-5 | ESC at the prompt aborts the run with no mutation. | ⚠️ shipped, but exits `130` — the exit-code contract says user abort = `5`. Open bug; see [exit-codes](../exit-codes/requirements.md). |
+| R-VER-5 | ESC at the prompt aborts the run with no mutation. | ✅ shipped — exits `5` via `fail` per the [exit-code contract](../exit-codes/requirements.md); `test/errors.bats` |
 
 Modules: `lib/version.sh`, `lib/validate.sh`. Tests: `test/version.bats` (22),
 `test/versionfile.bats`, `test/bumpfile.bats`.

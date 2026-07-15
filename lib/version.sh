@@ -88,8 +88,12 @@ process-version() {
     local _first
     IFS= read -rsn1 _first
     if [ "$_first" = $'\e' ]; then
-      printf '\n\n%b aborted %b\n' "${S_HDR_RED-}" "${S_HDR_END-}"
-      exit 130
+      # Terminate the (no-newline) prompt line, then abort via fail so the
+      # exit code honours the contract: user abort = 5, never a raw exit.
+      printf '\n'
+      fail 5 \
+        "version prompt aborted" \
+        "Re-run and enter a version (or <enter> for the suggestion), or pass -v <version> to skip the prompt."
     fi
     if [ -z "$_first" ]; then
       V_USR_INPUT=""

@@ -148,8 +148,12 @@ _make_tag_in_place() {
   git push -q origin release-1.2.0 v1.2.0
   run ${profile_script} --undo --yes
   assert_failure 3
+  # Exits via `fail 3` (contract precondition), not a raw exit after log_warn.
+  assert_output --partial "Error:"
+  assert_output --partial "Refusing to undo"
   assert_output --partial "present on remote"
   assert_output --partial "git push origin :refs/tags/v1.2.0"
+  assert_output --partial "Hint:"
   rm -rf "$remote"
 }
 

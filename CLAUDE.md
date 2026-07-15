@@ -32,13 +32,3 @@ Full rules in [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md) (§Pull requests,
 - **`Refs #N.`, never `Closes #N.`** — a human closes the issue after review.
 - Branches: `feat/*`, `fix/*`, `refactor/*`, `chore/*`, `docs/*`; releases use
   `release-<version>`.
-
-### The `ralph:` scope is Sandcastle-only
-
-The `ralph:<area>`, `ralph-review:<area>`, and `ralph-merge` scopes are
-reserved for commits authored by the autonomous **Sandcastle** harness in
-[`.sandcastle/`](.sandcastle/) — its prompts `git log --grep="ralph:"` to see
-recent loop activity, so the marker only earns its keep on commits that harness
-actually produced. **Do not use these scopes for interactive sessions or normal
-contributions** (human or agent); those use the plain scopes above. If you are
-not the Sandcastle loop, you are not `ralph`.

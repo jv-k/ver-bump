@@ -11,11 +11,6 @@ test/bats
 test/helpers
 test/test_helper/
 
-# sandcastle runtime (agent logs, per-branch worktrees, .env)
-.sandcastle/logs/
-.sandcastle/worktrees/
-.sandcastle/.env
-
 # Claude Code per-project local settings
 .claude/
 .worktrees/

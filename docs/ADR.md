@@ -164,7 +164,7 @@ feature; the suite never mutates the host checkout.
 **Status:** Accepted · PR #48, commit `592f754`
 
 **Context:** 2.0 work accumulated on a long-lived `feat/v2.0` branch;
-automation (sandcastle/ralph) needed a stable integration target, and
+release automation needed a stable integration target, and
 `feat/v2.0` was cut to `develop` for the 2.0.0-alpha.
 
 **Decision:** All work integrates to `develop`; `main` receives release

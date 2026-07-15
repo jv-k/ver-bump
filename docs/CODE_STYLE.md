@@ -1,6 +1,6 @@
 # Code Style & Contribution Standards
 
-<!-- Canonical standards doc. .sandcastle/CODING_STANDARDS.md points here.
+<!-- Canonical standards doc.
      Derived from ver-bump.sh, lib/*, test/*, and git history. -->
 
 ver-bump is a Bash release tool. Standards below reflect the conventions
@@ -234,11 +234,6 @@ Rules:
   - `feat(completions): --install-completions with shell auto-detection`
   - `fix(config): reject group-writable or attacker-owned .ver-bumprc`
   - `refactor(ui): strip narrative colour, reserve accents for values`
-- The `ralph:<area>`, `ralph-review:<area>`, and `ralph-merge` scopes are
-  **reserved for the autonomous Sandcastle harness**
-  ([`.sandcastle/`](../.sandcastle/)), whose prompts `git log --grep="ralph:"`
-  to track loop activity. Interactive sessions and normal contributions —
-  human or agent — use the plain scopes above, never a `ralph` marker.
 
 ### Body
 
@@ -321,7 +316,6 @@ Pick **exactly one type** + any applicable area/milestone labels.
 - `ci/cd` — workflows, release automation
 - `release` — release mechanics (tagging, CHANGELOG, branch strategy)
 - `distribution` — packaging, install paths, completions install
-- `Sandcastle` — issues meant for the Sandcastle agent to pick up
 
 **Milestone** (one, when applicable):
 

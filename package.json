@@ -33,7 +33,6 @@
     "screenshots": "./dev/capture-freeze.sh",
     "screenshots:help": "./dev/capture-freeze.sh help",
     "screenshots:demo": "./dev/screenshots.sh demo",
-    "sandcastle": "npx tsx .sandcastle/main.mts",
     "prepublishOnly": "bash dev/prepublish-version-guard.sh"
   },
   "keywords": [
@@ -46,7 +45,6 @@
     "versioning-workflow"
   ],
   "devDependencies": {
-    "cz-conventional-changelog": "^3.3.0",
-    "@ai-hero/sandcastle": "^0.5.1"
+    "cz-conventional-changelog": "^3.3.0"
   }
 }

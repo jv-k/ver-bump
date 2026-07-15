@@ -102,7 +102,7 @@ real script (not just dry-run) without touching their working repo.
 - **Not a CHANGELOG rewriter.** The existing `git log` dump is preserved as-is. A grouped, conventional-commit-aware changelog is scope for a later release.
 - **Not a monorepo release manager.** One tool, one `package.json`, one bump. `-f` remains a secondary knob.
 - **Not an npm publisher.** Registry publishing stays in the user's CI. (GitHub-release creation *did* land in 2.0, behind the opt-in `--release` flag — see §5.8; it is off by default and adds no default-path dependencies.)
-- **No plugin/hook system** in this release (exit code `4` is reserved for it as a forward-compat signal).
+- **No plugin/hook system** in this release (exit code `4` is reserved for it as a forward-compat signal). *Post-2.0, issue #62 claimed the reserved code for a deliberately minimal two-hook surface — `PRE_BUMP_CMD` / `POST_TAG_CMD` (R-HOOK-1..6, [`docs/features/hooks`](features/hooks/requirements.md)) — which stays short of a plugin system.*
 
 ---
 
@@ -177,7 +177,7 @@ Each requirement has an ID so tests and PRs can reference it.
 | `1`  | Generic / unexpected error |
 | `2`  | Usage or argument-parse error (bad/unknown flag, bad value) |
 | `3`  | Precondition failure (missing `git`/`jq`, no `package.json`, dirty tree, missing tag, SemVer parse failure) |
-| `4`  | Hook failure — **reserved** for user-supplied release hooks (future) |
+| `4`  | Hook failure — a user-supplied release hook (`PRE_BUMP_CMD` / `POST_TAG_CMD`) exited non-zero (R-HOOK-1/2, [`docs/features/hooks`](features/hooks/requirements.md)) |
 | `5`  | User abort (declined an interactive prompt) |
 
 | ID | Requirement |
@@ -221,7 +221,7 @@ Each requirement has an ID so tests and PRs can reference it.
 | ID | Requirement |
 | --- | --- |
 | **R-CFG-1** | `.ver-bumprc` is discovered by walking up from `$PWD` to `/`. First match wins; absence is not an error. |
-| **R-CFG-2** | Supported keys: `TAG_PREFIX`, `REL_PREFIX`, `PUSH_DEST`, `COMMIT_MSG_PREFIX`, `CHANGELOG_STYLE`, `FLAG_BRANCH`, `PR_BASE`, `FLAG_NOCHANGELOG`, `FLAG_CHANGELOG_PAUSE`, `ALLOW_DIRTY`, `NO_FETCH`, `RELEASE_BRANCHES`, plus deprecated `FLAG_NOBRANCH` (back-compat; superseded by `FLAG_BRANCH`). Only these participate in the precedence contract (R-CFG-3); other assignments in the file execute as plain shell (R-CFG-5) but are unsupported and carry no precedence or compatibility guarantee. |
+| **R-CFG-2** | Supported keys: `TAG_PREFIX`, `REL_PREFIX`, `PUSH_DEST`, `COMMIT_MSG_PREFIX`, `CHANGELOG_STYLE`, `FLAG_BRANCH`, `PR_BASE`, `FLAG_NOCHANGELOG`, `FLAG_CHANGELOG_PAUSE`, `ALLOW_DIRTY`, `NO_FETCH`, `RELEASE_BRANCHES`, `PRE_BUMP_CMD`, `POST_TAG_CMD`, plus deprecated `FLAG_NOBRANCH` (back-compat; superseded by `FLAG_BRANCH`). Only these participate in the precedence contract (R-CFG-3); other assignments in the file execute as plain shell (R-CFG-5) but are unsupported and carry no precedence or compatibility guarantee. |
 | **R-CFG-3** | Precedence end-to-end: CLI > environment > `.ver-bumprc` > built-in default. |
 | **R-CFG-4** | `.ver-bumprc` is refused (exit `3`) if world-writable, group-writable, or not owned by the invoking user. |
 | **R-CFG-5** | `.ver-bumprc` is shell-sourced, not parsed. Failures in sourcing exit `3` with the shell error as context. |
@@ -292,7 +292,7 @@ Each requirement has an ID so tests and PRs can reference it.
 
 - **B-1 — `-v` rejects non-SemVer.** Existing calls like `-v banana` will fail with exit `2`. This was never guaranteed; old behaviour tagged a corrupt version. **Migration**: fix the input.
 - **B-2 — Exit codes change.** `1.1.x` used `exit 1` for nearly every error. `2.0.0` uses `2`/`3`/`5` for usage, precondition, and user-abort failures. **Migration**: CI wrappers that branched on exit code `0` vs. non-zero are unaffected; wrappers that branched on specific non-zero codes must update.
-- **B-3 — `npm` no longer invoked.** `npm version`'s lifecycle scripts (`preversion`, `version`, `postversion`) will no longer fire as a side-effect of running `ver-bump`. **Migration**: if you relied on them, invoke them explicitly or move the logic into a separate step.
+- **B-3 — `npm` no longer invoked.** `npm version`'s lifecycle scripts (`preversion`, `version`, `postversion`) will no longer fire as a side-effect of running `ver-bump`. **Migration**: if you relied on them, invoke them explicitly or move the logic into a separate step. *Post-2.0, the release hooks (issue #62) close the common case: `PRE_BUMP_CMD="npm test"` in `.ver-bumprc` restores a `preversion`-style test gate — see [`docs/features/hooks`](features/hooks/requirements.md).*
 - **B-4 — bare `-v` / `--version` prints the tool version.** In `1.1.x`, `-v` without a value was an argument-parse error. In `2.0.0` it prints `ver-bump <ver>` and exits `0` (matching every modern CLI). With a value, `-v <semver>` keeps its `1.1.x` meaning. **Migration**: none expected — no working `1.1.x` invocation relied on the error.
 - **B-5 — tag-in-place is the new default workflow.** `1.1.x` always cut a `release-<version>` branch; `2.0.0` commits and tags the current branch in place (§5.14, ADR-12). `-b`/`--no-branch` becomes a no-op. **Migration**: pass `--branch` per run, or set `FLAG_BRANCH=true` in `.ver-bumprc` to keep the old behaviour as a team default.
 
@@ -355,7 +355,7 @@ All resolved for 2.0:
 ## 13. Future work (post-2.0)
 
 - **Grouped CHANGELOG** from Conventional Commits (the other major friction point vs. modern tools). *Shipped post-2.0 as opt-in `CHANGELOG_STYLE=grouped` (issue #61; R-CHLOG-1..5 in [docs/features/changelog/requirements.md](features/changelog/requirements.md)); the flat default is unchanged — flipping it is a 3.0 decision.*
-- **Hook system** (exit code `4` is reserved): `pre-bump`, `post-tag`, `post-push`.
+- **Hook system** (exit code `4` is reserved): `pre-bump`, `post-tag`, `post-push`. *`pre-bump` and `post-tag` shipped post-2.0 as `PRE_BUMP_CMD` / `POST_TAG_CMD` (issue #62; R-HOOK-1..6 in [docs/features/hooks/requirements.md](features/hooks/requirements.md)), claiming exit code `4`. `post-push` remains future work.*
 - **Non-npm install paths** — Homebrew formula (deferred from 2.0; issue [#24](https://github.com/jv-k/ver-bump/issues/24)), `basher` ([#39](https://github.com/jv-k/ver-bump/issues/39)).
 - **GitHub Packages publishing docs** ([#40](https://github.com/jv-k/ver-bump/issues/40)).
 
@@ -387,6 +387,7 @@ Exactly the flags shipping in `2.0.0`:
 | — | `--allow-dirty` | | Skip the clean-working-tree preflight (R-SAFE-2, [`docs/features/safety-preflights`](./features/safety-preflights/requirements.md)) |
 | — | `--allow-empty` | | Release even with no new commits since the previous tag (R-SAFE-16) |
 | — | `--no-fetch` | | Skip the remote-sync preflight (R-SAFE-8, [`docs/features/safety-preflights`](./features/safety-preflights/requirements.md)) |
+| — | `--no-hooks` | | Skip the `PRE_BUMP_CMD` / `POST_TAG_CMD` release hooks (R-HOOK-5, [`docs/features/hooks`](./features/hooks/requirements.md)) |
 | — | `--branch` | | Cut a `release-<version>` branch (pre-2.0 default) instead of tagging in place (§5.14) |
 | — | `--pr` | | Branch + push + open a release PR via `gh`; implies push to `origin` (§5.14) |
 | — | `--base` | ✓ | Base branch for `--pr` (default: resolution chain in R-FLOW-2) |

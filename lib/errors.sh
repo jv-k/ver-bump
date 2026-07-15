@@ -13,7 +13,7 @@ true
 #   2  usage / arg-parse error
 #   3  precondition (dirty tree, missing tag, SemVer parse failure,
 #                    missing package.json, missing dependency like git/jq)
-#   4  hook failure (reserved)
+#   4  hook failure (PRE_BUMP_CMD / POST_TAG_CMD exited non-zero, R-HOOK-1/2)
 #   5  user abort (declined prompt)
 fail() {
   local code=$1

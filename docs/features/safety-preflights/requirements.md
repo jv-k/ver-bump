@@ -19,6 +19,16 @@ contract (R-EXIT-2) is untouched.
 | R-SAFE-3 | Under `--dry-run` the check still runs (read-only) and fails with the same exit `3`, so the preview is honest about what a real run would do. | ✅ | `worktree-clean.bats` |
 | R-SAFE-4 | Skipped under `-n`/`--no-commit` (nothing is committed, nothing can be swept). | ✅ | `worktree-clean.bats` |
 
+## Remote sync (#58)
+
+| ID | Requirement | Status | Tests |
+| --- | --- | --- | --- |
+| R-SAFE-5 | During Verify, if the configured remote (`PUSH_DEST`, default `origin`) exists, run `git fetch <remote> --tags --quiet`. If the fetch fails (offline, auth), **warn and continue** — air-gapped use must keep working. | ✅ `check-remote-sync` | `remote-sync.bats` |
+| R-SAFE-6 | After the fetch, if the current branch has an upstream and is behind it (`git rev-list --count HEAD..@{upstream}` > 0), exit `3` with a hint (`git pull --rebase`, or `--no-fetch` to skip). | ✅ | `remote-sync.bats` |
+| R-SAFE-7 | `check-tag-exists` runs **after** the fetch in `main()` ordering, so remote tags are visible to the existing local check — no second check needed. | ✅ | `remote-sync.bats` |
+| R-SAFE-8 | `--no-fetch` (boolean, long-only) + `NO_FETCH` config/env key skip the network preflight explicitly. | ✅ | `remote-sync.bats`, `args.bats` |
+| R-SAFE-9 | The fetch is read-only and MAY run under `--dry-run` so the preview reflects reality (same reasoning as R-REL-5's read-only notes command). | ✅ | `remote-sync.bats` |
+
 ## Release-branch guard (#59)
 
 | ID | Requirement | Status | Tests |

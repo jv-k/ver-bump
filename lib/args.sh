@@ -187,6 +187,18 @@ normalize-long-opts() {
         "Drop the '=<value>' — --allow-dirty is a boolean flag."
     fi
 
+    # --no-fetch — long-only boolean: skip the remote-sync preflight
+    # (R-SAFE-8). Sets the NO_FETCH config key directly, so the CLI wins
+    # over env / .ver-bumprc per R-CFG-3 (process-arguments runs last).
+    if [ "$arg" = "--no-fetch" ]; then
+      NO_FETCH=true
+      continue
+    elif [[ "$arg" == "--no-fetch="* ]]; then
+      fail 2 \
+        "Option --no-fetch doesn't take a value." \
+        "Drop the '=<value>' — --no-fetch is a boolean flag."
+    fi
+
     # --base <branch> / --base=<branch> — explicit base branch for --pr. Long-only
     # value flag (no short form), captured here like --undo so it needs no getopts slot.
     if [ "$arg" = "--base" ] || [[ "$arg" == "--base="* ]]; then

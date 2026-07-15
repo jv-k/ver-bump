@@ -107,6 +107,19 @@ load 'test_helper'
   assert_output --partial "Option --allow-dirty doesn't take a value"
 }
 
+@test "long options: --no-fetch sets NO_FETCH" {
+  source ${profile_script}
+  process-arguments --no-fetch
+  assert_equal "${NO_FETCH}" "true"
+}
+
+@test "long options: --no-fetch=value is rejected" {
+  source ${profile_script}
+  run process-arguments --no-fetch=yes
+  assert_failure 2
+  assert_output --partial "Option --no-fetch doesn't take a value"
+}
+
 @test "long options: --pr implies branch + push and sets DO_PR" {
   source ${profile_script}
   process-arguments --pr

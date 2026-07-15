@@ -80,6 +80,7 @@ main() {
   check-commits-exist
   check-worktree-clean
   check-release-branch
+  check-remote-sync # must precede check-tag-exists so remote tags are visible
   process-version
   check-branch-notexist
   check-tag-exists

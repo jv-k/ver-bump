@@ -39,8 +39,8 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y shellcheck
 
-      - name: Test ./ver-bump.sh and ./lib/*.sh
-        run: shellcheck -x -e SC1017 ./ver-bump.sh ./lib/*.sh
+      - name: Test ./ver-bump.sh, ./install.sh and ./lib/*.sh
+        run: shellcheck -x -e SC1017 ./ver-bump.sh ./install.sh ./lib/*.sh
 
   tests:
     name: Run test suite on ${{ matrix.os }}
@@ -153,3 +153,50 @@ jobs:
       - run: npm publish --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-release-assets:
+    name: Upload release tarball + sha256
+    needs: tests
+    if: github.event.action == 'published'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write   # gh release upload attaches assets to the release
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      # The runtime file set for the curl installer (R-DIST-2, issue #66).
+      # package.json rides along because --about / --help read the tool's
+      # name + version from it (version_block in lib/ui.sh).
+      - name: Build runtime tarball + sha256
+        run: |
+          tar -czf ver-bump.tar.gz ver-bump.sh lib LICENSE package.json
+          sha256sum ver-bump.tar.gz > ver-bump.tar.gz.sha256
+
+      # Unversioned asset names keep install.sh's URLs stable:
+      #   latest: releases/latest/download/ver-bump.tar.gz
+      #   pinned: releases/download/v<x.y.z>/ver-bump.tar.gz
+      # --clobber makes a re-run of this job idempotent.
+      - name: Upload assets to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" ver-bump.tar.gz ver-bump.tar.gz.sha256 --clobber
+
+      # Cheap end-to-end proof that the published assets actually install
+      # (R-DIST-1/3/5 against the real release). Gates nothing else.
+      - name: Smoke-test install.sh against the uploaded assets
+        run: |
+          export VER_BUMP_INSTALL_VERSION="${GITHUB_REF_NAME#v}"
+          export VER_BUMP_PREFIX="$RUNNER_TEMP/smoke-prefix"
+          # Assets can take a moment to become downloadable after upload.
+          installed=false
+          for attempt in 1 2 3; do
+            if bash ./install.sh; then
+              installed=true
+              break
+            fi
+            echo "install attempt $attempt failed; retrying in 10s"
+            sleep 10
+          done
+          [ "$installed" = true ]
+          "$VER_BUMP_PREFIX/bin/ver-bump" --about

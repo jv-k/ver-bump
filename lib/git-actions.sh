@@ -67,11 +67,17 @@ do-tag() {
   # would point at the wrong (pre-bump) commit. Skip the tag too.
   [ "$FLAG_NOCOMMIT" = true ] && return
 
-  local tag_msg
+  local tag_msg tag_opt
   tag_msg="${REL_NOTE:-Tag version ${V_NEW}.}"
+  # -a (annotated, default) vs -s (signed, R-SIGN-1): --sign / TAG_SIGN=true
+  # opts into `git tag -s`. Key + program selection stays entirely in git's
+  # own config (user.signingkey, gpg.format) — no preflight here; a signing
+  # failure surfaces git's own error via the abort path below (R-SIGN-2).
+  tag_opt="-a"
+  [ "${TAG_SIGN:-false}" = true ] && tag_opt="-s"
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git tag -a ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET} -m '${tag_msg}'" >&2
+    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git tag ${tag_opt} ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET} -m '${tag_msg}'" >&2
     log_success "Tagged ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET}"
     return
   fi
@@ -79,7 +85,7 @@ do-tag() {
   # A failed `git tag` (e.g. bad object, signing failure, or a tag that
   # slipped past check-tag-exists) must abort — otherwise we'd report a false
   # "Tagged" success and push a branch whose tag was never created.
-  if ! git tag -a "${TAG_PREFIX}${V_NEW}" -m "${tag_msg}"; then
+  if ! git tag "$tag_opt" "${TAG_PREFIX}${V_NEW}" -m "${tag_msg}"; then
     fail 1 \
       "Failed to create git tag ${TAG_PREFIX}${V_NEW} (see git output above)." \
       "If a previous run left a partial release, check 'git tag -l ${TAG_PREFIX}${V_NEW}' and your release branch, then retry."

@@ -266,7 +266,7 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
            [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-q|--quiet] [-h|--help] \
            [--source <file.json>] [--branch] [--pr] [--base <branch>] \
            [--allow-dirty] [--allow-empty] [--no-fetch] [--no-hooks] \
-           [--undo [<version>]] [--major | --minor | --patch] [--release] \
+           [--undo [<version>]] [--major | --minor | --patch] [--preid <id>] [--release] \
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
 ```
 
@@ -433,9 +433,10 @@ to the bump commit only; the annotated tag's message keeps its own knob,
                               exactly one line: the new version (no tag prefix, no
                               colour); everything else goes to stderr. Errors keep
                               the usual exit codes; a no-op run (nothing to release)
-                              prints nothing and exits 0. Requires --yes, -v, or
-                              --major/--minor/--patch, and refuses -l/--pause-changelog
-                              (a hidden prompt would hang the pipeline). CI capture:
+                              prints nothing and exits 0. Requires --yes, -v,
+                              --major/--minor/--patch, or --preid, and refuses
+                              -l/--pause-changelog (a hidden prompt would hang the
+                              pipeline). CI capture:
                                 NEW_VERSION=$(ver-bump --yes --quiet -p origin)
 -h, --help                    Show help message.
     --source <file.json>      Version source + primary bump target (default:
@@ -453,9 +454,23 @@ to the bump commit only; the annotated tag's message keeps its own knob,
     --major                   Force a major bump from the current version.
                               Mutually exclusive with --minor / --patch and -v.
                               From a prerelease (X.Y.Z-dev.N), drops the prerelease
-                              before bumping the stable component.
+                              before bumping the stable component (unless combined
+                              with --preid — see below).
     --minor                   Force a minor bump (see --major for semantics).
     --patch                   Force a patch bump (see --major for semantics).
+    --preid <id>              Start or advance a prerelease line. Combined with
+                              --major/--minor/--patch: bump that level, then enter
+                              the prerelease at <id>.1 (1.2.3 --major --preid rc ->
+                              2.0.0-rc.1). Alone, on a version that already has a
+                              prerelease: the same id increments the trailing
+                              counter (4.0.0-dev.6 -> 4.0.0-dev.7); a different id
+                              swaps it and resets the counter (2.0.0-alpha.3 +
+                              --preid rc -> 2.0.0-rc.1). Alone on a stable version
+                              is ambiguous and exits 2 — combine with a bump-level
+                              switch. Mutually exclusive with -v. <id> is validated
+                              against the SemVer prerelease grammar (dot-separated
+                              alphanumeric/hyphen identifiers, no leading-zero
+                              numeric parts) before anything is mutated.
     --allow-dirty             Skip the clean-working-tree check and release with
                               uncommitted changes to tracked files. Untracked files
                               never trigger the check. Also available as the
@@ -525,6 +540,22 @@ version, use `--major` / `--minor` / `--patch`. They bump the current
 version's matching component, drop any prerelease/build metadata
 (`1.2.3-dev.5 --patch` → `1.2.4`), and are mutually exclusive with each
 other and with `-v`. Combining more than one exits with code `2`.
+
+To **enter** or **advance** a prerelease line, add `--preid <id>`:
+
+| Command | Current | Result |
+| --- | --- | --- |
+| `--major --preid rc` | `1.2.3` | `2.0.0-rc.1` |
+| `--patch --preid beta` | `1.2.3` | `1.2.4-beta.1` |
+| `--preid dev` (alone) | `4.0.0-dev.6` | `4.0.0-dev.7` (same id → counter++) |
+| `--preid rc` (alone) | `2.0.0-alpha.3` | `2.0.0-rc.1` (different id → reset) |
+| `--preid rc` (alone) | `1.2.3` (stable) | exit `2` — ambiguous, combine with `--major`/`--minor`/`--patch` |
+
+`--preid` is mutually exclusive with `-v`, and `<id>` is validated against
+the SemVer prerelease grammar before anything is mutated. To graduate a
+prerelease back to a stable release, `--major`/`--minor`/`--patch` without
+`--preid` bumps from the stable core as usual, or pass an explicit
+`-v <version>` / accept the interactive prompt.
 
 ### Dry-run
 

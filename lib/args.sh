@@ -316,6 +316,36 @@ normalize-long-opts() {
       ;;
     esac
 
+    # --preid <id> / --preid=<id> — start or advance a prerelease line
+    # (R-PRE bucket, issue #64). Long-only value flag, same shape as
+    # --source. Grammar-validated against the SemVer prerelease identifier
+    # chain before any mutation (R-PRE-5) — is_prerelease_id lives in
+    # lib/validate.sh, sourced before lib/args.sh. The -v / --version
+    # conflict (R-PRE-4) is caught later when getopts processes -v, mirroring
+    # the --major/--minor/--patch-vs-v check above: PRE_ID is already set by
+    # the time normalize-long-opts has emitted -v into NORMALIZED_ARGV,
+    # regardless of which flag appeared first on the command line.
+    if [ "$arg" = "--preid" ] || [[ "$arg" == "--preid="* ]]; then
+      if [[ "$arg" == "--preid="* ]]; then
+        PRE_ID="${arg#--preid=}"
+        [ -z "$PRE_ID" ] && fail 2 \
+          "--preid= requires a value." \
+          "Pass a prerelease id: --preid <id> or --preid=<id>."
+      elif (( $# )) && [ "${1:0:1}" != "-" ]; then
+        PRE_ID="$1"; shift
+      else
+        fail 2 \
+          "Option --preid requires a value." \
+          "Pass a prerelease id: --preid <id> or --preid=<id>."
+      fi
+      if ! is_prerelease_id "$PRE_ID"; then
+        fail 2 \
+          "Invalid --preid value '${PRE_ID}': not a valid SemVer prerelease identifier." \
+          "Use dot-separated alphanumeric/hyphen identifiers with no leading-zero numeric parts, e.g. rc, beta, dev-2."
+      fi
+      continue
+    fi
+
     if [[ "$arg" == --*=* ]]; then
       name="${arg%%=*}"; name="${name#--}"
       val="${arg#*=}"
@@ -381,17 +411,18 @@ normalize-long-opts() {
 process-arguments() {
   local OPTIONS OPTIND OPTARG
 
-  # DO_RELEASE, BUMP_LEVEL, ALLOW_EMPTY, FLAG_QUIET, and FLAG_NOHOOKS are
-  # CLI-only switches with no env / .ver-bumprc contract. Reset them before
-  # parsing so an inherited exported var — or a .ver-bumprc assignment
+  # DO_RELEASE, BUMP_LEVEL, PRE_ID, ALLOW_EMPTY, FLAG_QUIET, and FLAG_NOHOOKS
+  # are CLI-only switches with no env / .ver-bumprc contract. Reset them
+  # before parsing so an inherited exported var — or a .ver-bumprc assignment
   # (load-config sources the rc as raw shell) — can't silently force a bump,
-  # publish a release, push an empty release, hide the run's output, or
-  # disable the release hooks with no flag on the command line. FLAG_QUIET
-  # follows the FLAG_YES rationale (R-YES-3): a hidden-output mode must be an
-  # explicit per-invocation choice.
+  # start/advance a prerelease, publish a release, push an empty release,
+  # hide the run's output, or disable the release hooks with no flag on the
+  # command line. FLAG_QUIET follows the FLAG_YES rationale (R-YES-3): a
+  # hidden-output mode must be an explicit per-invocation choice.
   DO_RELEASE=false
   DO_PR=false
   BUMP_LEVEL=
+  PRE_ID=
   ALLOW_EMPTY=false
   FLAG_QUIET=false
   FLAG_NOHOOKS=false
@@ -441,6 +472,11 @@ process-arguments() {
           fail 2 \
             "Conflicting flags: -v / --version and --${BUMP_LEVEL} are mutually exclusive." \
             "Pass either an explicit version (-v X.Y.Z) or a bump level (--${BUMP_LEVEL}), not both."
+        fi
+        if [ -n "${PRE_ID-}" ]; then
+          fail 2 \
+            "Conflicting flags: -v / --version and --preid are mutually exclusive." \
+            "Pass either an explicit version (-v X.Y.Z) or --preid (optionally with --major/--minor/--patch), not both."
         fi
         V_USR_SUPPLIED=$OPTARG
       ;;
@@ -521,10 +557,10 @@ process-arguments() {
         "--quiet is incompatible with -l/--pause-changelog (an interactive pause would hang a captured pipeline)." \
         "Drop -l/--pause-changelog (or unset FLAG_CHANGELOG_PAUSE in .ver-bumprc), or drop --quiet."
     fi
-    if [ "${FLAG_YES:-false}" != true ] && [ -z "${V_USR_SUPPLIED-}" ] && [ -z "${BUMP_LEVEL-}" ]; then
+    if [ "${FLAG_YES:-false}" != true ] && [ -z "${V_USR_SUPPLIED-}" ] && [ -z "${BUMP_LEVEL-}" ] && [ -z "${PRE_ID-}" ]; then
       fail 2 \
         "--quiet would hide the interactive version prompt (a hidden prompt is a hung pipeline)." \
-        "Add --yes to accept the suggested version, pass -v <version>, or force a level with --major/--minor/--patch."
+        "Add --yes to accept the suggested version, pass -v <version>, or force a level with --major/--minor/--patch/--preid."
     fi
   fi
 }

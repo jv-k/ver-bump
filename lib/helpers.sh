@@ -40,7 +40,7 @@ usage() {
           "\nIt does several things that are typically required for releasing a Git repository, like git tagging, automatic updating of CHANGELOG.md, and incrementing the version number in various JSON files."
 
   echo -e "\n${S_NORM}${BOLD}Usage:${RESET}"\
-          "\n${SCRIPT_NAME} [-v <version number>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-c] [-p] [-h]" 1>&2; 
+          "\n${SCRIPT_NAME} [-v <version number>] [-m <release message>] [-f <file1>] [-f <file2>].. [-p <repository alias>] [-n] [-c] [-b] [-l] [-h]" 1>&2;
 
   echo -e "\n${S_NORM}${BOLD}Options:${RESET}"
   echo -e "$S_WARN-v$S_NORM <version number>\tSpecify a manual version number"
@@ -48,7 +48,8 @@ usage() {
   echo -e "$S_WARN-f$S_NORM <filename.json>\tUpdate version number inside JSON files."\
           "\n\t\t\tFor multiple files, add a separate -f option for each one, for example:"\
           "\n\t\t\t${S_NORM}ver-bump -f src/plugin/package.json -f composer.json"
-  echo -e "$S_WARN-p$S_NORM \t\t\tPush release branch to ORIGIN."
+  echo -e "$S_WARN-p$S_NORM <repository alias>\tPush release branch and tags to that remote, bypassing the prompt."\
+          "\n\t\t\tThe alias is required, for example: ${S_NORM}ver-bump -p origin"
   echo -e "$S_WARN-n$S_NORM \t\t\tDisable commit after tagging release."
   echo -e "$S_WARN-b$S_NORM \t\t\tDisable commit to a new release-x.x.x branch."
   echo -e "$S_WARN-c$S_NORM \t\t\tDisable updating CHANGELOG.md automatically with new commits since last release tag."

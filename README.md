@@ -158,7 +158,7 @@ $ npm install -g ver-bump
 ### CLI
 
 ```sh
-$ ver-bump [-v <version no.>] [-m <release message>] [-j <file1>] [-j <file2>].. [-n] [-p] [-b] [-h]
+$ ver-bump [-v <version no.>] [-m <release message>] [-f <file1>] [-f <file2>].. [-p <repository alias>] [-n] [-c] [-b] [-l] [-h]
 ```
 
 ## Options

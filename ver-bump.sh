@@ -30,6 +30,7 @@ source "$MODULE_DIR/lib/errors.sh"
 source "$MODULE_DIR/lib/ui.sh"
 source "$MODULE_DIR/lib/validate.sh"
 source "$MODULE_DIR/lib/json.sh"
+source "$MODULE_DIR/lib/textbump.sh"
 
 source "$MODULE_DIR/lib/usage.sh"
 source "$MODULE_DIR/lib/completions.sh"
@@ -70,6 +71,10 @@ VER_FILE="$SOURCE_FILE"
 
 JSON_FILES=()
 
+# --bump specs collected from the CLI (repeatable). Merged with the newline-
+# separated BUMP_FILES config/env key by resolve-bump-targets (lib/textbump.sh).
+BUMP_TARGETS=()
+
 # ── Initiate Script ────────────────────────────────────────────────────
 
 main() {
@@ -86,6 +91,7 @@ main() {
   VER_FILE="$SOURCE_FILE"
   check-dependencies
   check-release-deps
+  check-bump-deps # validate --bump / BUMP_FILES specs + conditional tomlq/yq (R-TGT-4)
 
   section "Verify"
   check-commits-exist
@@ -102,6 +108,7 @@ main() {
   run-pre-bump-hook # PRE_BUMP_CMD: all preflights passed, nothing mutated yet (R-HOOK-1)
   do-packagefile-bump
   bump-json-files
+  bump-target-files # --bump / BUMP_FILES: non-JSON + arbitrary-path targets (R-TGT)
   do-versionfile
   do-changelog
   do-branch

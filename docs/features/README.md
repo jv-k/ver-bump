@@ -30,4 +30,5 @@ contract); IDs added after the PRD are backfilled here first.
 | [ui-output](./ui-output/requirements.md) | R-UI, R-OUT | `ui.bats`, `color.bats`, `about.bats`, `quiet.bats` |
 | [dev-sandbox](./dev-sandbox/requirements.md) | R-DEV | `sandbox.bats` |
 | [json-bump-formatting](./json-bump-formatting/requirements.md) | R-FMT | `json.bats`, `bumpfile.bats` |
+| [bump-targets](./bump-targets/requirements.md) | R-TGT | `bump-targets.bats` |
 | [installer](./installer/requirements.md) | R-DIST | `install.bats` |

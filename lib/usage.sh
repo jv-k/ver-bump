@@ -96,7 +96,10 @@ usage() {
     local plain pad
     plain="  ${cmd}"
     if (( ${#plain} >= OPT_COL )); then
-      pad=" "
+      # Command overflows the column: keep a single-space gap before the
+      # description (the trailing ${pad# } strips one leading space, so two
+      # spaces here render as one).
+      pad="  "
     else
       printf -v pad '%*s' $((OPT_COL - ${#plain})) ''
     fi
@@ -122,6 +125,11 @@ usage() {
   print-opt-row "-q" "--quiet"         ""            "Suppress decoration; print only the new version on stdout (needs -y, -v, a bump level, or --preid)."
   print-opt-row ""   "--source"        "<file.json>" "Version source + primary bump target (default: package.json)."
   print-opt-cont "If the file is missing, the current version derives from the latest matching git tag."
+  print-opt-row ""   "--bump"          "<spec>"      "Also bump a JSON / TOML / YAML / text file. Repeatable. <spec> is one of:"
+  print-opt-cont "<file>                     structured, top-level .version by file type (jq / tomlq / yq)"
+  print-opt-cont "<file>:@<path>             structured, explicit dotted path, e.g. pyproject.toml:@tool.poetry.version"
+  print-opt-cont "'<file>:<pattern>'         text search/replace; the pattern must contain {{version}}"
+  print-opt-cont "e.g. ver-bump --bump 'main.go:Version = \"{{version}}\"' --bump Chart.yaml:@version"
   print-opt-row ""   "--undo"          "[<version>]" "Locally delete release-X.Y.Z + tag vX.Y.Z (refuses if pushed/dirty)."
   print-opt-row ""   "--major"              ""            "Force a major bump from the current version (mutually exclusive)."
   print-opt-row ""   "--minor"              ""            "Force a minor bump from the current version (mutually exclusive)."
@@ -154,6 +162,9 @@ usage() {
   print-example-row "${SCRIPT_NAME} -t release/"           "Use a custom tag prefix (e.g. release/1.2.3)."
   print-example-row "${SCRIPT_NAME} -f composer.json"      "Also bump version in an extra JSON file."
   print-example-row "${SCRIPT_NAME} --source composer.json" "Use composer.json as the version source (non-Node repo)."
+  print-example-row "${SCRIPT_NAME} --bump pyproject.toml:@project.version" "Also bump a Python project's version (needs tomlq)."
+  print-example-row "${SCRIPT_NAME} --bump 'pkg/__init__.py:__version__ = \"{{version}}\"'" "Also bump a Python __version__ via a text pattern (no extra tool)."
+  print-example-row "${SCRIPT_NAME} --bump 'main.go:Version = \"{{version}}\"'" "Also bump a Go const via a text pattern (no extra tool)."
   print-example-row "${SCRIPT_NAME} --about"               "Show branded version info."
   print-example-row "${SCRIPT_NAME} --install-completions" "Install shell completions (auto-detects shell)."
 

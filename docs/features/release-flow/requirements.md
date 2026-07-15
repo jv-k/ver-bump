@@ -18,6 +18,11 @@ push, with three selectable workflows since PR #49 (ADR-12):
 Migration note (PRD B-5): 1.x always cut a release branch; 2.0 tags in
 place by default — pass `--branch` for the old behaviour.
 
+Scope decision (#67): forge integration is GitHub-only by design —
+`--pr` and `--release` shell out to `gh`; the core flow (bump →
+changelog → commit → tag → push) works on any Git remote. Supporting
+another forge (GitLab, Gitea) is a separate feature decision.
+
 Modules: `lib/git-actions.sh`, `lib/git-checks.sh`, `lib/args.sh`.
 Tests: `test/git-ops.bats`, `test/pr.bats`, `test/prefixes.bats`,
 `test/e2e-live.bats`.

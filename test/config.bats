@@ -13,7 +13,7 @@ load 'test_helper'
 # itself, so our tests can assert "default" paths deterministically. Does NOT
 # unset the generic shell-inherited ones (those never are).
 _clear_config_env() {
-  unset TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX \
+  unset TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX CHANGELOG_STYLE \
         FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE
 }
 
@@ -102,6 +102,7 @@ _clear_config_env() {
   assert_equal "$REL_PREFIX" "release-"
   assert_equal "$PUSH_DEST" "origin"
   assert_equal "$COMMIT_MSG_PREFIX" "chore: "
+  assert_equal "$CHANGELOG_STYLE" "flat"
 }
 
 @test "ver-bump.sh: CLI -t beats .ver-bumprc TAG_PREFIX (end-to-end dry-run)" {
@@ -216,6 +217,7 @@ TAG_PREFIX=rel/
 REL_PREFIX=hotfix-
 PUSH_DEST=upstream
 COMMIT_MSG_PREFIX="release: "
+CHANGELOG_STYLE=grouped
 FLAG_NOBRANCH=true
 FLAG_NOCHANGELOG=true
 FLAG_CHANGELOG_PAUSE=true
@@ -226,6 +228,7 @@ EOF
   assert_equal "$REL_PREFIX" "hotfix-"
   assert_equal "$PUSH_DEST" "upstream"
   assert_equal "$COMMIT_MSG_PREFIX" "release: "
+  assert_equal "$CHANGELOG_STYLE" "grouped"
   assert_equal "$FLAG_NOBRANCH" "true"
   assert_equal "$FLAG_NOCHANGELOG" "true"
   assert_equal "$FLAG_CHANGELOG_PAUSE" "true"

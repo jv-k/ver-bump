@@ -129,21 +129,56 @@ process-version() {
   fi
 }
 
+# Classify a single commit per Conventional Commits. $1 = subject (first
+# line), $2 = body (may be empty / multi-line). Echoes exactly one of:
+# breaking | feat | fix | other. Shared by suggest-bump-level (bump
+# inference) and the grouped changelog (lib/changelog.sh) so the parsing
+# rules can never drift apart.
+#
+# Subject vs. body handling: only the subject is matched against the
+# "<type>:" / "<type>!:" patterns, so a commit body that quotes a prior
+# subject can't change the class. "BREAKING CHANGE:" /
+# "BREAKING-CHANGE:" is matched only when it appears as a footer —
+# start-of-line followed by the token and a colon.
+classify-commit() {
+  local subject=$1 body=${2-} line
+  local re_breaking_subject='^[a-zA-Z]+(\([^)]*\))?!:'
+  local re_feat='^feat(\([^)]*\))?:'
+  local re_fix='^fix(\([^)]*\))?:'
+  local re_breaking_footer='^BREAKING[ -]CHANGE:'
+
+  # Breaking change via "<type>!:" — subject only.
+  if [[ "$subject" =~ $re_breaking_subject ]]; then
+    echo "breaking"; return
+  fi
+
+  # Breaking change footer — anchored at start of a body line.
+  if [ -n "$body" ]; then
+    while IFS= read -r line; do
+      if [[ "$line" =~ $re_breaking_footer ]]; then
+        echo "breaking"; return
+      fi
+    done <<< "$body"
+  fi
+
+  if [[ "$subject" =~ $re_feat ]]; then
+    echo "feat"; return
+  fi
+  if [[ "$subject" =~ $re_fix ]]; then
+    echo "fix"; return
+  fi
+  echo "other"
+}
+
 # Inspect commit messages since the previous version's tag and suggest the
 # appropriate bump per Conventional Commits:
 #   - BREAKING CHANGE / <type>! → major
 #   - feat:                     → minor
 #   - anything else             → patch
 # Falls back to patch if no tag for previous version exists, or if parsing fails.
-#
-# Subject vs. body handling: we split every commit into its subject (first
-# line) and body (rest) via a record-separator/unit-separator format. Only
-# the subject is matched against the "<type>:" / "<type>!:" patterns, so a
-# commit body that quotes a prior subject can't trigger a spurious bump.
-# "BREAKING CHANGE:" / "BREAKING-CHANGE:" is matched only when it appears as
-# a footer — start-of-line followed by the token and a colon.
+# Parsing rules (subject-vs-body discipline) live in classify-commit above.
 suggest-bump-level() {
-  local prev_tag log level="patch" record subject body line
+  local prev_tag log level="patch" record subject body
   prev_tag="${TAG_PREFIX}${1}"
 
   if ! git rev-parse --verify "refs/tags/${prev_tag}" >/dev/null 2>&1; then
@@ -156,10 +191,6 @@ suggest-bump-level() {
     echo "patch"; return
   }
 
-  local re_breaking_subject='^[a-zA-Z]+(\([^)]*\))?!:'
-  local re_feat='^feat(\([^)]*\))?:'
-  local re_breaking_footer='^BREAKING[ -]CHANGE:'
-
   while IFS= read -r -d $'\x1f' record; do
     # Trim the newline git inserts between format records.
     record="${record#$'\n'}"
@@ -171,24 +202,10 @@ suggest-bump-level() {
       body=""
     fi
 
-    # Breaking change via "<type>!:" — subject only.
-    if [[ "$subject" =~ $re_breaking_subject ]]; then
-      echo "major"; return
-    fi
-
-    # Breaking change footer — anchored at start of a body line.
-    if [ -n "$body" ]; then
-      while IFS= read -r line; do
-        if [[ "$line" =~ $re_breaking_footer ]]; then
-          echo "major"; return
-        fi
-      done <<< "$body"
-    fi
-
-    # feat: → minor (subject only; never downgrade).
-    if [[ "$subject" =~ $re_feat ]]; then
-      level="minor"
-    fi
+    case "$(classify-commit "$subject" "$body")" in
+      breaking) echo "major"; return ;;
+      feat)     level="minor" ;;  # never downgrade
+    esac
   done <<< "$log"
 
   echo "$level"

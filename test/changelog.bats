@@ -55,6 +55,42 @@ load 'test_helper'
 
 # N3: no-prev-tag range — when V_PREV has no tag, list every reachable commit #
 
+# R-CHLOG-1 regression pin: the default (flat) format must stay
+# byte-identical to the pre-CHANGELOG_STYLE output (#61). ###################
+
+@test "do-changelog: default flat output is byte-identical to the legacy format" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  git tag v1.0.0
+  git commit --allow-empty -qm "feat(api): add endpoint (#12)"
+  git commit --allow-empty -qm "fix: solve crash"
+  git commit --allow-empty -qm "plain non-conventional message"
+
+  V_PREV="1.0.0"
+  V_NEW="1.1.0"
+  GIT_MSG=""
+  COMMIT_MSG_PREFIX="chore: "
+  # Prove the unset default is flat, not just CHANGELOG_STYLE=flat.
+  unset CHANGELOG_STYLE
+
+  run do-changelog <<< ""
+  assert_success
+
+  # Hand-built byte-for-byte copy of the legacy flat format: heading,
+  # synthetic bump entry, commits newest-first, one trailing blank line.
+  printf '%s\n' \
+    "## 1.1.0 ($NOW)" \
+    "- chore: created CHANGELOG.md, bumped 1.0.0 -> 1.1.0" \
+    "- plain non-conventional message" \
+    "- fix: solve crash" \
+    "- feat(api): add endpoint (#12)" \
+    "" > expected.md
+
+  run diff expected.md CHANGELOG.md
+  assert_success
+}
+
 @test "do-changelog: uses full history when no tag exists for V_PREV" {
   source ${profile_script}
   cd "$(scratch_repo)"

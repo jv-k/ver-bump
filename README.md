@@ -253,6 +253,7 @@ Supported keys (each maps 1:1 to an existing global):
 | `REL_PREFIX` | `-B` / `--branch-prefix` | `release-` |
 | `PUSH_DEST` | `-p` / `--push` | `origin` |
 | `COMMIT_MSG_PREFIX` | *(no flag)* | `"chore: "` |
+| `CHANGELOG_STYLE` | *(no flag)* | `flat` |
 | `FLAG_BRANCH` | `--branch` | *unset* (tag in place) |
 | `PR_BASE` | `--base` | *(auto-detect)* |
 | `FLAG_NOCHANGELOG` | `-c` / `--no-changelog` | *unset* |
@@ -277,6 +278,44 @@ overrides both.
 **Security** — `ver-bump` *sources* this file as shell, so do not commit
 one you wouldn't execute. As a safeguard, `ver-bump` refuses to load a
 world-writable rc and exits with code 3; `chmod 644 .ver-bumprc` fixes it.
+
+#### Grouped changelog (`CHANGELOG_STYLE=grouped`)
+
+By default the CHANGELOG section is a flat list of commit subjects
+(unchanged since 1.x). Set `CHANGELOG_STYLE=grouped` — in `.ver-bumprc` or
+as an environment variable; there is no CLI flag — to group commits by
+Conventional Commit type instead, with commit, PR and compare links when
+the remote is on GitHub:
+
+```markdown
+## [1.1.0](https://github.com/acme/widget/compare/v1.0.0...v1.1.0) (2026-07-15)
+
+### Breaking Changes
+
+- drop node 14 ([2296697](https://github.com/acme/widget/commit/2296697))
+
+### Features
+
+- **api:** add endpoint (#12) ([a746a76](https://github.com/acme/widget/commit/a746a76))
+
+### Fixes
+
+- **net:** retry on 503 ([7a1ecc3](https://github.com/acme/widget/commit/7a1ecc3))
+
+### Other
+
+- updated package.json, updated CHANGELOG.md, bumped 1.0.0 -> 1.1.0
+- plain non-conventional message ([e0d3107](https://github.com/acme/widget/commit/e0d3107))
+```
+
+Sections appear in that order and empty ones are omitted. Breaking changes
+are detected from a `<type>!:` subject or a `BREAKING CHANGE:` footer;
+everything that isn't `feat`/`fix`/breaking — including commits that don't
+follow Conventional Commits at all — lands under **Other**, so nothing is
+ever dropped. Scopes render as a bold `**scope:**` prefix. With a
+non-GitHub remote (or no remote) the same grouping renders as plain text
+without links. Any other `CHANGELOG_STYLE` value behaves as `flat`, whose
+output stays byte-identical to previous releases.
 
 ```text
 -v, --version [<version>]     Without a value: print tool version and exit.

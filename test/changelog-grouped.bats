@@ -176,6 +176,32 @@ _grouped_fixture() {
   assert_output --partial "- initial (["
 }
 
+@test "grouped: slashed TAG_PREFIX is URL-encoded in the compare link, plain heading untouched" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+  git tag rel/1.0.0
+  git commit --allow-empty -qm "feat: shiny"
+  git remote add origin https://github.com/acme/widget.git
+
+  TAG_PREFIX="rel/"
+  V_PREV="1.0.0"; V_NEW="1.1.0"; CHANGELOG_STYLE="grouped"
+
+  run do-changelog <<< ""
+  assert_success
+
+  run cat CHANGELOG.md
+  assert_output --partial "## [1.1.0](https://github.com/acme/widget/compare/rel%2F1.0.0...rel%2F1.1.0) ($NOW)"
+
+  # No remote → plain heading with no refs at all, so nothing gets encoded.
+  git remote remove origin
+  rm CHANGELOG.md
+  run do-changelog <<< ""
+  assert_success
+  run cat CHANGELOG.md
+  assert_output --partial "## 1.1.0 ($NOW)"
+  refute_output --partial "%2F"
+}
+
 # _forge-base-url unit table ##################################################
 
 @test "_forge-base-url: GitHub URL forms parse; non-GitHub and no-remote return 1 silently" {

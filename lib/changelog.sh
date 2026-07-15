@@ -40,6 +40,18 @@ _forge-base-url() {
   printf 'https://github.com/%s' "$owner_repo"
 }
 
+# Minimal URL-encoding for a git ref used as a path segment of a GitHub
+# compare URL: "%" first (so the escapes below aren't double-encoded),
+# then "/" — TAG_PREFIX may legitimately contain one (e.g. rel/), which
+# would otherwise break the compare path. Other ref-legal characters are
+# URL-safe in this position.
+_url-encode-ref() {
+  local ref=$1
+  ref=${ref//%/%25}
+  ref=${ref//\//%2F}
+  printf '%s' "$ref"
+}
+
 # Render one subject line for the grouped changelog. A Conventional Commit
 # "type(scope)!?:" prefix is stripped — the section heading already carries
 # the type — and the scope becomes a bold "**scope:**" prefix (R-CHLOG-2).
@@ -86,7 +98,9 @@ _changelog-grouped-section() {
   # tag and a recognised forge exist; otherwise the same text as flat.
   if [ -n "$range" ] && [ -n "$base_url" ]; then
     printf '## [%s](%s/compare/%s...%s) (%s)\n' \
-      "$V_NEW" "$base_url" "${TAG_PREFIX}${V_PREV}" "${TAG_PREFIX}${V_NEW}" "$NOW"
+      "$V_NEW" "$base_url" \
+      "$(_url-encode-ref "${TAG_PREFIX}${V_PREV}")" \
+      "$(_url-encode-ref "${TAG_PREFIX}${V_NEW}")" "$NOW"
   else
     printf '## %s (%s)\n' "$V_NEW" "$NOW"
   fi

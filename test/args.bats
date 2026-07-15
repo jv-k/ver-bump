@@ -140,6 +140,26 @@ load 'test_helper'
   assert_output --partial "Option --no-fetch doesn't take a value"
 }
 
+@test "long options: --no-hooks sets FLAG_NOHOOKS" {
+  source ${profile_script}
+  process-arguments --no-hooks
+  assert_equal "${FLAG_NOHOOKS}" "true"
+}
+
+@test "long options: --no-hooks=value is rejected" {
+  source ${profile_script}
+  run process-arguments --no-hooks=yes
+  assert_failure 2
+  assert_output --partial "Option --no-hooks doesn't take a value"
+}
+
+@test "process-arguments: resets a stale FLAG_NOHOOKS from the environment" {
+  source ${profile_script}
+  FLAG_NOHOOKS=true
+  process-arguments -d
+  assert_equal "${FLAG_NOHOOKS}" "false"
+}
+
 @test "long options: --pr implies branch + push and sets DO_PR" {
   source ${profile_script}
   process-arguments --pr

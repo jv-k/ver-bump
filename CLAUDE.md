@@ -35,8 +35,8 @@ Full rules in [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md) (§Pull requests,
 
 ### The `ralph:` scope is Sandcastle-only
 
-`ralph:` / `ralph-review:` / `ralph-merge:` scopes are reserved for commits
-authored by the autonomous **Sandcastle** harness in
+The `ralph:<area>`, `ralph-review:<area>`, and `ralph-merge` scopes are
+reserved for commits authored by the autonomous **Sandcastle** harness in
 [`.sandcastle/`](.sandcastle/) — its prompts `git log --grep="ralph:"` to see
 recent loop activity, so the marker only earns its keep on commits that harness
 actually produced. **Do not use these scopes for interactive sessions or normal

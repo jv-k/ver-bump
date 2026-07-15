@@ -72,6 +72,41 @@ check-release-branch() {
   fi
 }
 
+# Remote-sync preflight (R-SAFE-5..9). ver-bump otherwise never talks to the
+# remote before mutating: check-tag-exists consults local tags only, and a
+# stale local HEAD happily tags code that's already superseded on the remote.
+# Fetch (with tags) from the configured remote so (a) a behind-upstream HEAD
+# is refused here, and (b) check-tag-exists — which runs AFTER this in main()
+# — sees remote tags and catches collisions preflight instead of at push time.
+# Air-gapped use keeps working: no configured remote → silent skip; fetch
+# failure (offline, auth) → warn and continue. The fetch is read-only, so it
+# also runs under --dry-run (same reasoning as R-REL-5's notes command).
+# --no-fetch / NO_FETCH=true skips the whole preflight explicitly.
+check-remote-sync() {
+  [ "${NO_FETCH:-false}" = true ] && return 0
+
+  # PUSH_DEST may be a bare URL/path (e.g. -p /tmp/remote.git) rather than a
+  # configured remote — nothing to fetch state for, so skip silently.
+  git remote get-url "$PUSH_DEST" >/dev/null 2>&1 || return 0
+
+  if ! git fetch "$PUSH_DEST" --tags --quiet 2>/dev/null; then
+    log_warn "Could not fetch from <${S_VAL}${PUSH_DEST}${RESET-}> — continuing with local refs only."
+    return 0
+  fi
+
+  # Behind-upstream check: only meaningful when the current branch has an
+  # upstream configured. rev-list HEAD..@{upstream} counts commits the
+  # upstream has that we don't — anything > 0 means we'd tag a stale HEAD.
+  local upstream behind
+  upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null) || return 0
+  behind=$(git rev-list --count 'HEAD..@{upstream}' 2>/dev/null) || return 0
+  if [ "${behind:-0}" -gt 0 ]; then
+    fail 3 \
+      "Current branch is ${behind} commit(s) behind ${upstream} — releasing now would tag a stale HEAD." \
+      "Run 'git pull --rebase' first, or pass --no-fetch / set NO_FETCH=true to skip the remote-sync preflight."
+  fi
+}
+
 # If there are no commits in repo, quit, because you can't tag with zero commits.
 check-commits-exist() {
   if ! git rev-parse HEAD &> /dev/null; then

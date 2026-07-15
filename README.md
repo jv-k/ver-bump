@@ -252,7 +252,7 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
            [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
            [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-h|--help] \
-           [--branch] [--pr] [--base <branch>] [--allow-dirty] \
+           [--branch] [--pr] [--base <branch>] [--allow-dirty] [--no-fetch] \
            [--undo [<version>]] [--major | --minor | --patch] [--release] \
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
 ```
@@ -286,6 +286,7 @@ Supported keys (each maps 1:1 to an existing global):
 | `FLAG_NOCHANGELOG` | `-c` / `--no-changelog` | *unset* |
 | `FLAG_CHANGELOG_PAUSE` | `-l` / `--pause-changelog` | *unset* |
 | `ALLOW_DIRTY` | `--allow-dirty` | *unset* (dirty tree refuses) |
+| `NO_FETCH` | `--no-fetch` | *unset* (fetch + behind-upstream check) |
 | `RELEASE_BRANCHES` | *(no flag)* | *unset* (release from any branch) |
 
 Example:
@@ -386,6 +387,10 @@ output stays byte-identical to previous releases.
                               uncommitted changes to tracked files. Untracked files
                               never trigger the check. Also available as the
                               ALLOW_DIRTY config/env key.
+    --no-fetch                Skip the remote-sync preflight: no 'git fetch <remote>
+                              --tags' and no behind-upstream check before releasing.
+                              Remote-only tag collisions then surface at push time
+                              instead. Also available as the NO_FETCH config/env key.
     --branch                  Cut a release-<version> branch (the pre-2.0 default).
                               Otherwise ver-bump tags the current branch in place.
     --pr                      Create the release branch, push it, then open a pull

@@ -225,6 +225,20 @@ normalize-long-opts() {
         "Drop the '=<value>' — --no-fetch is a boolean flag."
     fi
 
+    # --sign — long-only boolean: create a signed release tag (`git tag -s`,
+    # R-SIGN-1). Sets the TAG_SIGN config key directly, so the CLI wins over
+    # env / .ver-bumprc per R-CFG-3 (process-arguments runs last). Key and
+    # signing program stay in git's own config (user.signingkey, gpg.format) —
+    # ver-bump adds no key management; git's own error is the error surface.
+    if [ "$arg" = "--sign" ]; then
+      TAG_SIGN=true
+      continue
+    elif [[ "$arg" == "--sign="* ]]; then
+      fail 2 \
+        "Option --sign doesn't take a value." \
+        "Drop the '=<value>' — --sign is a boolean flag."
+    fi
+
     # --base <branch> / --base=<branch> — explicit base branch for --pr. Long-only
     # value flag (no short form), captured here like --undo so it needs no getopts slot.
     if [ "$arg" = "--base" ] || [[ "$arg" == "--base="* ]]; then

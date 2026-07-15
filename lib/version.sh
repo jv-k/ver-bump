@@ -279,11 +279,9 @@ do-packagefile-bump() {
     echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in package.json" >&2
     [ -f package-lock.json ] && echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in package-lock.json" >&2
   else
-    # Bump package.json via jq (no npm dependency).
-    # Note: $V is a jq variable (set via --arg), not a bash expansion — single
-    # quotes on the jq program are correct.
-    # shellcheck disable=SC2016
-    if ! jq_inplace package.json '.version = $V' --arg V "$V_NEW"; then
+    # Bump package.json via jq (no npm dependency), preserving the file's
+    # own formatting where possible (R-FMT-1..3, lib/json.sh).
+    if ! json_set_version package.json "$V_NEW"; then
       fail 1 \
         "Error updating <package.json>." \
         "Check that package.json is valid JSON (run: jq . package.json) and that the file is writable."
@@ -334,8 +332,8 @@ bump-json-files() {
         echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in ${S_VAL}$FILE${RESET} (was ${S_VAL}$FILE_V_PREV${RESET})" >&2
         GIT_MSG+="updated $FILE, "
       else
-        # shellcheck disable=SC2016
-        if jq_inplace "$FILE" '.version = $V' --arg V "$V_NEW"; then
+        # Preserves the file's own formatting where possible (R-FMT-1..3).
+        if json_set_version "$FILE" "$V_NEW"; then
           log_success "Updated <${S_VAL}$FILE${RESET}>: ${S_VAL}$FILE_V_PREV${RESET} ${I_ARROW} ${S_VAL}$V_NEW${RESET}"
           # Add file change to commit message:
           GIT_MSG+="updated $FILE, "

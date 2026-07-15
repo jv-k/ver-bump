@@ -149,10 +149,10 @@ _ver_bump() {
 
     opts="--version --message --file --push --tag-prefix --branch-prefix \
           --dry-run --no-commit --no-branch --no-changelog --pause-changelog \
-          --yes --undo --branch --pr --base --major --minor --patch --release \
+          --yes --quiet --undo --branch --pr --base --major --minor --patch --release \
           --sign --allow-dirty --allow-empty --no-fetch \
           --help --completions --install-completions --about \
-          -v -m -f -p -t -B -d -n -b -c -l -y -h"
+          -v -m -f -p -t -B -d -n -b -c -l -y -q -h"
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 }
 complete -F _ver_bump ver-bump
@@ -181,6 +181,7 @@ _ver_bump() {
     '(-l --pause-changelog)'{-l,--pause-changelog}'[pause before commit]' \
     '(-h --help)'{-h,--help}'[show help]' \
     '(-y --yes)'{-y,--yes}'[skip interactive confirmation prompts]' \
+    '(-q --quiet)'{-q,--quiet}'[suppress decoration; print only the new version on stdout]' \
     '--undo[locally delete release branch + tag for <version>]::version:' \
     '--branch[cut a release-x.x.x branch (else tag in place)]' \
     '--pr[branch + push + open a release PR via gh]' \
@@ -219,6 +220,7 @@ for _cmd in ver-bump ver-bump.sh
     complete -c $_cmd -s l -l pause-changelog -d 'Pause before commit'
     complete -c $_cmd -s h -l help           -d 'Show help'
     complete -c $_cmd -s y -l yes            -d 'Skip interactive confirmation prompts'
+    complete -c $_cmd -s q -l quiet          -d 'Suppress decoration; print only the new version on stdout'
     complete -c $_cmd      -l undo           -d 'Locally delete release branch + tag for <version>'
     complete -c $_cmd      -l branch         -d 'Cut a release-x.x.x branch (else tag in place)'
     complete -c $_cmd      -l pr             -d 'Branch + push + open a release PR via gh'

@@ -133,7 +133,7 @@ _ver_bump() {
 
     # Options that take a file argument → complete .json paths
     case "$prev" in
-        -f|--file)
+        -f|--file|--source)
             COMPREPLY=( $(compgen -f -X '!*.json' -- "$cur") )
             return 0
             ;;
@@ -147,7 +147,7 @@ _ver_bump() {
             ;;
     esac
 
-    opts="--version --message --file --push --tag-prefix --branch-prefix \
+    opts="--version --message --file --source --push --tag-prefix --branch-prefix \
           --dry-run --no-commit --no-branch --no-changelog --pause-changelog \
           --yes --quiet --undo --branch --pr --base --major --minor --patch --release \
           --sign --allow-dirty --allow-empty --no-fetch --no-hooks \
@@ -171,6 +171,7 @@ _ver_bump() {
     '(-v --version)'{-v,--version}'[print tool version (no arg) or set manual SemVer]::version:' \
     '(-m --message)'{-m,--message}'[custom annotated-tag message]:message:' \
     '(-f --file)'{-f,--file}'[bump version in extra JSON file]:file:_files -g "*.json"' \
+    '--source[version source + primary bump target (default package.json)]:file:_files -g "*.json"' \
     '(-p --push)'{-p,--push}'[push branch + tag to <remote>]:remote:' \
     '(-t --tag-prefix)'{-t,--tag-prefix}'[override tag prefix]:prefix:' \
     '(-B --branch-prefix)'{-B,--branch-prefix}'[override branch prefix]:prefix:' \
@@ -211,6 +212,7 @@ for _cmd in ver-bump ver-bump.sh
     complete -c $_cmd -s v -l version        -d 'Print tool version (no arg) or set manual SemVer'
     complete -c $_cmd -s m -l message        -r -d 'Custom annotated-tag message'
     complete -c $_cmd -s f -l file           -r -a '(__fish_complete_suffix .json)' -d 'Bump version in extra JSON file'
+    complete -c $_cmd      -l source         -r -a '(__fish_complete_suffix .json)' -d 'Version source + primary bump target'
     complete -c $_cmd -s p -l push           -r -d 'Push branch + tag to <remote>'
     complete -c $_cmd -s t -l tag-prefix     -r -d 'Override tag prefix'
     complete -c $_cmd -s B -l branch-prefix  -r -d 'Override branch prefix'

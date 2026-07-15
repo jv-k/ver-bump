@@ -42,6 +42,20 @@ do-commit() {
 
   local COMMIT_MSG COMMIT_RC FINAL_MSG
 
+  # Tag-only release (R-SRC-3): when this run staged nothing — tag-derived
+  # source (nothing to write), -c, no -f extras — `git commit` would die
+  # with "nothing to commit". Skip the commit; do-tag then tags the current
+  # HEAD, which is a valid release output here. GIT_MSG is the staging ledger
+  # (every path that stages a file appends to it); the `git diff --cached`
+  # check reads the real index in both live and dry-run, so anything staged
+  # outside this run (possible under --allow-dirty) is still committed and
+  # previewed identically — no dry-run-only early return that would diverge
+  # from a live run's behaviour.
+  if [ -z "$GIT_MSG" ] && git diff --cached --quiet 2>/dev/null; then
+    log_info "Nothing staged to commit — skipping the commit; the tag will point at the current HEAD."
+    return 0
+  fi
+
   # ONE renderer, shared with do-changelog's manual bump entry, so the
   # CHANGELOG and the commit can't disagree — see render-commit-msg in
   # lib/changelog.sh (R-TPL-1..3). Applies to this bump commit only; the

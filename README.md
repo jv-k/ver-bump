@@ -286,6 +286,7 @@ Supported keys (each maps 1:1 to an existing global):
 | `FLAG_NOCHANGELOG` | `-c` / `--no-changelog` | *unset* |
 | `FLAG_CHANGELOG_PAUSE` | `-l` / `--pause-changelog` | *unset* |
 | `ALLOW_DIRTY` | `--allow-dirty` | *unset* (dirty tree refuses) |
+| `RELEASE_BRANCHES` | *(no flag)* | *unset* (release from any branch) |
 
 Example:
 
@@ -296,6 +297,17 @@ REL_PREFIX="hotfix-"
 PUSH_DEST="upstream"
 COMMIT_MSG_PREFIX="release: "
 FLAG_NOCHANGELOG=true
+RELEASE_BRANCHES="main develop release/*"
+```
+
+`RELEASE_BRANCHES` is a space-separated list of glob patterns naming the
+branches a release may be cut from. When set, running ver-bump from any
+other branch (or from a detached HEAD) exits with code 3 — it is a guard,
+not a prompt, so `--yes` does not bypass it. Clear it for a single run
+with an empty environment override (env beats the file):
+
+```sh
+RELEASE_BRANCHES= ver-bump …
 ```
 
 **Precedence** — highest to lowest: **CLI flag** > **environment variable**

@@ -79,6 +79,7 @@ main() {
   section "Verify"
   check-commits-exist
   check-worktree-clean
+  check-release-branch
   process-version
   check-branch-notexist
   check-tag-exists

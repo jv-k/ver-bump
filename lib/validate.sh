@@ -18,6 +18,16 @@ is_semver() {
   [[ "$1" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*))?(\+([0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?$ ]]
 }
 
+# Returns 0 if $1 is a valid SemVer 2.0 prerelease identifier chain — the
+# same grammar as the prerelease group inside is_semver's regex (kept in
+# sync deliberately): dot-separated alphanumeric/hyphen identifiers, no
+# leading-zero numeric identifiers. Used to validate --preid values before
+# any mutation (R-PRE-5). Examples: "rc", "beta.1", "dev-2" are valid;
+# "bad..id" (empty identifier) and "01" (leading-zero numeric) are not.
+is_prerelease_id() {
+  [[ "$1" =~ ^(0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*$ ]]
+}
+
 # Bump a SemVer prerelease version's trailing numeric counter.
 # Examples:
 #   1.2.3-dev.6         -> 1.2.3-dev.7
@@ -54,6 +64,36 @@ bump-prerelease() {
   local joined
   joined=$( IFS='.'; echo "${parts[*]}" )
   printf '%s' "${base}-${joined}${build}"
+}
+
+# Compose a --preid <id> value with a version that already has a prerelease
+# (R-PRE-2): same id as the current prerelease -> increment the trailing
+# counter (delegates to bump-prerelease, the existing R-BUMP-1 behaviour);
+# different id -> swap to <id>.1, resetting the counter. Build metadata
+# after '+' is preserved either way. Caller (process-version) only invokes
+# this once $1 is confirmed to have an existing prerelease segment
+# (R-PRE-3 handles the stable-version case separately).
+# Examples:
+#   bump-preid "4.0.0-dev.6"        dev -> 4.0.0-dev.7   (same id, counter++)
+#   bump-preid "2.0.0-alpha.3"      rc  -> 2.0.0-rc.1     (different id, reset)
+#   bump-preid "2.1.0-beta.3+b.sha" rc  -> 2.1.0-rc.1+b.sha
+bump-preid() {
+  local version="$1" want="$2" core build="" pre cur_id base
+  core="$version"
+  if [[ "$core" == *+* ]]; then
+    build="+${core#*+}"
+    core="${core%%+*}"
+  fi
+  if [[ "$core" == *-* ]]; then
+    pre="${core#*-}"
+    cur_id="${pre%%.*}"
+    if [ "$cur_id" = "$want" ]; then
+      bump-prerelease "$version"
+      return
+    fi
+  fi
+  base="${core%%-*}"
+  printf '%s-%s.1%s' "$base" "$want" "$build"
 }
 
 # Force a major / minor / patch bump on a SemVer string, dropping any

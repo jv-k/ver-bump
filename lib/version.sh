@@ -30,10 +30,11 @@ process-version() {
 
     if [ -n "$V_PREV" ]; then
       echo -e "\nCurrent version read from <${S_VAL}${VER_FILE}${RESET}>: ${S_VAL}$V_PREV${RESET}"
-      # Only compute a suggestion when we'll actually prompt for it. With -v or
-      # --major/--minor/--patch the suggestion is discarded; running it anyway
-      # printed a contradictory "suggesting <level> bump" line and an extra git log.
-      if [ -z "$V_USR_SUPPLIED" ] && [ -z "${BUMP_LEVEL-}" ]; then
+      # Only compute a suggestion when we'll actually prompt for it. With -v,
+      # --major/--minor/--patch, or --preid the suggestion is discarded;
+      # running it anyway printed a contradictory "suggesting <level> bump"
+      # line and an extra git log.
+      if [ -z "$V_USR_SUPPLIED" ] && [ -z "${BUMP_LEVEL-}" ] && [ -z "${PRE_ID-}" ]; then
         set-v-suggest "$V_PREV" # check + compute next version from conventional commits (or patch +1)
       fi
     elif [ -z "$V_USR_SUPPLIED" ]; then
@@ -69,7 +70,7 @@ process-version() {
         V_PREV=""
       else
         echo -e "\n<${S_VAL}${VER_FILE}${RESET}> ${reason} — current version derived from git tag <${S_VAL}${derived_tag}${RESET}>: ${S_VAL}$V_PREV${RESET}"
-        if [ -z "$V_USR_SUPPLIED" ] && [ -z "${BUMP_LEVEL-}" ]; then
+        if [ -z "$V_USR_SUPPLIED" ] && [ -z "${BUMP_LEVEL-}" ] && [ -z "${PRE_ID-}" ]; then
           set-v-suggest "$V_PREV" # full suggestion machinery, unchanged (R-SRC-2)
         fi
       fi
@@ -86,24 +87,51 @@ process-version() {
   if [ -n "$V_USR_SUPPLIED" ]; then
     echo -e "\nVersion supplied via [-v]: ${S_VAL}${V_USR_SUPPLIED}${RESET}"
     V_NEW="${V_USR_SUPPLIED}"
-  elif [ -n "${BUMP_LEVEL-}" ]; then
-    # Forced bump via --major / --minor / --patch. Needs a SemVer V_PREV
-    # to bump from; argument-parse-time conflict checks already prevent
-    # combining this with -v.
+  elif [ -n "${BUMP_LEVEL-}" ] || [ -n "${PRE_ID-}" ]; then
+    # Forced bump via --major / --minor / --patch, and/or entering or
+    # advancing a prerelease line via --preid (R-PRE bucket, issue #64).
+    # Needs a SemVer V_PREV to bump from; argument-parse-time conflict
+    # checks already prevent combining either with -v.
     if [ -z "$V_PREV" ] || ! is_semver "$V_PREV"; then
       fail 3 \
-        "Cannot apply --${BUMP_LEVEL}: current version '${V_PREV}' is not a valid SemVer 2.0 version." \
+        "Cannot apply --${BUMP_LEVEL:-preid}: current version '${V_PREV}' is not a valid SemVer 2.0 version." \
         "Ensure ${VER_FILE} contains a SemVer \"version\" field, or pass an explicit -v <version>."
     fi
-    # force-bump returns 1 (empty output) on an unknown level. With the reset in
-    # process-arguments BUMP_LEVEL is always major/minor/patch here, but guard
-    # anyway so a bad value can never propagate an empty V_NEW into the tag/commit.
-    if ! V_NEW=$(force-bump "$V_PREV" "$BUMP_LEVEL") || [ -z "$V_NEW" ]; then
-      fail 3 \
-        "Cannot compute a '${BUMP_LEVEL}' bump from '${V_PREV}'." \
-        "Use --major, --minor, or --patch, or pass an explicit -v <version>."
+
+    if [ -n "${BUMP_LEVEL-}" ]; then
+      # force-bump returns 1 (empty output) on an unknown level. With the reset
+      # in process-arguments BUMP_LEVEL is always major/minor/patch here, but
+      # guard anyway so a bad value can never propagate an empty V_NEW into
+      # the tag/commit.
+      if ! V_NEW=$(force-bump "$V_PREV" "$BUMP_LEVEL") || [ -z "$V_NEW" ]; then
+        fail 3 \
+          "Cannot compute a '${BUMP_LEVEL}' bump from '${V_PREV}'." \
+          "Use --major, --minor, or --patch, or pass an explicit -v <version>."
+      fi
+      if [ -n "${PRE_ID-}" ]; then
+        # R-PRE-1: bump the level (force-bump already dropped any prerelease
+        # / build metadata), then enter the prerelease at <preid>.1.
+        V_NEW="${V_NEW}-${PRE_ID}.1"
+        echo -e "\n${S_LIGHT}Forced ${S_VAL}${BUMP_LEVEL}${RESET}${S_LIGHT} bump into prerelease ${S_VAL}${PRE_ID}${RESET}${S_LIGHT}: ${S_VAL}${V_PREV}${RESET}${S_LIGHT} ${I_ARROW-→} ${S_VAL}${V_NEW}${RESET}"
+      else
+        echo -e "\n${S_LIGHT}Forced ${S_VAL}${BUMP_LEVEL}${RESET}${S_LIGHT} bump: ${S_VAL}${V_PREV}${RESET}${S_LIGHT} ${I_ARROW-→} ${S_VAL}${V_NEW}${RESET}"
+      fi
+    else
+      # --preid alone, no --major/--minor/--patch (R-PRE-2 / R-PRE-3). Only
+      # meaningful on a version that already has a prerelease — strip build
+      # metadata first so a hyphen inside +build.info can't masquerade as one.
+      case "${V_PREV%%+*}" in
+        *-*)
+          V_NEW=$(bump-preid "$V_PREV" "$PRE_ID")
+          echo -e "\n${S_LIGHT}Prerelease ${S_VAL}${PRE_ID}${RESET}${S_LIGHT}: ${S_VAL}${V_PREV}${RESET}${S_LIGHT} ${I_ARROW-→} ${S_VAL}${V_NEW}${RESET}"
+        ;;
+        *)
+          fail 2 \
+            "--preid on a stable version ('${V_PREV}') is ambiguous." \
+            "Combine with --major, --minor, or --patch to enter a prerelease, e.g. --major --preid ${PRE_ID}."
+        ;;
+      esac
     fi
-    echo -e "\n${S_LIGHT}Forced ${S_VAL}${BUMP_LEVEL}${RESET}${S_LIGHT} bump: ${S_VAL}${V_PREV}${RESET}${S_LIGHT} ${I_ARROW-→} ${S_VAL}${V_NEW}${RESET}"
   else
     # Display a suggested version
     echo -ne "\n${S_QUESTION}Enter a new version number, <enter> for [${S_VAL}$V_SUGGEST${S_QUESTION}], or <esc> to quit:${RESET} "

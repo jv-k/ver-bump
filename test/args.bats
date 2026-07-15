@@ -219,6 +219,60 @@ load 'test_helper'
   assert_output --partial "requires a file path"
 }
 
+# --preid <id> — issue #64. Semantics (R-PRE-1/2/3/6) live in preid.bats;
+# these are the flag-parsing cases CODE_STYLE requires here.
+
+@test "long options: --preid sets PRE_ID (space and = forms)" {
+  source ${profile_script}
+  process-arguments --preid rc
+  assert_equal "${PRE_ID}" "rc"
+  process-arguments --preid=beta
+  assert_equal "${PRE_ID}" "beta"
+}
+
+@test "long options: --preid without value exits 2" {
+  source ${profile_script}
+  run process-arguments --preid
+  assert_failure 2
+  assert_output --partial "Option --preid requires a value"
+}
+
+@test "long options: --preid= empty value exits 2" {
+  source ${profile_script}
+  run process-arguments --preid=
+  assert_failure 2
+  assert_output --partial "--preid= requires a value"
+}
+
+@test "long options: --preid rejects a value that isn't a SemVer prerelease identifier (R-PRE-5)" {
+  source ${profile_script}
+  run process-arguments --preid 'bad..id'
+  assert_failure 2
+  assert_output --partial "not a valid SemVer prerelease identifier"
+
+  run process-arguments --preid 01
+  assert_failure 2
+  assert_output --partial "not a valid SemVer prerelease identifier"
+}
+
+@test "process-arguments: --preid conflicts with -v, order-independent (R-PRE-4)" {
+  source ${profile_script}
+  run process-arguments --preid rc -v 2.0.0
+  assert_failure 2
+  assert_output --partial "Conflicting flags"
+
+  run process-arguments -v 2.0.0 --preid rc
+  assert_failure 2
+  assert_output --partial "Conflicting flags"
+}
+
+@test "process-arguments: resets a stale PRE_ID from the environment (R-CFG-6)" {
+  source ${profile_script}
+  PRE_ID="leaked"
+  process-arguments -d
+  assert_equal "${PRE_ID}" ""
+}
+
 @test "long options: --push <remote> sets push flag + dest" {
   source ${profile_script}
   process-arguments --push upstream

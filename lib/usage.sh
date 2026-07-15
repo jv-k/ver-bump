@@ -3,26 +3,37 @@
 # shellcheck disable=SC2288
 true
 
-# _help_wrap <width> <text> — word-wrap <text> to <width> columns, one physical
-# line per output line, breaking only at spaces. A single word longer than
-# <width> is left to overflow its own line rather than hard-cut (URLs, paths).
-# Splitting goes through `read -ra` so no globbing/brace expansion touches the
-# text. Callers own indentation (hanging indent under the description column).
-_help_wrap() {
-  local width="$1" text="$2" line="" word
-  local -a words
-  read -ra words <<< "$text"
-  for word in "${words[@]}"; do
+# _help_pack <width> <token>... — greedily pack atomic tokens into lines no
+# wider than <width>, one line per output line, joining tokens with a single
+# space. A token is never split, so a token longer than <width> gets its own
+# (overflowing) line. Callers own any prefix/indent. This is the shared engine
+# behind both prose wrapping (_help_wrap) and the USAGE synopsis, where the
+# atomic tokens are bracket groups like "[--major | --minor | --patch]".
+_help_pack() {
+  local width="$1"; shift
+  local line="" tok
+  for tok in "$@"; do
     if [ -z "$line" ]; then
-      line="$word"
-    elif (( ${#line} + 1 + ${#word} <= width )); then
-      line="$line $word"
+      line="$tok"
+    elif (( ${#line} + 1 + ${#tok} <= width )); then
+      line="$line $tok"
     else
       printf '%s\n' "$line"
-      line="$word"
+      line="$tok"
     fi
   done
   [ -n "$line" ] && printf '%s\n' "$line"
+}
+
+# _help_wrap <width> <text> — word-wrap prose to <width> columns by splitting on
+# spaces (a word longer than <width> overflows its own line rather than being
+# hard-cut). Splitting goes through `read -ra` so no globbing/brace expansion
+# touches the text. Callers own indentation.
+_help_wrap() {
+  local width="$1" text="$2"
+  local -a words
+  read -ra words <<< "$text"
+  _help_pack "$width" "${words[@]}"
 }
 
 # Show --help.
@@ -64,23 +75,10 @@ usage() {
   printf '  %bbump, CHANGELOG, tag, and push, driven by Conventional Commits.%b\n' \
     "${S_DIM-}" "${RESET-}"
 
-  # USAGE section pill
-  printf '\n%bUSAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
-  printf '  %b%s%b [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]\n' \
-    "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
-  printf '  %b%s%b [--source <file.json>] [--branch] [--pr] [--base <branch>] [--major | --minor | --patch] [--preid <id>] [--release] [--sign] [--completions <shell>] [--install-completions[=<shell>]] [--about]\n' \
-    "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
-
-  # Column width for label + 2-space gutter. Longest label is
-  # "  --install-completions [=<shell>]" = 34 chars. OPT_COL 40 gives a
-  # comfortable description column start.
-  local OPT_COL=40
-
-  # Fluid layout: when writing to a real terminal, wrap descriptions to the
-  # actual width and hang wrapped lines under the description column so a long
-  # description no longer overflows flush-left. TERM_COLS=0 means "don't wrap"
-  # — piped/redirected output (tests, `| less`, files) keeps one description per
-  # line, stable for grepping and byte-identical to the historic layout.
+  # Fluid layout: when writing to a real terminal, wrap to the actual width so
+  # long lines no longer overflow the screen edge. TERM_COLS=0 means "don't
+  # wrap" — piped/redirected output (tests, `| less`, files) keeps the historic
+  # single-line layout, stable for grepping and byte-identical to before.
   # COLUMNS is rarely exported into a script, so `tput cols` is the real source;
   # COLUMNS wins when set, and 80 is the last resort.
   local TERM_COLS=0
@@ -92,6 +90,51 @@ usage() {
     fi
     case "$TERM_COLS" in ''|*[!0-9]*) TERM_COLS=80 ;; esac
   fi
+
+  # print-usage-synopsis <name> <token>... — render "  <name> <tokens>",
+  # wrapping the atomic bracket tokens to the terminal width and hanging
+  # continuation lines under the first token. A token is never split, so a
+  # group like "[--major | --minor | --patch]" stays whole. Non-TTY: one line,
+  # byte-identical to the old hardcoded synopsis (stable for pipes/tests).
+  print-usage-synopsis() {
+    local name="$1"; shift
+    local prefix="  ${name} " indent
+    printf -v indent '%*s' "${#prefix}" ''
+
+    if (( TERM_COLS == 0 )); then
+      printf '  %b%s%b %s\n' "${BOLD-}" "$name" "${RESET-}" "$*"
+      return
+    fi
+
+    local avail=$(( TERM_COLS - ${#prefix} ))
+    (( avail < 20 )) && avail=20
+    # Pack the atomic tokens, then dress line 1 with the bold program name and
+    # hang the rest under the first token.
+    local packed first=1
+    while IFS= read -r packed; do
+      if (( first )); then
+        printf '  %b%s%b %s\n' "${BOLD-}" "$name" "${RESET-}" "$packed"; first=0
+      else
+        printf '%s%s\n' "$indent" "$packed"
+      fi
+    done < <(_help_pack "$avail" "$@")
+  }
+
+  # USAGE section pill. Two invocation forms (short flags, then long-only
+  # flags); each wraps independently under its own repeated program name.
+  printf '\n%bUSAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  print-usage-synopsis "${SCRIPT_NAME}" \
+    '[-v <version>]' '[-m <message>]' '[-f <file.json>]...' '[-p <remote>]' \
+    '[-t <tag-prefix>]' '[-B <branch-prefix>]' '[-d]' '[-n]' '[-b]' '[-c]' '[-l]' '[-h]'
+  print-usage-synopsis "${SCRIPT_NAME}" \
+    '[--source <file.json>]' '[--branch]' '[--pr]' '[--base <branch>]' \
+    '[--major | --minor | --patch]' '[--preid <id>]' '[--release]' '[--sign]' \
+    '[--completions <shell>]' '[--install-completions[=<shell>]]' '[--about]'
+
+  # Column width for label + 2-space gutter. Longest label is
+  # "  --install-completions [=<shell>]" = 34 chars. OPT_COL 40 gives a
+  # comfortable description column start.
+  local OPT_COL=40
 
   # _help_desc_avail — columns available for the description/continuation text
   # to the right of OPT_COL, floored so a very narrow terminal still wraps

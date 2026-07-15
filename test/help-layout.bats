@@ -33,6 +33,35 @@ load 'test_helper'
   assert_output "short and sweet"
 }
 
+@test "help-pack: packs atomic tokens without splitting a token" {
+  source ${profile_script}
+  # "[--major | --minor | --patch]" has inner spaces but is one atomic token —
+  # it must never be broken across lines.
+  run _help_pack 30 "[-v <version>]" "[-m <message>]" "[--major | --minor | --patch]" "[-h]"
+  assert_success
+  assert_line --index 0 "[-v <version>] [-m <message>]"
+  assert_line --index 1 "[--major | --minor | --patch]"
+  assert_line --index 2 "[-h]"
+}
+
+@test "help-pack: a token wider than the width overflows on its own line" {
+  source ${profile_script}
+  run _help_pack 8 "[-a]" "[--install-completions[=<shell>]]" "[-b]"
+  assert_success
+  assert_line --index 0 "[-a]"
+  assert_line --index 1 "[--install-completions[=<shell>]]"
+  assert_line --index 2 "[-b]"
+}
+
+@test "help-layout: piped (non-TTY) --help keeps the USAGE synopsis on one line per form" {
+  run get_help_msg
+  assert_success
+  strip_ansi_output
+  # Both invocation forms stay intact and unwrapped when captured/piped.
+  assert_output --partial "ver-bump [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]"
+  assert_output --partial "ver-bump [--source <file.json>] [--branch] [--pr] [--base <branch>] [--major | --minor | --patch] [--preid <id>] [--release] [--sign] [--completions <shell>] [--install-completions[=<shell>]] [--about]"
+}
+
 @test "help-layout: piped (non-TTY) --help keeps descriptions on one line" {
   # The fluid wrap only engages on a real terminal; captured/piped output must
   # stay byte-stable so grepping the help — and these very tests — keeps

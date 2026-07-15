@@ -3,13 +3,13 @@
 # shellcheck disable=SC2288
 true
 
-# Suggests version from VERSION file, or grabs from user supplied -v <version>.
-# If none is set, suggest default from options.
+# Suggests version from the source file (VER_FILE), the latest matching git
+# tag, or grabs from user supplied -v <version>.
 
-# - If <package.json> doesn't exist, warn + exit
 # - If -v specified, set version from that
 # - Else,
-#   - Grab from package.json
+#   - Grab from the source file (package.json by default, --source overrides)
+#   - If the source file is absent, derive from the latest matching git tag
 #   - Suggest incremented number
 #   - Give prompt to user to modify
 # - Set globally
@@ -19,10 +19,12 @@ true
 # — MINOR version when you add functionality in a backwards compatible manner, and
 # — PATCH version when you make backwards compatible bug fixes.
 process-version() {
-  # Read V_PREV from VER_FILE (package.json) for display + same-version dedup.
-  # When -v is supplied, V_PREV is best-effort: the user already gave us V_NEW,
-  # so missing/empty VER_FILE is allowed. Without -v we need a version to bump,
-  # so a missing VER_FILE is a hard error.
+  # Read V_PREV from VER_FILE (the resolved --source / SOURCE_FILE target,
+  # package.json by default) for display + same-version dedup. When the file
+  # is absent, fall back to the latest matching release tag (R-SRC-2) — the
+  # suggestion machinery then works unchanged. Without -v we need a version
+  # to bump, so no file AND no tag is a hard error (R-SRC-4). With -v both
+  # reads are best-effort: the user already gave us V_NEW.
   if [ -f "$VER_FILE" ] && [ -s "$VER_FILE" ]; then
     V_PREV=$( jq -r '.version // empty' "$VER_FILE" 2>/dev/null )
 
@@ -39,8 +41,8 @@ process-version() {
         "<${VER_FILE}> doesn't contain a 'version' field." \
         "Add a top-level \"version\" key to ${VER_FILE}, or pass an explicit version with -v <version>."
     fi
-  elif [ -z "$V_USR_SUPPLIED" ]; then
-    local reason
+  else
+    local reason derived_tag
     if [ ! -f "$VER_FILE" ]; then
       reason="was not found"
     elif [ ! -s "$VER_FILE" ]; then
@@ -48,9 +50,36 @@ process-version() {
     else
       reason="could not be read"
     fi
-    fail 3 \
-      "<${VER_FILE}> ${reason}." \
-      "Run ver-bump inside a directory with a valid ${VER_FILE}, pass -v <version> to bypass, or override via VER_FILE=<path>."
+
+    # Source file absent: derive V_PREV from the latest release tag reachable
+    # from HEAD (R-SRC-2). The match glob "${TAG_PREFIX}[0-9]*" keeps
+    # unrelated tags (e.g. 'nightly') out. The derivation also runs with -v —
+    # it feeds the changelog range, the commit message, and the no-op guard
+    # (check-releasable-commits) — but stays best-effort there: an unusable
+    # tag is discarded, never fatal.
+    if derived_tag=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}[0-9]*" 2>/dev/null) \
+       && [ -n "$derived_tag" ]; then
+      V_PREV="${derived_tag#"${TAG_PREFIX}"}"
+      if ! is_semver "$V_PREV"; then
+        if [ -z "$V_USR_SUPPLIED" ]; then
+          fail 3 \
+            "<${VER_FILE}> ${reason} and the latest matching tag '${derived_tag}' is not '${TAG_PREFIX}' + a SemVer 2.0 version." \
+            "Tag releases as ${TAG_PREFIX}MAJOR.MINOR.PATCH, pass -v <version>, or create ${VER_FILE} with a \"version\" field."
+        fi
+        V_PREV=""
+      else
+        echo -e "\n<${S_VAL}${VER_FILE}${RESET}> ${reason} — current version derived from git tag <${S_VAL}${derived_tag}${RESET}>: ${S_VAL}$V_PREV${RESET}"
+        if [ -z "$V_USR_SUPPLIED" ] && [ -z "${BUMP_LEVEL-}" ]; then
+          set-v-suggest "$V_PREV" # full suggestion machinery, unchanged (R-SRC-2)
+        fi
+      fi
+    elif [ -z "$V_USR_SUPPLIED" ]; then
+      # No source file and no tag to derive from (R-SRC-4): name both escape
+      # routes — -v for a first release, or create the file.
+      fail 3 \
+        "<${VER_FILE}> ${reason} and no '${TAG_PREFIX}*' release tag exists to derive the current version from." \
+        "First release? Pass -v <version>. Otherwise create ${VER_FILE} with a \"version\" field, or point --source / SOURCE_FILE at the right file."
+    fi
   fi
 
   # If a version number is supplied by the user with [-v <version number>] — use it!
@@ -275,14 +304,20 @@ set-v-suggest() {
   V_SUGGEST="$1"
 }
 
+# Bump the resolved version source (VER_FILE — package.json by default, or
+# whatever --source / SOURCE_FILE points at, R-SRC-1). The built-in
+# package-lock.json companion bump (R-OPT-7) applies only when the source is
+# actually package.json — a --source composer.json run must not touch a
+# stray lock file.
 do-packagefile-bump() {
-  local NOTICE_MSG
-  NOTICE_MSG="<${S_VAL}package.json${RESET}>"
+  local NOTICE_MSG BUMP_LOCK=false
+  NOTICE_MSG="<${S_VAL}${VER_FILE}${RESET}>"
 
-  # Skip entirely if package.json is absent. With -v + -f, the user may be
-  # bumping only auxiliary JSON files — process-version already allowed
-  # missing VER_FILE in that path.
-  if [ ! -f package.json ]; then
+  # Skip entirely if the source file is absent. In tag-derived mode
+  # (R-SRC-2/3) there is nothing to write, and with -v + -f the user may be
+  # bumping only auxiliary JSON files — process-version already allowed the
+  # missing file in both paths.
+  if [ ! -f "$VER_FILE" ]; then
     log_warn "${NOTICE_MSG} not found — skipping."
     return
   fi
@@ -292,20 +327,22 @@ do-packagefile-bump() {
     return
   fi
 
+  [ "$VER_FILE" = "package.json" ] && [ -f package-lock.json ] && BUMP_LOCK=true
+
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in package.json" >&2
-    [ -f package-lock.json ] && echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in package-lock.json" >&2
+    echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in ${VER_FILE}" >&2
+    [ "$BUMP_LOCK" = true ] && echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in package-lock.json" >&2
   else
-    # Bump package.json via jq (no npm dependency), preserving the file's
+    # Bump the source file via jq (no npm dependency), preserving the file's
     # own formatting where possible (R-FMT-1..3, lib/json.sh).
-    if ! json_set_version package.json "$V_NEW"; then
+    if ! json_set_version "$VER_FILE" "$V_NEW"; then
       fail 1 \
-        "Error updating <package.json>." \
-        "Check that package.json is valid JSON (run: jq . package.json) and that the file is writable."
+        "Error updating <${VER_FILE}>." \
+        "Check that ${VER_FILE} is valid JSON (run: jq . ${VER_FILE}) and that the file is writable."
     fi
     # package-lock.json: update both top-level .version and (if present) the
     # root package entry .packages[""].version — matches npm's own behaviour.
-    if [ -f package-lock.json ]; then
+    if [ "$BUMP_LOCK" = true ]; then
       # shellcheck disable=SC2016
       if ! jq_inplace package-lock.json '
         .version = $V
@@ -320,9 +357,9 @@ do-packagefile-bump() {
     fi
   fi
 
-  dryrun git add package.json
-  GIT_MSG+="updated package.json, "
-  if [ -f package-lock.json ]; then
+  dryrun git add "$VER_FILE"
+  GIT_MSG+="updated ${VER_FILE}, "
+  if [ "$BUMP_LOCK" = true ]; then
     dryrun git add package-lock.json
     GIT_MSG+="updated package-lock.json, "
     NOTICE_MSG+=" and <${S_VAL}package-lock.json${RESET}>"

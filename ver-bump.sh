@@ -11,8 +11,10 @@
 #
 # Description:
 #   An opinionated release tool for Git projects with a `package.json` —
-#   primarily Node / JS / TS projects, but also usable for any SemVer repo
-#   via `-f <file>.json` for the bump target. It automates the mechanical
+#   primarily Node / JS / TS projects, but also usable for any SemVer repo:
+#   `--source <file>.json` swaps the version source / bump target, and with
+#   no version file at all the current version is derived from the latest
+#   release tag. It automates the mechanical
 #   parts of cutting a release (SemVer bump, CHANGELOG, release branch,
 #   tag, push), driven by Conventional Commits, and leaves the integration
 #   step (merge back to `develop` / `main`) to the human.
@@ -43,7 +45,6 @@ source "$MODULE_DIR/lib/config.sh"
 NOW="$(date +%F)"
 
 V_SUGGEST="0.1.0" # This is suggested in case VERSION file or user supplied version via -v is missing
-VER_FILE="package.json"
 GIT_MSG=""
 REL_NOTE=""
 FLAG_DRYRUN=false
@@ -59,6 +60,11 @@ FLAG_DRYRUN=false
 : "${COMMIT_MSG_PREFIX:=chore: }" # Commit msg prefix for the file changes this script makes
 : "${PUSH_DEST:=origin}"
 : "${CHANGELOG_STYLE:=flat}" # CHANGELOG.md style: flat (1.x-identical, default) | grouped
+: "${SOURCE_FILE:=package.json}" # Version source + primary bump target (R-SRC-1/5)
+
+# Internal alias for the resolved version source. Everything downstream reads
+# VER_FILE; main() re-derives it from SOURCE_FILE once config + CLI are final.
+VER_FILE="$SOURCE_FILE"
 
 JSON_FILES=()
 
@@ -73,6 +79,9 @@ main() {
 
   # Process and prepare
   process-arguments "$@"
+  # SOURCE_FILE is final here (CLI --source > env > .ver-bumprc > default);
+  # point the internal VER_FILE alias at it (R-SRC-1/5).
+  VER_FILE="$SOURCE_FILE"
   check-dependencies
   check-release-deps
 

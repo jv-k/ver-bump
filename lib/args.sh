@@ -212,6 +212,27 @@ normalize-long-opts() {
         "Drop the '=<value>' — --no-fetch is a boolean flag."
     fi
 
+    # --source <file.json> / --source=<file.json> — the version source and
+    # primary bump target (R-SRC-1). Long-only value flag captured here like
+    # --base, so it needs no getopts slot. Sets the SOURCE_FILE config key
+    # directly, so the CLI wins over env / .ver-bumprc per R-CFG-3.
+    if [ "$arg" = "--source" ] || [[ "$arg" == "--source="* ]]; then
+      if [[ "$arg" == "--source="* ]]; then
+        SOURCE_FILE="${arg#--source=}"
+        [ -z "$SOURCE_FILE" ] && fail 2 \
+          "--source= requires a file path." \
+          "Pass a JSON file: --source <file.json> or --source=<file.json>."
+      elif (( $# )) && [ "${1:0:1}" != "-" ]; then
+        SOURCE_FILE="$1"; shift
+      else
+        fail 2 \
+          "Option --source requires a file path." \
+          "Pass a JSON file: --source <file.json> or --source=<file.json>."
+      fi
+      echo -e "\n${S_LIGHT}Option set:${RESET} version source: <${S_VAL}${SOURCE_FILE}${RESET}>"
+      continue
+    fi
+
     # --base <branch> / --base=<branch> — explicit base branch for --pr. Long-only
     # value flag (no short form), captured here like --undo so it needs no getopts slot.
     if [ "$arg" = "--base" ] || [[ "$arg" == "--base="* ]]; then

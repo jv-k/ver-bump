@@ -129,8 +129,11 @@ check-commits-exist() {
 # previous matching tag (first release) → proceeds as today (R-BUMP-3).
 check-releasable-commits() {
   [ "${ALLOW_EMPTY:-false}" = true ] && return 0
-  # With -v and no readable VER_FILE, V_PREV may be empty — no previous tag
-  # can be derived, so there is nothing to compare against.
+  # V_PREV may be empty only with -v when the source file is unreadable AND
+  # no matching tag exists (process-version's tag-derived fallback, R-SRC-2,
+  # otherwise fills it in) — then there is nothing to compare against. A
+  # tag-derived V_PREV by definition has a tag, so the guard applies to
+  # source-less repos exactly like package.json ones.
   [ -n "${V_PREV:-}" ] || return 0
 
   local prev_tag count

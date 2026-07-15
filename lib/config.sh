@@ -19,6 +19,8 @@ true
 #   NO_FETCH (skip the remote-sync preflight, R-SAFE-8)
 #   RELEASE_BRANCHES (space-separated glob allowlist of branches a release
 #                     may be cut from; empty = no guard, R-SAFE-10)
+#   SOURCE_FILE (version source + primary bump target, mirrors --source;
+#                default package.json, R-SRC-1/5)
 #   FLAG_NOBRANCH (deprecated, no-op — tag-in-place is the default as of 2.0)
 #
 # Safety: shell-sourced files are code. The rc must be owned by the current
@@ -29,7 +31,7 @@ true
 _CONFIG_KEYS=(TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX \
               FLAG_BRANCH PR_BASE CHANGELOG_STYLE \
               FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE \
-              ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES)
+              ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES SOURCE_FILE)
 
 # Walk up from $PWD. Echoes the first .ver-bumprc found; returns 1 if none.
 # Never touches stdout on the "not found" path — load-config treats that
@@ -132,4 +134,7 @@ apply-config-defaults() {
   # "flat" (default, 1.x-identical) or "grouped" (R-CHLOG-1). Any other
   # value behaves as flat — same lenient contract as the FLAG_* keys.
   CHANGELOG_STYLE="${CHANGELOG_STYLE:-flat}"
+  # Version source + primary bump target (R-SRC-1/5). VER_FILE derives from
+  # it in main() after process-arguments, so --source (CLI) wins per R-CFG-3.
+  SOURCE_FILE="${SOURCE_FILE:-package.json}"
 }

@@ -1,6 +1,6 @@
 # ver-bump
 
-An opinionated release tool for Git projects with a `package.json` (Node / JS / TS, or any repo that follows SemVer via `-f <file>.json`). Automates SemVer bumps, CHANGELOG updates, tagging, and pushing — driven by Conventional Commits. Tags in place by default, or cut a release branch (`--branch`) and open a pull request (`--pr`). The core flow — bump, changelog, tag, push — works on any Git remote and needs only `git` + `jq`; `--pr` and `--release` are GitHub-specific and require the optional [`gh`](https://cli.github.com) CLI. Single-file bash at runtime.
+An opinionated release tool for Git projects with a `package.json` (Node / JS / TS, or any repo that follows SemVer — point `--source <file>.json` at another manifest, or use no version file at all and let the latest release tag supply the current version). Automates SemVer bumps, CHANGELOG updates, tagging, and pushing — driven by Conventional Commits. Tags in place by default, or cut a release branch (`--branch`) and open a pull request (`--pr`). The core flow — bump, changelog, tag, push — works on any Git remote and needs only `git` + `jq`; `--pr` and `--release` are GitHub-specific and require the optional [`gh`](https://cli.github.com) CLI. Single-file bash at runtime.
 
 <p>
   <img src="https://raw.githubusercontent.com/jv-k/ver-bump/main/img/demo.gif?raw=true" alt="Animated demo: ver-bump reads commits, suggests a SemVer bump, updates package.json + CHANGELOG, creates a release branch, tags, and pushes.">
@@ -241,9 +241,20 @@ branch.
 
 ### Pre-requisites
 
-- Make sure you have `package.json` file in your project and it contains a `"version": "x.x.x"` parameter
+- A version source: a `package.json` with a `"version": "x.x.x"` field, another
+  JSON file via `--source <file.json>` (e.g. `composer.json`), or — with no
+  version file at all — at least one release tag (`v1.2.3`) for ver-bump to
+  derive the current version from
 - You have done some work and have some existing commits
 - You have the ability to push to your Git remote via the Git CLI
+
+**Non-Node repos** — Rust / Python / Go / anything SemVer works out of the
+box: if there is no version file, ver-bump reads the current version from
+your latest matching git tag, runs the same Conventional-Commit suggestion
+machinery, and cuts a CHANGELOG + tag release (skipping the commit when
+there is nothing to commit). Keep a JSON manifest like `composer.json`?
+Point `--source` at it (or set `SOURCE_FILE` in `.ver-bumprc`) and it
+becomes both the version source and the file that gets bumped.
 
 ### CLI
 
@@ -252,7 +263,7 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
            [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
            [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-h|--help] \
-           [--branch] [--pr] [--base <branch>] \
+           [--source <file.json>] [--branch] [--pr] [--base <branch>] \
            [--allow-dirty] [--allow-empty] [--no-fetch] \
            [--undo [<version>]] [--major | --minor | --patch] [--release] \
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
@@ -280,6 +291,7 @@ Supported keys (each maps 1:1 to an existing global):
 | `TAG_PREFIX` | `-t` / `--tag-prefix` | `v` |
 | `REL_PREFIX` | `-B` / `--branch-prefix` | `release-` |
 | `PUSH_DEST` | `-p` / `--push` | `origin` |
+| `SOURCE_FILE` | `--source` | `package.json` |
 | `COMMIT_MSG_PREFIX` | *(no flag)* | `"chore: "` |
 | `CHANGELOG_STYLE` | *(no flag)* | `flat` |
 | `FLAG_BRANCH` | `--branch` | *unset* (tag in place) |
@@ -376,6 +388,16 @@ output stays byte-identical to previous releases.
 -l, --pause-changelog         Pause before commit so CHANGELOG.md can be hand-edited.
 -y, --yes                     Skip interactive confirmation prompts.
 -h, --help                    Show help message.
+    --source <file.json>      Version source + primary bump target (default:
+                              package.json). Replaces package.json for reading the
+                              current version and writing the bump; the built-in
+                              package-lock.json companion bump only applies when the
+                              source really is package.json. If the file doesn't
+                              exist, the current version is derived from the latest
+                              matching git tag instead and nothing is written for it
+                              (tag + CHANGELOG release; with nothing staged, the
+                              commit is skipped and the tag lands on HEAD). Also
+                              available as the SOURCE_FILE config/env key.
     --undo [<version>]        Locally delete the release branch + tag for <version>
                               (refuses if pushed, dirty, or already merged).
     --major                   Force a major bump from the current version.

@@ -9,6 +9,7 @@ contract); IDs added after the PRD are backfilled here first.
 | --- | --- | --- |
 | [runtime-dependencies](./runtime-dependencies/requirements.md) | R-DEP | `errors.bats` |
 | [version-input](./version-input/requirements.md) | R-VER | `version.bats` |
+| [version-source](./version-source/requirements.md) | R-SRC | `version-source.bats` |
 | [bump-suggestion](./bump-suggestion/requirements.md) | R-BUMP | `bump-suggest.bats` |
 | [explicit-bump-switches](./explicit-bump-switches/requirements.md) | R-FORCE | `args.bats`, `bump-suggest.bats` |
 | [cli-options](./cli-options/requirements.md) | R-OPT | `args.bats` |

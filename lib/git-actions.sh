@@ -77,7 +77,10 @@ do-tag() {
   [ "${TAG_SIGN:-false}" = true ] && tag_opt="-s"
 
   if [ "$FLAG_DRYRUN" = true ]; then
-    echo -e "${S_LIGHT}[dry-run]${RESET} would run: git tag ${tag_opt} ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET} -m '${tag_msg}'" >&2
+    # printf, not echo -e: tag_msg is user-supplied (-m/REL_NOTE) and must
+    # print verbatim — %s never interprets backslash escapes.
+    printf "%b[dry-run]%b would run: git tag %s %b%s%b -m '%s'\n" \
+      "${S_LIGHT-}" "${RESET-}" "$tag_opt" "${S_VAL-}" "${TAG_PREFIX}${V_NEW}" "${RESET-}" "$tag_msg" >&2
     log_success "Tagged ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET}"
     return
   fi

@@ -140,6 +140,22 @@ EOF
   assert_output ""
 }
 
+@test "dry-run: preview prints a backslash-containing -m message verbatim" {
+  source ${profile_script}
+  cd "$(scratch_repo)"
+
+  FLAG_DRYRUN=true
+  V_NEW="1.0.0"
+  REL_NOTE='note with \n backslash'
+  TAG_SIGN=true
+
+  run do-tag
+  strip_ansi_output
+  assert_success
+  # echo -e would have turned \n into a real newline; printf %s must not.
+  assert_output --partial "git tag -s v1.0.0 -m 'note with \\n backslash'"
+}
+
 # ── R-SIGN-1 precedence (R-CFG-3), end-to-end via the dry-run preview ────
 
 @test "TAG_SIGN=true in .ver-bumprc → signed tag (end-to-end)" {

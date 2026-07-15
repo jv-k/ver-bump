@@ -151,6 +151,13 @@ In order to use `ver-bump` you need:
 - Have `git` and `jq` installed in your environment
 - `npm` / `node` are *optional* — only required if you want to install `ver-bump` from the npm registry, not at run time
 
+**Platform support** — `ver-bump` is pure bash, so it runs wherever bash does:
+
+- **Tested in CI:** Linux and macOS — the full test suite runs on both for every change.
+- **Expected to work:** WSL — it's just Linux underneath, with the same `bash` + `git` + `jq`.
+- **Best effort, untested:** Git Bash / MSYS2 — should work, but nothing in CI verifies it; if something breaks, CRLF line endings are the usual suspect.
+- **Unsupported:** native `cmd` / PowerShell — there's no bash there to run the script.
+
 ## Installation
 
 `ver-bump` is bash with `git` + `jq` as its only runtime dependencies, so
@@ -497,23 +504,18 @@ This project uses [bats](https://github.com/bats-core/bats-core) to test the fun
 
 To run the tests, first install the pre-requisites:
 
-Linux/MacOS: 
-
 ```sh
-$ npm run tests:install
-```
-
-Windows:
-
-```sh
-$ npm run tests:install:windows
+$ pnpm tests:install
 ```
 
 And finally, run the test suite:
 
 ```sh
-$ npm run tests:run
+$ pnpm tests:run
 ```
+
+> **On Windows?** Run the suite under [WSL](https://learn.microsoft.com/en-us/windows/wsl/) — bats can't run natively on
+> Windows (see [Requirements](#requirements) for the full platform-support picture).
 
 The suite covers short/long option parsing, SemVer validation (including
 prerelease and build metadata), prerelease counter bumping, conventional-commit

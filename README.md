@@ -433,9 +433,10 @@ to the bump commit only; the annotated tag's message keeps its own knob,
                               exactly one line: the new version (no tag prefix, no
                               colour); everything else goes to stderr. Errors keep
                               the usual exit codes; a no-op run (nothing to release)
-                              prints nothing and exits 0. Requires --yes, -v, or
-                              --major/--minor/--patch, and refuses -l/--pause-changelog
-                              (a hidden prompt would hang the pipeline). CI capture:
+                              prints nothing and exits 0. Requires --yes, -v,
+                              --major/--minor/--patch, or --preid, and refuses
+                              -l/--pause-changelog (a hidden prompt would hang the
+                              pipeline). CI capture:
                                 NEW_VERSION=$(ver-bump --yes --quiet -p origin)
 -h, --help                    Show help message.
     --source <file.json>      Version source + primary bump target (default:

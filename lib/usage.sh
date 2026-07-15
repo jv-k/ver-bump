@@ -119,7 +119,7 @@ usage() {
   print-opt-row "-l" "--pause-changelog" ""          "Pause before commit so CHANGELOG.md can be edited."
   print-opt-row "-h" "--help"          ""            "Show this help message."
   print-opt-row "-y" "--yes"           ""            "Skip interactive confirmation prompts."
-  print-opt-row "-q" "--quiet"         ""            "Suppress decoration; print only the new version on stdout (needs -y, -v, or a level)."
+  print-opt-row "-q" "--quiet"         ""            "Suppress decoration; print only the new version on stdout (needs -y, -v, a bump level, or --preid)."
   print-opt-row ""   "--source"        "<file.json>" "Version source + primary bump target (default: package.json)."
   print-opt-cont "If the file is missing, the current version derives from the latest matching git tag."
   print-opt-row ""   "--undo"          "[<version>]" "Locally delete release-X.Y.Z + tag vX.Y.Z (refuses if pushed/dirty)."

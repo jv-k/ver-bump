@@ -252,7 +252,7 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
            [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
            [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
            [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-h|--help] \
-           [--branch] [--pr] [--base <branch>] \
+           [--branch] [--pr] [--base <branch>] [--allow-dirty] \
            [--undo [<version>]] [--major | --minor | --patch] [--release] \
            [--completions <shell>] [--install-completions[=<shell>]] [--about]
 ```
@@ -285,6 +285,7 @@ Supported keys (each maps 1:1 to an existing global):
 | `PR_BASE` | `--base` | *(auto-detect)* |
 | `FLAG_NOCHANGELOG` | `-c` / `--no-changelog` | *unset* |
 | `FLAG_CHANGELOG_PAUSE` | `-l` / `--pause-changelog` | *unset* |
+| `ALLOW_DIRTY` | `--allow-dirty` | *unset* (dirty tree refuses) |
 
 Example:
 
@@ -369,6 +370,10 @@ output stays byte-identical to previous releases.
                               before bumping the stable component.
     --minor                   Force a minor bump (see --major for semantics).
     --patch                   Force a patch bump (see --major for semantics).
+    --allow-dirty             Skip the clean-working-tree check and release with
+                              uncommitted changes to tracked files. Untracked files
+                              never trigger the check. Also available as the
+                              ALLOW_DIRTY config/env key.
     --branch                  Cut a release-<version> branch (the pre-2.0 default).
                               Otherwise ver-bump tags the current branch in place.
     --pr                      Create the release branch, push it, then open a pull

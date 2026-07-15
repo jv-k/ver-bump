@@ -175,6 +175,18 @@ normalize-long-opts() {
         "Drop the '=<value>' — --branch is a boolean flag (did you mean --branch-prefix=?)."
     fi
 
+    # --allow-dirty — long-only boolean: skip the clean-working-tree preflight
+    # (R-SAFE-2). Sets the ALLOW_DIRTY config key directly, so the CLI wins
+    # over env / .ver-bumprc per R-CFG-3 (process-arguments runs last).
+    if [ "$arg" = "--allow-dirty" ]; then
+      ALLOW_DIRTY=true
+      continue
+    elif [[ "$arg" == "--allow-dirty="* ]]; then
+      fail 2 \
+        "Option --allow-dirty doesn't take a value." \
+        "Drop the '=<value>' — --allow-dirty is a boolean flag."
+    fi
+
     # --base <branch> / --base=<branch> — explicit base branch for --pr. Long-only
     # value flag (no short form), captured here like --undo so it needs no getopts slot.
     if [ "$arg" = "--base" ] || [[ "$arg" == "--base="* ]]; then

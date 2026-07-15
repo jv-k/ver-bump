@@ -17,8 +17,8 @@
 # on the last line, so a truncated download can never half-execute.
 #
 # Failure contract (R-DIST-5): any download, checksum, or install error exits
-# non-zero, leaves an existing install untouched, and cleans up temp files.
-# Exit codes mirror lib/errors.sh: 2 usage, 3 missing tools, 1 anything else.
+# non-zero, keeps (or restores) any existing install, and cleans up temp
+# files. Exit codes mirror lib/errors.sh: 2 usage, 3 missing tools, 1 else.
 
 REPO_SLUG="jv-k/ver-bump"
 ASSET_NAME="ver-bump.tar.gz"
@@ -32,6 +32,8 @@ BIN_DIR=""
 BIN_LINK=""
 WORK_DIR=""          # mktemp scratch dir, removed by the EXIT trap
 STAGED_DIR=""        # in-flight ${SHARE_DIR}.staged.$$, removed by the trap
+BACKUP_DIR=""        # previous install moved aside during the swap; removed
+                     # on success, restored (never deleted) on failure
 
 usage() {
   cat <<'EOF'
@@ -223,20 +225,59 @@ read-tree-version() {
   printf 'unknown\n'
 }
 
-# install-tree <src-dir> — stage next to the destination, then swap, so a
-# failed run can never leave a half-written install and a re-run upgrades
-# in place (R-DIST-3).
+# install-tree <src-dir> — rename swap with rollback. The verified tree is
+# staged next to the destination (same filesystem, so the swap is a plain
+# rename, never a partial cross-device copy), any previous install is moved
+# aside — not deleted — and only removed once the new tree and symlink are
+# in place. A failure mid-swap puts the previous install back (R-DIST-5);
+# a re-run upgrades in place (R-DIST-3).
 install-tree() {
   local src=$1
   mkdir -p "$BIN_DIR" "${SHARE_DIR%/*}" || return 1
+
   STAGED_DIR="${SHARE_DIR}.staged.$$"
   rm -rf "$STAGED_DIR" || return 1
   mv "$src" "$STAGED_DIR" || return 1
   chmod +x "$STAGED_DIR/ver-bump.sh" || return 1
-  rm -rf "$SHARE_DIR" || return 1
-  mv "$STAGED_DIR" "$SHARE_DIR" || return 1
+
+  # 1. Move any previous install aside, kept for rollback.
+  BACKUP_DIR=""
+  if [ -e "$SHARE_DIR" ]; then
+    BACKUP_DIR="${SHARE_DIR}.bak.$$"
+    rm -rf "$BACKUP_DIR" || return 1
+    mv "$SHARE_DIR" "$BACKUP_DIR" || return 1
+  fi
+
+  # 2.+3. Swap the new tree in and point the symlink at it.
+  if ! mv "$STAGED_DIR" "$SHARE_DIR" || \
+     ! ln -sfn "$SHARE_DIR/ver-bump.sh" "$BIN_LINK"; then
+    _restore-backup
+    return 1
+  fi
   STAGED_DIR=""
-  ln -sfn "$SHARE_DIR/ver-bump.sh" "$BIN_LINK" || return 1
+
+  # 4. Only now is the previous install gone.
+  if [ -n "$BACKUP_DIR" ]; then
+    rm -rf "$BACKUP_DIR"
+    BACKUP_DIR=""
+  fi
+}
+
+# Undo a failed swap: clear whatever half-state sits at SHARE_DIR and put
+# the moved-aside previous install back. Best-effort — this runs on the
+# failure path — but a backup that cannot be moved back is preserved and
+# named, never deleted.
+_restore-backup() {
+  rm -rf "$SHARE_DIR"
+  if [ -n "$BACKUP_DIR" ] && [ -e "$BACKUP_DIR" ]; then
+    if mv "$BACKUP_DIR" "$SHARE_DIR"; then
+      BACKUP_DIR=""
+      printf 'ver-bump install: swap failed — previous installation restored\n' >&2
+    else
+      printf 'ver-bump install: swap failed — previous installation preserved at %s\n' \
+        "$BACKUP_DIR" >&2
+    fi
+  fi
 }
 
 # Warn when the bin dir isn't on PATH — the most common "installed but
@@ -255,6 +296,8 @@ _path-hint() {
 cleanup() {
   [ -n "${WORK_DIR:-}" ] && rm -rf "$WORK_DIR"
   [ -n "${STAGED_DIR:-}" ] && rm -rf "$STAGED_DIR"
+  # BACKUP_DIR is deliberately not removed here: if a failed swap could not
+  # restore it, it is the user's previous install — never delete it.
   return 0
 }
 

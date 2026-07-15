@@ -214,8 +214,10 @@ make_release_fixture() {
   assert_output --partial "Installed ver-bump $(jsonfile_get_ver "$repo_dir/package.json")"
   assert_output --partial "ver-bump --install-completions"
 
-  # No temp leftovers on success either.
+  # No temp leftovers on success either — and no .staged/.bak next to the
+  # install.
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
+  assert_equal "$(ls -A "$PREFIX/share")" "ver-bump"
 }
 
 @test "install: e2e re-run upgrades in place (idempotent)" {
@@ -235,6 +237,81 @@ make_release_fixture() {
 
   [ ! -e "$PREFIX/share/ver-bump/stale-file-from-old-version" ]
   [ -L "$PREFIX/bin/ver-bump" ]
+  [ -z "$(ls -A "$SCRATCH_TMP")" ]
+  # The upgrade's backup of the old tree must not linger after success.
+  assert_equal "$(ls -A "$PREFIX/share")" "ver-bump"
+}
+
+@test "install: e2e failed swap restores the previous install" {
+  source "$installer"
+  make_release_fixture
+  http_fetch() { cp "$FIXTURE_DIR/${1##*/}" "$2"; }
+  export TMPDIR="$SCRATCH_TMP"
+
+  # Existing install that must survive the failure.
+  mkdir -p "$PREFIX/share/ver-bump"
+  printf 'old\n' > "$PREFIX/share/ver-bump/sentinel-old-install"
+
+  # Fail only the swap: mv of the .staged tree into place. Staging (dest is
+  # .staged) and the rollback mv (source is .bak) still use the real mv.
+  mv() {
+    case "$1" in
+      *.staged.*) return 1 ;;
+    esac
+    command mv "$@"
+  }
+
+  run main --prefix "$PREFIX"
+  assert_failure 1
+  assert_output --partial "previous installation restored"
+
+  # R-DIST-5: the old install is back, byte for byte where it was.
+  [ -f "$PREFIX/share/ver-bump/sentinel-old-install" ]
+  [ ! -f "$PREFIX/share/ver-bump/ver-bump.sh" ]
+  # No .bak/.staged leftovers, no temp leftovers.
+  assert_equal "$(ls -A "$PREFIX/share")" "ver-bump"
+  [ -z "$(ls -A "$SCRATCH_TMP")" ]
+}
+
+@test "install: e2e failed symlink rolls back to the previous install" {
+  source "$installer"
+  make_release_fixture
+  http_fetch() { cp "$FIXTURE_DIR/${1##*/}" "$2"; }
+  export TMPDIR="$SCRATCH_TMP"
+
+  mkdir -p "$PREFIX/share/ver-bump"
+  printf 'old\n' > "$PREFIX/share/ver-bump/sentinel-old-install"
+
+  # The swap succeeds but the symlink step fails: the new tree must be
+  # backed out and the previous install put back.
+  ln() { return 1; }
+
+  run main --prefix "$PREFIX"
+  assert_failure 1
+  assert_output --partial "previous installation restored"
+
+  [ -f "$PREFIX/share/ver-bump/sentinel-old-install" ]
+  [ ! -f "$PREFIX/share/ver-bump/ver-bump.sh" ]
+  [ ! -e "$PREFIX/bin/ver-bump" ]
+  assert_equal "$(ls -A "$PREFIX/share")" "ver-bump"
+  [ -z "$(ls -A "$SCRATCH_TMP")" ]
+}
+
+@test "install: e2e failed symlink on a fresh install leaves nothing behind" {
+  source "$installer"
+  make_release_fixture
+  http_fetch() { cp "$FIXTURE_DIR/${1##*/}" "$2"; }
+  export TMPDIR="$SCRATCH_TMP"
+
+  ln() { return 1; }
+
+  run main --prefix "$PREFIX"
+  assert_failure 1
+
+  # No previous install to restore — the half-swapped tree must be gone.
+  [ ! -e "$PREFIX/share/ver-bump" ]
+  [ ! -e "$PREFIX/bin/ver-bump" ]
+  [ -z "$(ls -A "$PREFIX/share")" ]
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
 }
 

@@ -27,9 +27,12 @@ Design notes:
   (2 usage / 3 missing tools / 1 failure) are mirrored from `lib/`.
 - `http_fetch` is the single network seam; tests stub it to serve local
   fixture files, so the bats suite never touches the network.
-- Install is stage-then-swap: the verified tree is staged next to
-  `share/ver-bump` and swapped in only after every earlier step succeeded,
-  so a failed run can never leave a half-written install.
+- Install is a rename swap with rollback: the verified tree is staged next
+  to `share/ver-bump` (same filesystem, so the swap is a plain rename), any
+  previous install is moved aside — not deleted — and only removed once the
+  new tree and symlink are in place. A failure mid-swap restores the
+  previous install; a backup that cannot be restored is preserved and named,
+  never deleted.
 
 Modules: `install.sh` (standalone), `publish-release-assets` in
 [.github/workflows/ci.yml](../../../.github/workflows/ci.yml).

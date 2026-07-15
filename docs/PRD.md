@@ -221,7 +221,7 @@ Each requirement has an ID so tests and PRs can reference it.
 | ID | Requirement |
 | --- | --- |
 | **R-CFG-1** | `.ver-bumprc` is discovered by walking up from `$PWD` to `/`. First match wins; absence is not an error. |
-| **R-CFG-2** | Supported keys: `TAG_PREFIX`, `REL_PREFIX`, `PUSH_DEST`, `COMMIT_MSG_PREFIX`, `CHANGELOG_STYLE`, `FLAG_BRANCH`, `PR_BASE`, `FLAG_NOCHANGELOG`, `FLAG_CHANGELOG_PAUSE`, plus deprecated `FLAG_NOBRANCH` (back-compat; superseded by `FLAG_BRANCH`). Only these participate in the precedence contract (R-CFG-3); other assignments in the file execute as plain shell (R-CFG-5) but are unsupported and carry no precedence or compatibility guarantee. |
+| **R-CFG-2** | Supported keys: `TAG_PREFIX`, `REL_PREFIX`, `PUSH_DEST`, `COMMIT_MSG_PREFIX`, `CHANGELOG_STYLE`, `FLAG_BRANCH`, `PR_BASE`, `FLAG_NOCHANGELOG`, `FLAG_CHANGELOG_PAUSE`, `ALLOW_DIRTY`, `NO_FETCH`, `RELEASE_BRANCHES`, plus deprecated `FLAG_NOBRANCH` (back-compat; superseded by `FLAG_BRANCH`). Only these participate in the precedence contract (R-CFG-3); other assignments in the file execute as plain shell (R-CFG-5) but are unsupported and carry no precedence or compatibility guarantee. |
 | **R-CFG-3** | Precedence end-to-end: CLI > environment > `.ver-bumprc` > built-in default. |
 | **R-CFG-4** | `.ver-bumprc` is refused (exit `3`) if world-writable, group-writable, or not owned by the invoking user. |
 | **R-CFG-5** | `.ver-bumprc` is shell-sourced, not parsed. Failures in sourcing exit `3` with the shell error as context. |
@@ -322,7 +322,7 @@ Each requirement has an ID so tests and PRs can reference it.
 
 ## 10. Testing strategy
 
-- **Unit level** — one `.bats` file per feature under `test/` (`args.bats`, `version.bats`, `release.bats`, `pr.bats`, `undo.bats`, `sandbox.bats`, …) covers every requirement in §5. Currently **237 tests** across 22 files — every `R-*` bucket now has coverage (AC-1 holds).
+- **Unit level** — one `.bats` file per feature under `test/` (`args.bats`, `version.bats`, `release.bats`, `pr.bats`, `undo.bats`, `sandbox.bats`, …) covers every requirement in §5. Currently **347 tests** across 29 files — every `R-*` bucket now has coverage (AC-1 holds), including the `R-SAFE` safety preflights (`worktree-clean.bats`, `release-branch-guard.bats`, `remote-sync.bats`, `no-release.bats`).
 - **Contract level** — exit-code table is asserted per branch in `fail()` unit tests (`test/errors.bats`).
 - **Regression** — running the test suite must not mutate the host repo: anything touching git state runs inside a `scratch_repo` throwaway (`test/test_helper.bash`).
 - **Emitted artefacts** — every completion script is syntax-checked (`bash -n` / `zsh -n` / `fish --no-execute`) in `test/completions-syntax.bats`.
@@ -384,6 +384,9 @@ Exactly the flags shipping in `2.0.0`:
 | `-h` | `--help` | | Help output |
 | — | `--about` | | Branded info block; exit 0 (§5.4 R-OPT-8) |
 | — | `--major` / `--minor` / `--patch` | | Force bump level; mutually exclusive (§5.12) |
+| — | `--allow-dirty` | | Skip the clean-working-tree preflight (R-SAFE-2, [`docs/features/safety-preflights`](./features/safety-preflights/requirements.md)) |
+| — | `--allow-empty` | | Release even with no new commits since the previous tag (R-SAFE-16) |
+| — | `--no-fetch` | | Skip the remote-sync preflight (R-SAFE-8, [`docs/features/safety-preflights`](./features/safety-preflights/requirements.md)) |
 | — | `--branch` | | Cut a `release-<version>` branch (pre-2.0 default) instead of tagging in place (§5.14) |
 | — | `--pr` | | Branch + push + open a release PR via `gh`; implies push to `origin` (§5.14) |
 | — | `--base` | ✓ | Base branch for `--pr` (default: resolution chain in R-FLOW-2) |

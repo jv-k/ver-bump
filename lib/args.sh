@@ -175,6 +175,43 @@ normalize-long-opts() {
         "Drop the '=<value>' — --branch is a boolean flag (did you mean --branch-prefix=?)."
     fi
 
+    # --allow-dirty — long-only boolean: skip the clean-working-tree preflight
+    # (R-SAFE-2). Sets the ALLOW_DIRTY config key directly, so the CLI wins
+    # over env / .ver-bumprc per R-CFG-3 (process-arguments runs last).
+    if [ "$arg" = "--allow-dirty" ]; then
+      ALLOW_DIRTY=true
+      continue
+    elif [[ "$arg" == "--allow-dirty="* ]]; then
+      fail 2 \
+        "Option --allow-dirty doesn't take a value." \
+        "Drop the '=<value>' — --allow-dirty is a boolean flag."
+    fi
+
+    # --allow-empty — long-only boolean: force a release even when there are
+    # no new commits since the previous tag (R-SAFE-16). CLI-only — no env /
+    # .ver-bumprc contract (see the reset in process-arguments): a deliberate
+    # empty release must be an explicit per-invocation choice, like --yes.
+    if [ "$arg" = "--allow-empty" ]; then
+      ALLOW_EMPTY=true
+      continue
+    elif [[ "$arg" == "--allow-empty="* ]]; then
+      fail 2 \
+        "Option --allow-empty doesn't take a value." \
+        "Drop the '=<value>' — --allow-empty is a boolean flag."
+    fi
+
+    # --no-fetch — long-only boolean: skip the remote-sync preflight
+    # (R-SAFE-8). Sets the NO_FETCH config key directly, so the CLI wins
+    # over env / .ver-bumprc per R-CFG-3 (process-arguments runs last).
+    if [ "$arg" = "--no-fetch" ]; then
+      NO_FETCH=true
+      continue
+    elif [[ "$arg" == "--no-fetch="* ]]; then
+      fail 2 \
+        "Option --no-fetch doesn't take a value." \
+        "Drop the '=<value>' — --no-fetch is a boolean flag."
+    fi
+
     # --base <branch> / --base=<branch> — explicit base branch for --pr. Long-only
     # value flag (no short form), captured here like --undo so it needs no getopts slot.
     if [ "$arg" = "--base" ] || [[ "$arg" == "--base="* ]]; then
@@ -279,13 +316,15 @@ normalize-long-opts() {
 process-arguments() {
   local OPTIONS OPTIND OPTARG
 
-  # DO_RELEASE and BUMP_LEVEL are CLI-only switches with no env / .ver-bumprc
-  # contract. Reset them before parsing so an inherited exported var — or a
-  # .ver-bumprc assignment (load-config sources the rc as raw shell) — can't
-  # silently force a bump or publish a release with no flag on the command line.
+  # DO_RELEASE, BUMP_LEVEL, and ALLOW_EMPTY are CLI-only switches with no
+  # env / .ver-bumprc contract. Reset them before parsing so an inherited
+  # exported var — or a .ver-bumprc assignment (load-config sources the rc as
+  # raw shell) — can't silently force a bump, publish a release, or push an
+  # empty release with no flag on the command line.
   DO_RELEASE=false
   DO_PR=false
   BUMP_LEVEL=
+  ALLOW_EMPTY=false
 
   normalize-long-opts "$@"
   set -- ${NORMALIZED_ARGV[@]+"${NORMALIZED_ARGV[@]}"}

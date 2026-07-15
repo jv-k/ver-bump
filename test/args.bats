@@ -164,6 +164,28 @@ load 'test_helper'
   assert_failure 2
 }
 
+@test "long options: --source sets SOURCE_FILE (space and = forms)" {
+  source ${profile_script}
+  process-arguments --source composer.json
+  assert_equal "${SOURCE_FILE}" "composer.json"
+  process-arguments --source=manifest.json
+  assert_equal "${SOURCE_FILE}" "manifest.json"
+}
+
+@test "long options: --source without value exits 2" {
+  source ${profile_script}
+  run process-arguments --source
+  assert_failure 2
+  assert_output --partial "requires a file path"
+}
+
+@test "long options: --source= empty value exits 2" {
+  source ${profile_script}
+  run process-arguments --source=
+  assert_failure 2
+  assert_output --partial "requires a file path"
+}
+
 @test "long options: --push <remote> sets push flag + dest" {
   source ${profile_script}
   process-arguments --push upstream

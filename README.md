@@ -164,6 +164,31 @@ In order to use `ver-bump` you need:
 install it whichever way suits you. `node`/`npm`/`pnpm` are only needed to
 install *from the registry* — never to run the tool.
 
+**curl (no Node required)** — downloads the latest GitHub release, verifies
+its published SHA-256 checksum, and installs to `~/.local`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/jv-k/ver-bump/main/install.sh | bash
+```
+
+Re-running upgrades in place. `VER_BUMP_INSTALL_VERSION=x.y.z` pins a
+release; `VER_BUMP_PREFIX=<dir>` changes the prefix (layout:
+`<prefix>/share/ver-bump/` + a `<prefix>/bin/ver-bump` symlink — make sure
+`<prefix>/bin` is on your `$PATH`).
+
+> **Piping a script into your shell runs code you haven't read.** The
+> checksum protects the release *tarball*; it can't vet the installer
+> itself. If that trade-off isn't for you, download it first, read it (it's
+> short and boring on purpose), then run it:
+>
+> ```sh
+> curl -fsSLO https://raw.githubusercontent.com/jv-k/ver-bump/main/install.sh
+> less install.sh
+> bash install.sh
+> ```
+
+**npm / pnpm** — install from the registry:
+
 ```sh
 # pnpm (this repo's package manager)
 pnpm add -g ver-bump
@@ -172,7 +197,7 @@ pnpm add -g ver-bump
 npm install -g ver-bump
 ```
 
-**No Node?** Clone and symlink the script — `lib/` travels with it, so module
+**Manual** — clone and symlink the script; `lib/` travels with it, so module
 resolution still works:
 
 ```sh
@@ -180,7 +205,9 @@ git clone https://github.com/jv-k/ver-bump.git ~/.local/share/ver-bump
 ln -s ~/.local/share/ver-bump/ver-bump.sh ~/.local/bin/ver-bump   # ensure ~/.local/bin is on $PATH
 ```
 
-> A Homebrew tap is planned for a future release ([#24](https://github.com/jv-k/ver-bump/issues/24)).
+> **Homebrew** ([#24](https://github.com/jv-k/ver-bump/issues/24)) and
+> **basher** ([#39](https://github.com/jv-k/ver-bump/issues/39)) install
+> paths are tracked for a future release.
 
 ## Quickstart
 

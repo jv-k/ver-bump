@@ -281,6 +281,7 @@ Supported keys (each maps 1:1 to an existing global):
 | `REL_PREFIX` | `-B` / `--branch-prefix` | `release-` |
 | `PUSH_DEST` | `-p` / `--push` | `origin` |
 | `COMMIT_MSG_PREFIX` | *(no flag)* | `"chore: "` |
+| `COMMIT_MSG_TEMPLATE` | *(no flag)* | *unset* (prefix + generated file list) |
 | `CHANGELOG_STYLE` | *(no flag)* | `flat` |
 | `FLAG_BRANCH` | `--branch` | *unset* (tag in place) |
 | `PR_BASE` | `--base` | *(auto-detect)* |
@@ -359,6 +360,43 @@ ever dropped. Scopes render as a bold `**scope:**` prefix. With a
 non-GitHub remote (or no remote) the same grouping renders as plain text
 without links. Any other `CHANGELOG_STYLE` value behaves as `flat`, whose
 output stays byte-identical to previous releases.
+
+#### Commit message template (`COMMIT_MSG_TEMPLATE`)
+
+By default the bump commit's message is `COMMIT_MSG_PREFIX` plus a
+generated list of what changed:
+
+```text
+chore: updated package.json, updated CHANGELOG.md, bumped 1.1.7 -> 1.1.8
+```
+
+Set `COMMIT_MSG_TEMPLATE` — in `.ver-bumprc` or as an environment
+variable; there is no CLI flag — to replace the **whole** message with
+your own template. When it is set, `COMMIT_MSG_PREFIX` is **ignored**:
+the template owns the entire message, prefix included.
+
+```sh
+# .ver-bumprc — single quotes are required so your shell / the rc loader
+# doesn't expand the placeholders before ver-bump sees them
+COMMIT_MSG_TEMPLATE='chore(release): v${version}'
+```
+
+Available placeholders:
+
+| Placeholder | Replaced with | Example |
+| --- | --- | --- |
+| `${version}` | the new version | `1.1.8` |
+| `${prev_version}` | the previous version | `1.1.7` |
+| `${tag}` | the new tag (`TAG_PREFIX` + version) | `v1.1.8` |
+| `${files}` | the generated changed-file list | `updated package.json, updated CHANGELOG.md` |
+
+Substitution is a literal string replacement — the template is **never**
+evaluated as shell, so `$(...)`, backticks, and unknown `${...}`
+placeholders pass through as literal text. The CHANGELOG's entry for the
+bump commit uses the same rendered message (first line, in both `flat`
+and `grouped` styles), so the two never drift apart. The template applies
+to the bump commit only; the annotated tag's message keeps its own knob,
+`-m` / `--message`.
 
 ```text
 -v, --version [<version>]     Without a value: print tool version and exit.

@@ -13,8 +13,8 @@ load 'test_helper'
 # itself, so our tests can assert "default" paths deterministically. Does NOT
 # unset the generic shell-inherited ones (those never are).
 _clear_config_env() {
-  unset TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX CHANGELOG_STYLE \
-        FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE
+  unset TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX COMMIT_MSG_TEMPLATE \
+        CHANGELOG_STYLE FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE
 }
 
 # Absent file ##################################################################

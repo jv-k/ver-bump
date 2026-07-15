@@ -48,6 +48,24 @@ teardown() {
   assert_success
 }
 
+@test "undo: --dry-run preview prints to stderr, not stdout (R-DRY-2)" {
+  # Redirections live inside bash -c so `run` still captures the real exit
+  # status while stdout/stderr land in separate files for the assertions.
+  run bash -c '"$1" --undo --dry-run >"$2/out" 2>"$2/err"' _ \
+    "${profile_script}" "$BATS_TEST_TMPDIR"
+  assert_success
+
+  # The [dry-run] preview line goes to stderr…
+  run cat "$BATS_TEST_TMPDIR/err"
+  strip_ansi_output
+  assert_output --partial "[dry-run]"
+
+  # …and stdout stays clean of it (safe for piping).
+  run cat "$BATS_TEST_TMPDIR/out"
+  strip_ansi_output
+  refute_output --partial "[dry-run]"
+}
+
 # Recreate a tag-in-place release (the 2.0 default): the bump commit + tag live
 # on the current branch, with NO release-<v> branch. Folds the setup's release
 # branch into feat/x, then drops it.

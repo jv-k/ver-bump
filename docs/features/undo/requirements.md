@@ -9,7 +9,7 @@ anything is pushed. Never touches a remote.
 | R-UNDO-2 | Honours `--dry-run`, `--yes`, `--tag-prefix`, `--branch-prefix` regardless of position in argv; worktree marker respected (`d32d426`). | ✅ shipped |
 | R-UNDO-3 | Prompts for confirmation before deleting; `-y` bypasses. | ✅ shipped |
 | R-UNDO-5 | Tag-in-place releases (no release branch — the 2.0 default, ADR-12) are handled: the tag is deleted and the bump commit kept. | ✅ shipped (PR #49) — `test/undo.bats` |
-| R-UNDO-4 | Precondition refusals and aborts use contract exit codes via `fail`. | ⚠️ mostly — one path exits `3` directly after `log_warn` instead of via `fail`; and the dry-run preview line prints to **stdout**, violating R-DRY-2. Open bugs. |
+| R-UNDO-4 | Precondition refusals and aborts use contract exit codes via `fail`. | ⚠️ mostly — one path exits `3` directly after `log_warn` instead of via `fail` (#51, being fixed in parallel). |
 
 Modules: `lib/args.sh` (pre-scan), `lib/git-actions.sh` (`do-undo`).
 Tests: `test/undo.bats`.

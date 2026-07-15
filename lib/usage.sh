@@ -125,7 +125,7 @@ usage() {
   print-opt-row ""   "--patch"              ""            "Force a patch bump from the current version (mutually exclusive)."
   print-opt-row ""   "--branch"             ""            "Cut a release-x.x.x branch (pre-2.0 default); otherwise tag in place."
   print-opt-row ""   "--pr"                 ""            "Branch + push + open a release PR via 'gh' (implies push to origin)."
-  print-opt-row ""   "--base"               "<branch>"    "Base branch for --pr (default: the branch you ran ver-bump from)."
+  print-opt-row ""   "--base"               "<branch>"    "Base branch for --pr (GitHub-only; default: the branch you ran ver-bump from)."
   print-opt-row ""   "--release"            ""            "Publish a GitHub release for the new tag (requires -p; uses 'gh')."
   print-opt-row ""   "--about"              ""            "Print name, version, author, and homepage; then exit."
   print-opt-row ""   "--completions"        "<shell>"     "Emit completion script for bash, zsh, or fish."

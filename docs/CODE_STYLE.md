@@ -222,11 +222,11 @@ Rules:
   - `feat(completions): --install-completions with shell auto-detection`
   - `fix(config): reject group-writable or attacker-owned .ver-bumprc`
   - `refactor(ui): strip narrative colour, reserve accents for values`
-- The `ralph:` / `ralph-review:` / `ralph-merge:` scopes are **reserved for the
-  autonomous Sandcastle harness** ([`.sandcastle/`](../.sandcastle/)), whose
-  prompts `git log --grep="ralph:"` to track loop activity. Interactive
-  sessions and normal contributions — human or agent — use the plain scopes
-  above, never a `ralph` marker.
+- The `ralph:<area>`, `ralph-review:<area>`, and `ralph-merge` scopes are
+  **reserved for the autonomous Sandcastle harness**
+  ([`.sandcastle/`](../.sandcastle/)), whose prompts `git log --grep="ralph:"`
+  to track loop activity. Interactive sessions and normal contributions —
+  human or agent — use the plain scopes above, never a `ralph` marker.
 
 ### Body
 

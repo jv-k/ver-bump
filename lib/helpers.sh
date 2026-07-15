@@ -273,12 +273,12 @@ bump-json-files() {
       elif [ "$V_PREV" = "$V_NEW" ]; then
         echo -e "\n${I_WARN} ${S_WARN}File <${S_QUESTION}$FILE${S_WARN}> already contains version ${S_NORM}$V_PREV"
       else
-        # Write to output file. jq's stdout is the rewritten JSON and goes to
-        # the temp file, so 2>&1 has to come first for the substitution to
-        # capture stderr — the errors the -z check below is testing for.
-        FILE_MSG=$( jq --arg V_NEW "$V_NEW" '.version = $V_NEW' "$FILE" 2>&1 > "${FILE}.temp" )
-
-        if [ -z "$FILE_MSG" ]; then
+        # Gate the move on jq's exit status, not on whether it said anything.
+        # Silence is not success: a jq killed by a signal writes no stderr and
+        # still leaves a partial temp file. 2>&1 comes before the redirect so
+        # stdout (the rewritten JSON) reaches the temp file while stderr is
+        # captured for the error message below.
+        if FILE_MSG=$( jq --arg V_NEW "$V_NEW" '.version = $V_NEW' "$FILE" 2>&1 > "${FILE}.temp" ); then
           echo -e "\n${I_OK} ${S_NOTICE}Updated file <${S_NORM}$FILE${S_NOTICE}> from ${S_QUESTION}$V_PREV ${S_NOTICE}-> ${S_QUESTION}$V_NEW"
           mv -f "${FILE}.temp" "${FILE}"
           # Add file change to commit message:

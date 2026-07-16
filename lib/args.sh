@@ -484,8 +484,8 @@ process-arguments() {
   while getopts ":v:p:m:f:t:B:hbncdlyq" OPTIONS; do # Note: Adding the first : before the flags takes control of flags and prevents default error msgs.
     case "$OPTIONS" in
       h )
-        # Show help
-        usage
+        # Show help (paged when the terminal is too short — see show-help).
+        show-help
         exit 0
       ;;
       v )

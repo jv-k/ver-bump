@@ -65,6 +65,37 @@ load 'test_helper'
   refute_output --partial "[--install-completions[=<shell>]]"
 }
 
+@test "help-layout: OPTIONS are grouped under uppercase subheadings" {
+  run get_help_msg
+  assert_success
+  strip_ansi_output
+  assert_output --partial "CHOOSE THE NEW VERSION"
+  assert_output --partial "FILES TO BUMP"
+  assert_output --partial "PUSH, BRANCH & PUBLISH"
+  # Bump levels sit under --version now (grouped together).
+  local vpos mpos
+  vpos=$(printf '%s\n' "$output" | grep -n -- "--version" | head -1 | cut -d: -f1)
+  mpos=$(printf '%s\n' "$output" | grep -n -- "--major"   | head -1 | cut -d: -f1)
+  [ "$mpos" -gt "$vpos" ] || bats_fail "--major should be listed after --version"
+}
+
+@test "help-layout: --about is hidden from the help listing (still works)" {
+  run get_help_msg
+  assert_success
+  strip_ansi_output
+  refute_output --partial "--about"
+}
+
+@test "help-layout: _VB_HELP_COLS forces wrapping (the pager render path)" {
+  # show-help renders through this override when paging (its stdout is a pipe,
+  # so the TTY checks don't fire) — a piped run with it set must still wrap.
+  run env _VB_HELP_COLS=48 ${profile_script} --help
+  assert_success
+  strip_ansi_output
+  # At 48 cols the -v description can no longer sit on one line.
+  refute_output --partial "Without a value: print tool version and exit. With a value: set manual SemVer."
+}
+
 @test "help-layout: OPTIONS lists the short alias first, long flag second" {
   run get_help_msg
   assert_success

@@ -74,7 +74,11 @@ usage() {
   # stdout is a pipe, so tput's ioctl misreads the size as 80; /dev/tty is the
   # real terminal regardless of fd redirection. tput then 80 are the backstops.
   local TERM_COLS=0
-  if [ -t 1 ]; then
+  if [ -n "${_VB_HELP_COLS:-}" ] && [ -z "${_VB_HELP_COLS//[0-9]/}" ]; then
+    # Forced width: show-help renders into a pager, so our stdout is a pipe and
+    # the [ -t 1 ] checks below would fail — it passes the real terminal width.
+    TERM_COLS="$_VB_HELP_COLS"
+  elif [ -t 1 ]; then
     if [ -n "${COLUMNS:-}" ] && [ -z "${COLUMNS//[0-9]/}" ]; then
       TERM_COLS="$COLUMNS"
     else
@@ -193,17 +197,16 @@ usage() {
   }
 
   # _print-example-desc <text> — the description half of an example row, wrapped
-  # (on a TTY) and hung under OPT_COL. Shared by the inline and stacked layouts.
+  # (on a TTY) and hung under OPT_COL. Dimmed (S_DIM) — the whole EXAMPLES
+  # section is demoted relative to OPTIONS. Shared by the inline/stacked layouts.
   _print-example-desc() {
     if (( TERM_COLS > 0 )) && [[ "$1" != *"  "* ]]; then
       local wline
       while IFS= read -r wline; do
-        printf '%*s' "$OPT_COL" ''
-        echo -e "$wline"
+        printf '%*s%b%s%b\n' "$OPT_COL" '' "${S_DIM-}" "$wline" "${RESET-}"
       done < <(_help_wrap "$(_help_desc_avail)" "$1")
     else
-      printf '%*s' "$OPT_COL" ''
-      echo -e "$1"
+      printf '%*s%b%s%b\n' "$OPT_COL" '' "${S_DIM-}" "$1" "${RESET-}"
     fi
   }
 
@@ -228,19 +231,19 @@ usage() {
     fi
   }
 
-  # print-example-row <command> <description> — 2-space gutter, bold command,
-  # description column aligned to OPT_COL. A command that fits the column gets a
-  # clean two-column row (description wraps and hangs under OPT_COL). A command
-  # longer than the column would shove its description out of alignment — and,
-  # once wrapped, zig-zag back to the column — so it is stacked instead: the
-  # command sits alone on its line (also easier to copy) and the description
-  # hangs under OPT_COL on the line(s) below.
+  # print-example-row <command> <description> — 2-space gutter. The whole
+  # EXAMPLES section is dimmed (S_DIM) so it reads as demoted relative to
+  # OPTIONS. A command that fits the column gets a clean two-column row
+  # (description wraps and hangs under OPT_COL). A command longer than the
+  # column would shove its description out of alignment — and, once wrapped,
+  # zig-zag back to the column — so it is stacked instead: the command sits
+  # alone on its line (easier to copy) and the description hangs below.
   print-example-row() {
     local cmd="$1" desc="$2"
     local plain="  ${cmd}"
 
     if (( ${#plain} >= OPT_COL )); then
-      printf '  %b%s%b\n' "${BOLD-}" "${cmd}" "${RESET-}"
+      printf '  %b%s%b\n' "${S_DIM-}" "${cmd}" "${RESET-}"
       [ -n "$desc" ] && _print-example-desc "$desc"
       return
     fi
@@ -250,35 +253,46 @@ usage() {
       local wline first=1
       while IFS= read -r wline; do
         if (( first )); then
-          printf '  %b%s%b%s%s\n' "${BOLD-}" "${cmd}" "${RESET-}" "$pad" "${wline}"
+          printf '  %b%s%s%s%b\n' "${S_DIM-}" "${cmd}" "${pad}" "${wline}" "${RESET-}"
           first=0
         else
-          printf '%*s' "$OPT_COL" ''
-          echo -e "$wline"
+          printf '%*s%b%s%b\n' "$OPT_COL" '' "${S_DIM-}" "$wline" "${RESET-}"
         fi
       done < <(_help_wrap "$(_help_desc_avail)" "$desc")
     else
-      printf '  %b%s%b%s%s\n' "${BOLD-}" "${cmd}" "${RESET-}" "$pad" "${desc}"
+      printf '  %b%s%s%s%b\n' "${S_DIM-}" "${cmd}" "${pad}" "${desc}" "${RESET-}"
     fi
   }
 
-  # OPTIONS section pill (the "long forms accept ..." note moved to the bottom).
+  # print-opt-group <label> — a bold group heading inside OPTIONS that clusters
+  # related flags. A blank line precedes every group except the first (which
+  # sits directly under the pill — no blank line after a header pill). _optgrp
+  # tracks whether a group has already been emitted this run.
+  local _optgrp=""
+  print-opt-group() {
+    [ -n "$_optgrp" ] && printf '\n'
+    _optgrp=1
+    local upper; upper=$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')
+    printf '  %b%s%b\n' "${S_NORM-}" "$upper" "${RESET-}"
+  }
+
+  # OPTIONS — grouped by task, in the order you meet them during a release.
+  # --about is intentionally not listed here (it still works). The "long forms
+  # accept …" note is at the bottom.
   printf '\n%bOPTIONS %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+
+  print-opt-group "Choose the new version"
   print-opt-row "-v" "--version"       "[<version>]" "Without a value: print tool version and exit. With a value: set manual SemVer."
-  print-opt-row "-m" "--message"       "<message>"   "Custom annotated-tag release message."
-  print-opt-row "-f" "--file"          "<file.json>" "Also bump \"version\" in this JSON file. Repeatable:"
-  print-opt-cont "ver-bump -f src/plugin/package.json -f composer.json"
-  print-opt-row "-p" "--push"          "<remote>"    "Push release branch + tag to <remote> at end of run."
-  print-opt-row "-t" "--tag-prefix"    "<prefix>"    "Override tag prefix (default: v)."
-  print-opt-row "-B" "--branch-prefix" "<prefix>"    "Override branch prefix (default: release-)."
-  print-opt-row "-d" "--dry-run"       ""            "Dry-run: print every side-effect without executing."
-  print-opt-row "-n" "--no-commit"     ""            "Disable commit (and tag + push) after bumping files."
-  print-opt-row "-b" "--no-branch"     ""            "(deprecated) Tag-in-place is the default now; this is a no-op."
-  print-opt-row "-c" "--no-changelog"  ""            "Disable updating CHANGELOG.md automatically."
-  print-opt-row "-l" "--pause-changelog" ""          "Pause before commit so CHANGELOG.md can be edited."
-  print-opt-row "-h" "--help"          ""            "Show this help message."
-  print-opt-row "-y" "--yes"           ""            "Skip interactive confirmation prompts."
-  print-opt-row "-q" "--quiet"         ""            "Suppress decoration; print only the new version on stdout (needs -y, -v, a bump level, or --preid)."
+  print-opt-row ""   "--major"         ""            "Force a major bump from the current version."
+  print-opt-row ""   "--minor"         ""            "Force a minor bump from the current version."
+  print-opt-row ""   "--patch"         ""            "Force a patch bump from the current version."
+  print-opt-cont "Without --preid, any of the three drops an existing prerelease/build and bumps the stable core (1.2.3-dev.5 --patch -> 1.2.4)."
+  print-opt-row ""   "--preid"         "<id>"        "Start or advance a prerelease line; conflicts with -v."
+  print-opt-cont "With --major/--minor/--patch: bump that level, then enter <id>.1 (1.2.3 --major --preid rc -> 2.0.0-rc.1)."
+  print-opt-cont "Alone, on a version that already has a prerelease: same id increments the counter, a different id resets it to .1."
+  print-opt-cont "Alone, on a stable version: ambiguous -> exit 2 (combine with --major/--minor/--patch)."
+
+  print-opt-group "Files to bump"
   print-opt-row ""   "--source"        "<file.json>" "Version source + primary bump target (default: package.json)."
   print-opt-cont "If the file is missing, the current version derives from the latest matching git tag."
   print-opt-row ""   "--bump"          "<spec>"      "Also bump a JSON / TOML / YAML / text file. Repeatable. <spec> is one of:"
@@ -286,26 +300,43 @@ usage() {
   print-opt-subitem "<file>:@<path> — structured, explicit dotted path (e.g. pyproject.toml:@tool.poetry.version)"
   print-opt-subitem "'<file>:<pattern>' — text search/replace; the pattern must contain {{version}}"
   print-opt-cont "e.g. ver-bump --bump 'main.go:Version = \"{{version}}\"' --bump Chart.yaml:@version"
+  print-opt-row "-f" "--file"          "<file.json>" "Also bump \"version\" in this JSON file. Repeatable:"
+  print-opt-cont "ver-bump -f src/plugin/package.json -f composer.json"
+
+  print-opt-group "Commit, tag & changelog"
+  print-opt-row "-m" "--message"       "<message>"   "Custom annotated-tag release message."
+  print-opt-row "-t" "--tag-prefix"    "<prefix>"    "Override tag prefix (default: v)."
+  print-opt-row ""   "--sign"          ""            "Create a signed tag (git tag -s; uses your git signing config)."
+  print-opt-row "-c" "--no-changelog"  ""            "Disable updating CHANGELOG.md automatically."
+  print-opt-row "-l" "--pause-changelog" ""          "Pause before commit so CHANGELOG.md can be edited."
+  print-opt-row "-n" "--no-commit"     ""            "Disable commit (and tag + push) after bumping files."
+
+  print-opt-group "Push, branch & publish"
+  print-opt-row "-p" "--push"          "<remote>"    "Push release branch + tag to <remote> at end of run."
+  print-opt-row ""   "--pr"            ""            "Branch + push + open a release PR via 'gh' (GitHub-only; implies push to origin)."
+  print-opt-row ""   "--base"          "<branch>"    "Base branch for --pr (GitHub-only; default: the branch you ran ver-bump from)."
+  print-opt-row ""   "--release"       ""            "Publish a GitHub release for the new tag (GitHub-only; requires -p, uses 'gh')."
+  print-opt-row ""   "--branch"        ""            "Cut a release-x.x.x branch (pre-2.0 default); otherwise tag in place."
+  print-opt-row "-B" "--branch-prefix" "<prefix>"    "Override branch prefix (default: release-)."
+  print-opt-row "-b" "--no-branch"     ""            "(deprecated) Tag-in-place is the default now; this is a no-op."
+
+  print-opt-group "Skip preflight checks"
+  print-opt-row ""   "--allow-dirty"   ""            "Skip the clean-working-tree check (untracked files never trigger it)."
+  print-opt-row ""   "--allow-empty"   ""            "Release even with no new commits since the previous tag."
+  print-opt-row ""   "--no-fetch"      ""            "Skip the remote-sync preflight (no fetch / behind-upstream check)."
+  print-opt-row ""   "--no-hooks"      ""            "Skip the PRE_BUMP_CMD / POST_TAG_CMD release hooks for this run."
+
+  print-opt-group "Undo a release"
   print-opt-row ""   "--undo"          "[<version>]" "Locally delete release-X.Y.Z + tag vX.Y.Z (refuses if pushed/dirty)."
-  print-opt-row ""   "--major"              ""            "Force a major bump from the current version."
-  print-opt-row ""   "--minor"              ""            "Force a minor bump from the current version."
-  print-opt-row ""   "--patch"              ""            "Force a patch bump from the current version."
-  print-opt-cont "Without --preid, any of the three drops an existing prerelease/build and bumps the stable core (1.2.3-dev.5 --patch -> 1.2.4)."
-  print-opt-row ""   "--preid"              "<id>"        "Start or advance a prerelease line; conflicts with -v."
-  print-opt-cont "With --major/--minor/--patch: bump that level, then enter <id>.1 (1.2.3 --major --preid rc -> 2.0.0-rc.1)."
-  print-opt-cont "Alone, on a version that already has a prerelease: same id increments the counter, a different id resets it to .1."
-  print-opt-cont "Alone, on a stable version: ambiguous -> exit 2 (combine with --major/--minor/--patch)."
-  print-opt-row ""   "--allow-dirty"        ""            "Skip the clean-working-tree check (untracked files never trigger it)."
-  print-opt-row ""   "--allow-empty"        ""            "Release even with no new commits since the previous tag."
-  print-opt-row ""   "--no-fetch"           ""            "Skip the remote-sync preflight (no fetch / behind-upstream check)."
-  print-opt-row ""   "--no-hooks"           ""            "Skip the PRE_BUMP_CMD / POST_TAG_CMD release hooks for this run."
-  print-opt-row ""   "--branch"             ""            "Cut a release-x.x.x branch (pre-2.0 default); otherwise tag in place."
-  print-opt-row ""   "--pr"                 ""            "Branch + push + open a release PR via 'gh' (GitHub-only; implies push to origin)."
-  print-opt-row ""   "--base"               "<branch>"    "Base branch for --pr (GitHub-only; default: the branch you ran ver-bump from)."
-  print-opt-row ""   "--release"            ""            "Publish a GitHub release for the new tag (GitHub-only; requires -p, uses 'gh')."
-  print-opt-row ""   "--sign"               ""            "Create a signed tag (git tag -s; uses your git signing config)."
-  print-opt-row ""   "--about"              ""            "Print name, version, author, and homepage; then exit."
-  print-opt-row ""   "--completions"        "<shell>"     "Emit completion script for bash, zsh, or fish."
+
+  print-opt-group "Run mode & output"
+  print-opt-row "-d" "--dry-run"       ""            "Dry-run: print every side-effect without executing."
+  print-opt-row "-y" "--yes"           ""            "Skip interactive confirmation prompts."
+  print-opt-row "-q" "--quiet"         ""            "Suppress decoration; print only the new version on stdout (needs -y, -v, a bump level, or --preid)."
+
+  print-opt-group "Help & completions"
+  print-opt-row "-h" "--help"          ""            "Show this help message."
+  print-opt-row ""   "--completions"   "<shell>"     "Emit completion script for bash, zsh, or fish."
   print-opt-row ""   "--install-completions" "[=<shell>]" "Install completion script (auto-detects shell)."
 
   # EXAMPLES section pill
@@ -321,8 +352,45 @@ usage() {
   print-example-row "${SCRIPT_NAME} --bump pyproject.toml:@project.version" "Also bump a Python project's version (needs tomlq)."
   print-example-row "${SCRIPT_NAME} --bump 'pkg/__init__.py:__version__ = \"{{version}}\"'" "Also bump a Python __version__ via a text pattern (no extra tool)."
   print-example-row "${SCRIPT_NAME} --bump 'main.go:Version = \"{{version}}\"'" "Also bump a Go const via a text pattern (no extra tool)."
-  print-example-row "${SCRIPT_NAME} --about"               "Show branded version info."
   print-example-row "${SCRIPT_NAME} --install-completions" "Install shell completions (auto-detects shell)."
 
   printf '\n  %b(long forms accept --name value or --name=value)%b\n\n' "${S_DIM-}" "${RESET-}"
+}
+
+# show-help — the entry point for --help. Renders usage() through a pager when
+# the output is taller than the terminal (like `git help` / `man`), so a short
+# window doesn't scroll the top off-screen. Only pages on an interactive stdout
+# with a usable pager; piped / redirected output (`ver-bump --help | cat`, the
+# tests) prints straight through, unchanged. Colour still works in the pager:
+# USE_COLOR was fixed at startup from the real stdout, and less gets -R.
+show-help() {
+  # Not a terminal (pipe/file/CI), or no size → print straight through.
+  [ -t 1 ] || { usage; return; }
+
+  local size rows cols pager
+  size=$(stty size </dev/tty 2>/dev/null)
+  rows=${size%% *}; cols=${size##* }
+  case "$rows" in ''|*[!0-9]*) rows=0 ;; esac
+  case "$cols" in ''|*[!0-9]*) cols=0 ;; esac
+
+  # Use the standard *nix pager — less (with -R so ANSI colour passes through),
+  # else more. Deliberately IGNORE $PAGER: a "fancy" pager (bat, most, delta …)
+  # can mangle the coloured, pre-wrapped output, so pick the predictable one.
+  if   command -v less >/dev/null 2>&1; then pager="less -R"
+  elif command -v more >/dev/null 2>&1; then pager="more"
+  else                                  pager=""
+  fi
+
+  if [ -z "$pager" ] || [ "$rows" -le 0 ]; then usage; return; fi
+
+  # Render once at the real width (our stdout becomes a pipe), then page only
+  # when it's taller than the window.
+  local tmp; tmp=$(mktemp "${TMPDIR:-/tmp}/ver-bump-help.XXXXXX") || { usage; return; }
+  _VB_HELP_COLS="$cols" usage > "$tmp"
+  if [ "$(grep -c '' "$tmp")" -gt "$rows" ]; then
+    eval "$pager" < "$tmp"
+  else
+    cat "$tmp"
+  fi
+  rm -f "$tmp"
 }

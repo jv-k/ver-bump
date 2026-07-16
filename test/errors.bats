@@ -24,6 +24,16 @@ load 'test_helper'
   assert_output --partial "Hint: Install jq: brew install jq"
 }
 
+@test "fail: separates the hint from the error with a blank line" {
+  source ${profile_script}
+  run fail 3 "missing jq" "Install jq: brew install jq"
+  assert_failure 3
+  strip_ansi_output
+  # A blank line precedes the dim hint so it reads apart from the error.
+  [[ "$output" == *$'\n\n  Hint:'* ]] \
+    || bats_fail "expected a blank line before the Hint, got: ${output}"
+}
+
 @test "fail: omits hint line when no hint provided" {
   source ${profile_script}
   run fail 1 "generic failure"

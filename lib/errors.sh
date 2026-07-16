@@ -4,8 +4,9 @@
 true
 
 # fail <exit_code> <message> [hint]
-#   Writes a red labeled error line to stderr, optionally followed by a
-#   dim hint line, then exits with <exit_code>.
+#   Writes a red labeled error line to stderr, optionally followed by a blank
+#   line and a dim hint line, then exits with <exit_code>. The blank line sets
+#   the actionable hint apart from the error message.
 #
 # Exit code convention (see README / v2.0 plan §1.3):
 #   0  success
@@ -21,7 +22,7 @@ fail() {
   local hint=${3-}
   printf '\n%b%s Error:%b %s%b\n' "${S_ERROR-}" "${I_ERROR-}" "${S_NORM-}" "$msg" "${RESET-}" >&2
   if [ -n "$hint" ]; then
-    printf '%b  Hint: %s%b\n' "${S_LIGHT-}" "$hint" "${RESET-}" >&2
+    printf '\n%b  Hint: %s%b\n' "${S_LIGHT-}" "$hint" "${RESET-}" >&2
   fi
   exit "$code"
 }

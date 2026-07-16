@@ -26,7 +26,7 @@
   "scripts": {
     "dev": "./dev/sandbox.sh",
     "dev:dry": "./dev/sandbox.sh --dry-run",
-    "release": "gh release create --notes \"$(npx jv-k/releasetool)\"",
+    "release": "./ver-bump.sh --release -p origin",
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/*.bats",
     "lint": "shellcheck -x -e SC1017 ./ver-bump.sh ./install.sh ./lib/*.sh",

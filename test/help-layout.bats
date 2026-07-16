@@ -57,10 +57,22 @@ load 'test_helper'
   run get_help_msg
   assert_success
   strip_ansi_output
-  assert_output --partial "ver-bump [<version>] [options]"
+  # The version is an option value, not a positional — shown as -v <version>.
+  assert_output --partial "ver-bump [-v <version>] [options]"
+  refute_output --partial "ver-bump [<version>] [options]"
   # The old exhaustive per-flag synopsis is gone (flags live in OPTIONS).
   refute_output --partial "[-B <branch-prefix>]"
   refute_output --partial "[--install-completions[=<shell>]]"
+}
+
+@test "help-layout: OPTIONS lists the long flag first, short alias second" {
+  run get_help_msg
+  assert_success
+  strip_ansi_output
+  assert_output --partial "--version, -v"
+  assert_output --partial "--message, -m"
+  # The old short-first order is gone.
+  refute_output --partial "-v, --version"
 }
 
 @test "help-layout: no blank line after the name/version header pill" {

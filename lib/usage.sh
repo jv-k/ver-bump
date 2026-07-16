@@ -43,7 +43,7 @@ usage() {
 
   # Tagline comes from the repo's package.json ".description"; this literal is
   # only a fallback for a package.json without one (or when jq is absent).
-  SCRIPT_DESC="An opinionated release tool for Git projects — automates SemVer bump, CHANGELOG, tag, and push, driven by Conventional Commits."
+  SCRIPT_DESC="Release tool for any Git repo: reads your Conventional Commits to suggest a SemVer bump, then updates the changelog, tags, and pushes. Optional release-branch and PR workflows — no Node toolchain, just git + jq."
 
   if command -v jq >/dev/null 2>&1; then
     SCRIPT_VER=$(  jq -r '.version  // ""'         "$MODULE_DIR/package.json" )
@@ -107,10 +107,10 @@ usage() {
   fi
 
   # USAGE — a concise synopsis (à la `gh`), not an enumeration of every flag.
-  # The full flag list lives in OPTIONS below; here we show the shape of an
-  # invocation: an optional explicit version, then options.
+  # The version is an OPTION value (-v <version>), not a positional, so it is
+  # shown as such; the rest of the flag list lives in OPTIONS below.
   printf '\n%bUSAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
-  printf '  %b%s%b [<version>] [options]\n' "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
+  printf '  %b%s%b [-v <version>] [options]\n' "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
 
   # Column width for label + 2-space gutter. Longest label is
   # "  --install-completions [=<shell>]" = 34 chars. OPT_COL 40 gives a
@@ -127,18 +127,19 @@ usage() {
   }
 
   # print-opt-row <short> <long> <arg-or-empty> <description>
-  # 2-space left gutter on every row. Flag names are bold + default colour
-  # (no red/pink accent). Long-only rows align under the long-flag column.
+  # 2-space left gutter on every row. The long flag ("--noun") leads in bold;
+  # the short alias ("-x") follows it, dimmed (S_DIM) so it reads as secondary.
+  # Every row's long flag starts at the same column, so long-only rows need no
+  # extra indent.
   print-opt-row() {
     local short="$1" long="$2" arg="$3" desc="$4"
     local plain label pad head_plain head_label
     if [ -n "$short" ]; then
-      head_plain="  ${short}, ${long}"
-      head_label="  ${BOLD-}${short}${RESET-}, ${BOLD-}${long}${RESET-}"
+      head_plain="  ${long}, ${short}"
+      head_label="  ${BOLD-}${long}${RESET-}${S_DIM-}, ${short}${RESET-}"
     else
-      # Align long-only rows under the long-flag column: 2-space gutter + "-x, " = 6 chars indent.
-      head_plain="      ${long}"
-      head_label="      ${BOLD-}${long}${RESET-}"
+      head_plain="  ${long}"
+      head_label="  ${BOLD-}${long}${RESET-}"
     fi
     if [ -n "$arg" ]; then
       plain="${head_plain} ${arg}"
@@ -147,11 +148,15 @@ usage() {
       plain="${head_plain}"
       label="${head_label}"
     fi
+    # If the label reaches the description column, it would crowd (touch) the
+    # description — stack it instead: label alone, description on the next
+    # line(s) at OPT_COL. Same rule as print-example-row.
     if (( ${#plain} >= OPT_COL )); then
-      pad=" "
-    else
-      printf -v pad '%*s' $((OPT_COL - ${#plain})) ''
+      echo -e "${label}"
+      [ -n "$desc" ] && print-opt-cont "$desc"
+      return
     fi
+    printf -v pad '%*s' $((OPT_COL - ${#plain})) ''
     # Fluid: wrap the description and hang continuations under OPT_COL. Rows
     # with runs of 2+ spaces are pre-aligned (never reflowed); descriptions are
     # plain single-spaced prose so they always wrap cleanly.
@@ -199,6 +204,27 @@ usage() {
     else
       printf '%*s' "$OPT_COL" ''
       echo -e "$1"
+    fi
+  }
+
+  # print-opt-subitem <text> — a sub-entry beneath an option's description (the
+  # --bump spec forms). Renders at OPT_COL and wraps free prose with a DEEPER
+  # (+2) hanging indent, so a wrapped line reads as subordinate to its form and
+  # successive forms stay visually distinct. Non-TTY: one line, at OPT_COL.
+  print-opt-subitem() {
+    if (( TERM_COLS > 0 )); then
+      local avail=$(( TERM_COLS - OPT_COL - 2 ))
+      (( avail < 18 )) && avail=18
+      local wline first=1
+      while IFS= read -r wline; do
+        if (( first )); then
+          printf '%*s%b\n' "$OPT_COL" '' "$wline"; first=0
+        else
+          printf '%*s%b\n' "$((OPT_COL + 2))" '' "$wline"
+        fi
+      done < <(_help_wrap "$avail" "$1")
+    else
+      printf '%*s%b\n' "$OPT_COL" '' "$1"
     fi
   }
 
@@ -256,14 +282,14 @@ usage() {
   print-opt-row ""   "--source"        "<file.json>" "Version source + primary bump target (default: package.json)."
   print-opt-cont "If the file is missing, the current version derives from the latest matching git tag."
   print-opt-row ""   "--bump"          "<spec>"      "Also bump a JSON / TOML / YAML / text file. Repeatable. <spec> is one of:"
-  print-opt-cont "<file>                     structured, top-level .version by file type (jq / tomlq / yq)"
-  print-opt-cont "<file>:@<path>             structured, explicit dotted path, e.g. pyproject.toml:@tool.poetry.version"
-  print-opt-cont "'<file>:<pattern>'         text search/replace; the pattern must contain {{version}}"
+  print-opt-subitem "<file> — structured, top-level .version by file type (jq / tomlq / yq)"
+  print-opt-subitem "<file>:@<path> — structured, explicit dotted path (e.g. pyproject.toml:@tool.poetry.version)"
+  print-opt-subitem "'<file>:<pattern>' — text search/replace; the pattern must contain {{version}}"
   print-opt-cont "e.g. ver-bump --bump 'main.go:Version = \"{{version}}\"' --bump Chart.yaml:@version"
   print-opt-row ""   "--undo"          "[<version>]" "Locally delete release-X.Y.Z + tag vX.Y.Z (refuses if pushed/dirty)."
-  print-opt-row ""   "--major"              ""            "Force a major bump from the current version (mutually exclusive)."
-  print-opt-row ""   "--minor"              ""            "Force a minor bump from the current version (mutually exclusive)."
-  print-opt-row ""   "--patch"              ""            "Force a patch bump from the current version (mutually exclusive)."
+  print-opt-row ""   "--major"              ""            "Force a major bump from the current version."
+  print-opt-row ""   "--minor"              ""            "Force a minor bump from the current version."
+  print-opt-row ""   "--patch"              ""            "Force a patch bump from the current version."
   print-opt-cont "Without --preid, any of the three drops an existing prerelease/build and bumps the stable core (1.2.3-dev.5 --patch -> 1.2.4)."
   print-opt-row ""   "--preid"              "<id>"        "Start or advance a prerelease line; conflicts with -v."
   print-opt-cont "With --major/--minor/--patch: bump that level, then enter <id>.1 (1.2.3 --major --preid rc -> 2.0.0-rc.1)."

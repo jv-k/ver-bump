@@ -1,5 +1,9 @@
 ## Unreleased — 2.0 (breaking)
 - **BREAKING:** tag-in-place is now the default workflow. ver-bump 1.x always cut a `release-<version>` branch; 2.0 commits + tags the current branch in place. Pass `--branch` to keep the old behaviour.
+- **BREAKING:** `-v <value>` now rejects non-SemVer input with exit `2` before any mutation; 1.x tagged whatever string you passed (`vbanana` included). Migration: pass valid SemVer.
+- **BREAKING:** bare `-v` / `--version` (no value) now prints the tool version and exits `0`; in 1.x it was a parse error. `-v <semver>` is unchanged.
+- **BREAKING:** exit codes are now a fixed contract — `0` success, `2` usage/parse, `3` precondition, `4` hook failure, `5` user abort; 1.x used `1` for everything. Wrappers branching on `0` vs non-zero are unaffected; those branching on specific codes must update.
+- **BREAKING:** `npm` is no longer invoked at runtime, so `npm version` lifecycle scripts (`preversion` / `version` / `postversion`) no longer fire as a side-effect. Migration: run them explicitly, or set `PRE_BUMP_CMD` / `POST_TAG_CMD` in `.ver-bumprc`.
 - feat: `--pr` opens a release pull request via the `gh` CLI (branch + push + PR). Base resolves to `--base <branch>`, else `PR_BASE`, else the invocation branch, else the remote default branch.
 - feat: `--branch` opts into the `release-<version>` branch workflow; `--base <branch>` sets the `--pr` PR base.
 - feat(config): `.ver-bumprc` gains `FLAG_BRANCH` and `PR_BASE` keys.

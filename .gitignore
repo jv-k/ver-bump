@@ -3,9 +3,6 @@ node_modules/
 # vhs throwaway gifs (only the Screenshot frame / demo.gif is kept)
 img/tmp/
 
-# terminalizer
-demo/
-
 # bats
 test/bats
 test/helpers

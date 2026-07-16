@@ -151,6 +151,10 @@ apply-config-defaults() {
   # Signed tags are opt-in (R-SIGN-1). Explicit false default; false and
   # unset behave identically under [ "$TAG_SIGN" = true ].
   TAG_SIGN="${TAG_SIGN:-false}"
+  # Tag-in-place is the default as of 2.0 — cutting a release-<v> branch is
+  # opt-in via --branch / --pr (or FLAG_BRANCH=true in config). Explicit false
+  # default so the tag-in-place behaviour is the documented, canonical one.
+  FLAG_BRANCH="${FLAG_BRANCH:-false}"
   # Version source + primary bump target (R-SRC-1/5). VER_FILE derives from
   # it in main() after process-arguments, so --source (CLI) wins per R-CFG-3.
   SOURCE_FILE="${SOURCE_FILE:-package.json}"

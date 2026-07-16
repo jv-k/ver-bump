@@ -103,6 +103,8 @@ _clear_config_env() {
   assert_equal "$PUSH_DEST" "origin"
   assert_equal "$COMMIT_MSG_PREFIX" "chore: "
   assert_equal "$CHANGELOG_STYLE" "flat"
+  # Tag-in-place is the default; the release branch is opt-in.
+  assert_equal "$FLAG_BRANCH" "false"
 }
 
 @test "ver-bump.sh: CLI -t beats .ver-bumprc TAG_PREFIX (end-to-end dry-run)" {

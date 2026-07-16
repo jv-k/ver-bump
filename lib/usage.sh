@@ -38,14 +38,20 @@ _help_wrap() {
 
 # Show --help.
 usage() {
-  local SCRIPT_VER SCRIPT_NAME SCRIPT_AUTH SCRIPT_HOME env_var env_var_val
+  local SCRIPT_VER SCRIPT_NAME SCRIPT_AUTH SCRIPT_HOME SCRIPT_DESC env_var env_var_val
   local env_vars=( SCRIPT_VER SCRIPT_NAME SCRIPT_AUTH SCRIPT_HOME )
+
+  # Tagline comes from the repo's package.json ".description"; this literal is
+  # only a fallback for a package.json without one (or when jq is absent).
+  SCRIPT_DESC="An opinionated release tool for Git projects — automates SemVer bump, CHANGELOG, tag, and push, driven by Conventional Commits."
 
   if command -v jq >/dev/null 2>&1; then
     SCRIPT_VER=$(  jq -r '.version  // ""'         "$MODULE_DIR/package.json" )
     SCRIPT_NAME=$( jq -r '.name     // "ver-bump"' "$MODULE_DIR/package.json" )
     SCRIPT_AUTH=$( jq -r '.author   // ""'         "$MODULE_DIR/package.json" )
     SCRIPT_HOME=$( jq -r '.homepage // ""'         "$MODULE_DIR/package.json" )
+    local _desc; _desc=$( jq -r '.description // ""' "$MODULE_DIR/package.json" )
+    [ -n "$_desc" ] && SCRIPT_DESC="$_desc"
   else
     # Fallback: grep + trim (works without jq for --help alone)
     SCRIPT_VER=$(  cd "$MODULE_DIR" && grep version  package.json | head -1 )
@@ -59,77 +65,52 @@ usage() {
     done
   fi
 
+  # Fluid layout: on a real terminal, wrap output to the actual width so long
+  # lines don't overflow. TERM_COLS=0 disables wrapping — piped / redirected
+  # output (tests, `| less`, files) keeps the historic single-line layout,
+  # stable for grepping. Width detection: an exported COLUMNS wins; otherwise
+  # read the controlling terminal with `stty size </dev/tty`. Plain `tput cols`
+  # is WRONG here — usage() computes width inside command substitution, where
+  # stdout is a pipe, so tput's ioctl misreads the size as 80; /dev/tty is the
+  # real terminal regardless of fd redirection. tput then 80 are the backstops.
+  local TERM_COLS=0
+  if [ -t 1 ]; then
+    if [ -n "${COLUMNS:-}" ] && [ -z "${COLUMNS//[0-9]/}" ]; then
+      TERM_COLS="$COLUMNS"
+    else
+      local _size
+      _size=$(stty size </dev/tty 2>/dev/null) && TERM_COLS=${_size##* }
+      case "$TERM_COLS" in ''|0|*[!0-9]*) TERM_COLS=$(tput cols 2>/dev/null) ;; esac
+    fi
+    case "$TERM_COLS" in ''|*[!0-9]*) TERM_COLS=80 ;; esac
+  fi
+
   # rip off the oh-my-zsh logo, clearly ;)
   printf  "%s _ _  %s___  %s___ %s     %s ___  %s_ _ %s __ __ %s ___  %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
   printf  "%s| | |%s| __>%s| . \%s ___ %s| . >%s| | |%s|  \  \%s| . \ %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
   printf  "%s| ' |%s| _> %s|   /%s|___|%s| . \%s| ' |%s|     |%s|  _/ %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
   printf  "%s|__/ %s|___>%s|_\_\%s     %s|___/%s\___/%s|_|_|_|%s|_|   %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
 
-  # Branded header pill + author/homepage bullets + dim tagline.
-  # Green inverse pill for name + version, blank line, then author/homepage bullets and dim tagline.
-  printf '\n %b %s v%s %b\n\n' "${S_HDR_SUB-}" "${SCRIPT_NAME}" "${SCRIPT_VER}" "${S_HDR_END-}"
+  # Branded header pill + author/homepage bullets + dim tagline. No blank line
+  # after the pill — the author bullet sits directly beneath it.
+  printf '\n %b %s v%s %b\n' "${S_HDR_SUB-}" "${SCRIPT_NAME}" "${SCRIPT_VER}" "${S_HDR_END-}"
   printf ' %b%s%b Author:   %s\n'   "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_AUTH}"
   printf ' %b%s%b Homepage: %s\n\n' "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_HOME}"
-  printf '  %bAn opinionated release tool for Git projects with a package.json — automates SemVer%b\n' \
-    "${S_DIM-}" "${RESET-}"
-  printf '  %bbump, CHANGELOG, tag, and push, driven by Conventional Commits.%b\n' \
-    "${S_DIM-}" "${RESET-}"
-
-  # Fluid layout: when writing to a real terminal, wrap to the actual width so
-  # long lines no longer overflow the screen edge. TERM_COLS=0 means "don't
-  # wrap" — piped/redirected output (tests, `| less`, files) keeps the historic
-  # single-line layout, stable for grepping and byte-identical to before.
-  # COLUMNS is rarely exported into a script, so `tput cols` is the real source;
-  # COLUMNS wins when set, and 80 is the last resort.
-  local TERM_COLS=0
-  if [ -t 1 ]; then
-    if [ -n "${COLUMNS:-}" ] && [ -z "${COLUMNS//[0-9]/}" ]; then
-      TERM_COLS="$COLUMNS"
-    elif command -v tput >/dev/null 2>&1; then
-      TERM_COLS=$(tput cols 2>/dev/null)
-    fi
-    case "$TERM_COLS" in ''|*[!0-9]*) TERM_COLS=80 ;; esac
+  # Tool description (from package.json), dim and wrapped to the terminal.
+  if (( TERM_COLS > 0 )); then
+    local _dline
+    while IFS= read -r _dline; do
+      printf '  %b%s%b\n' "${S_DIM-}" "$_dline" "${RESET-}"
+    done < <(_help_wrap $(( TERM_COLS > 2 ? TERM_COLS - 2 : 20 )) "$SCRIPT_DESC")
+  else
+    printf '  %b%s%b\n' "${S_DIM-}" "${SCRIPT_DESC}" "${RESET-}"
   fi
 
-  # print-usage-synopsis <name> <token>... — render "  <name> <tokens>",
-  # wrapping the atomic bracket tokens to the terminal width and hanging
-  # continuation lines under the first token. A token is never split, so a
-  # group like "[--major | --minor | --patch]" stays whole. Non-TTY: one line,
-  # byte-identical to the old hardcoded synopsis (stable for pipes/tests).
-  print-usage-synopsis() {
-    local name="$1"; shift
-    local prefix="  ${name} " indent
-    printf -v indent '%*s' "${#prefix}" ''
-
-    if (( TERM_COLS == 0 )); then
-      printf '  %b%s%b %s\n' "${BOLD-}" "$name" "${RESET-}" "$*"
-      return
-    fi
-
-    local avail=$(( TERM_COLS - ${#prefix} ))
-    (( avail < 20 )) && avail=20
-    # Pack the atomic tokens, then dress line 1 with the bold program name and
-    # hang the rest under the first token.
-    local packed first=1
-    while IFS= read -r packed; do
-      if (( first )); then
-        printf '  %b%s%b %s\n' "${BOLD-}" "$name" "${RESET-}" "$packed"; first=0
-      else
-        printf '%s%s\n' "$indent" "$packed"
-      fi
-    done < <(_help_pack "$avail" "$@")
-  }
-
-  # USAGE section pill. Two invocation forms (short flags, then long-only
-  # flags); each wraps independently under its own repeated program name.
+  # USAGE — a concise synopsis (à la `gh`), not an enumeration of every flag.
+  # The full flag list lives in OPTIONS below; here we show the shape of an
+  # invocation: an optional explicit version, then options.
   printf '\n%bUSAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
-  print-usage-synopsis "${SCRIPT_NAME}" \
-    '[-v <version>]' '[-m <message>]' '[-f <file.json>]...' '[-p <remote>]' \
-    '[-t <tag-prefix>]' '[-B <branch-prefix>]' '[-d]' '[-n]' '[-b]' '[-c]' '[-l]' '[-h]'
-  print-usage-synopsis "${SCRIPT_NAME}" \
-    '[--source <file.json>]' '[--branch]' '[--pr]' '[--base <branch>]' \
-    '[--major | --minor | --patch]' '[--preid <id>]' '[--release]' '[--sign]' \
-    '[--completions <shell>]' '[--install-completions[=<shell>]]' '[--about]'
+  printf '  %b%s%b [<version>] [options]\n' "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
 
   # Column width for label + 2-space gutter. Longest label is
   # "  --install-completions [=<shell>]" = 34 chars. OPT_COL 40 gives a

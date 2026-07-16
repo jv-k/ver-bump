@@ -53,13 +53,32 @@ load 'test_helper'
   assert_line --index 2 "[-b]"
 }
 
-@test "help-layout: piped (non-TTY) --help keeps the USAGE synopsis on one line per form" {
+@test "help-layout: USAGE is a concise synopsis, not a flag enumeration" {
   run get_help_msg
   assert_success
   strip_ansi_output
-  # Both invocation forms stay intact and unwrapped when captured/piped.
-  assert_output --partial "ver-bump [-v <version>] [-m <message>] [-f <file.json>]... [-p <remote>] [-t <tag-prefix>] [-B <branch-prefix>] [-d] [-n] [-b] [-c] [-l] [-h]"
-  assert_output --partial "ver-bump [--source <file.json>] [--branch] [--pr] [--base <branch>] [--major | --minor | --patch] [--preid <id>] [--release] [--sign] [--completions <shell>] [--install-completions[=<shell>]] [--about]"
+  assert_output --partial "ver-bump [<version>] [options]"
+  # The old exhaustive per-flag synopsis is gone (flags live in OPTIONS).
+  refute_output --partial "[-B <branch-prefix>]"
+  refute_output --partial "[--install-completions[=<shell>]]"
+}
+
+@test "help-layout: no blank line after the name/version header pill" {
+  run get_help_msg
+  assert_success
+  strip_ansi_output
+  # The author bullet sits directly beneath the pill — no empty line between.
+  refute_output --partial $'\n\n • Author'
+}
+
+@test "help: the tool description is sourced from package.json" {
+  # The tagline is not hardcoded — it is package.json ".description" verbatim.
+  local desc
+  desc=$(jq -r '.description' "${repo_dir}/package.json")
+  run get_help_msg
+  assert_success
+  strip_ansi_output
+  assert_output --partial "$desc"
 }
 
 @test "help-layout: an over-long EXAMPLES command stacks above its description" {

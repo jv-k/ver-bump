@@ -1,10 +1,11 @@
 #!/usr/bin/env bats
 
 # --release flag: publish a GitHub release for the newly-created tag via the
-# `gh` CLI, with notes piped from $VER_BUMP_RELEASE_NOTES_CMD (default
-# `npx jv-k/releasetool`). Conditional dependencies — `gh` and the notes
-# command are only required when --release is passed; the default ver-bump
-# path stays bash + git + jq only.
+# `gh` CLI. Notes default to `gh release create --generate-notes`; setting
+# $VER_BUMP_RELEASE_NOTES_CMD captures that command's stdout via --notes.
+# Conditional dependency — `gh` is only required when --release is passed (a
+# custom notes command may add more); the default ver-bump path stays
+# bash + git + jq only.
 
 load 'test_helper'
 
@@ -67,6 +68,21 @@ SH
   assert_output --partial "[dry-run]"
   assert_output --partial "gh release create v1.2.3"
   assert_output --partial "STUB-NOTES"
+}
+
+@test "release: default notes path uses gh --generate-notes (dry-run preview)" {
+  local repo
+  repo="$(scratch_repo)"
+  cd "$repo"
+  printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
+
+  VER_BUMP_RELEASE_NOTES_CMD='' \
+    run ${profile_script} --release -d -b -c -p origin -v 1.2.3
+  assert_success
+  strip_ansi_output
+  assert_output --partial "gh release create v1.2.3"
+  assert_output --partial "--generate-notes"
+  refute_output --partial "--notes"
 }
 
 @test "release: --release --dry-run leaves working tree byte-identical" {
@@ -248,6 +264,36 @@ SH
   strip_ansi_output
   assert_output --partial "GH-CALL: release create v1.2.5"
   assert_output --partial "LIVE-NOTES"
+  assert_output --partial "Published GitHub release"
+}
+
+@test "release: live default path runs gh release create with --generate-notes" {
+  local repo remote
+  repo="$(scratch_repo)"
+  cd "$repo"
+  printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
+  git add package.json && git commit -qm "feat: seed"
+
+  remote=$(mktemp -d)
+  CLEANUP_CMDS+=("rm -rf ${remote}")
+  git init -q --bare "${remote}"
+
+  local shim
+  shim=$(mktemp -d)
+  CLEANUP_CMDS+=("rm -rf ${shim}")
+  cat > "${shim}/gh" <<'SH'
+#!/bin/sh
+[ "$1" = "auth" ] && exit 0
+echo "GH-CALL: $*"
+exit 0
+SH
+  chmod +x "${shim}/gh"
+
+  PATH="${shim}:$PATH" VER_BUMP_RELEASE_NOTES_CMD='' \
+    run ${profile_script} --release -p "${remote}" -b -c -v 1.2.5
+  strip_ansi_output
+  assert_output --partial "GH-CALL: release create v1.2.5"
+  assert_output --partial "--generate-notes"
   assert_output --partial "Published GitHub release"
 }
 

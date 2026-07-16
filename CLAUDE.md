@@ -32,3 +32,23 @@ Full rules in [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md) (§Pull requests,
 - **`Refs #N.`, never `Closes #N.`** — a human closes the issue after review.
 - Branches: `feat/*`, `fix/*`, `refactor/*`, `chore/*`, `docs/*`; releases use
   `release-<version>`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked as **GitHub issues** via the `gh` CLI
+(`github.com/jv-k/ver-bump`). See
+[`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md).
+
+### Triage labels
+
+The five canonical triage roles map **1:1** onto identically-named GitHub
+labels already in the repo. See
+[`docs/agents/triage-labels.md`](docs/agents/triage-labels.md).
+
+### Domain docs
+
+**Single-context.** ADRs live in a single `docs/ADR.md` (`ADR-NN` sections),
+alongside `docs/PRD.md` and `docs/features/*/requirements.md`; `CONTEXT.md` is
+created lazily. See [`docs/agents/domain.md`](docs/agents/domain.md).

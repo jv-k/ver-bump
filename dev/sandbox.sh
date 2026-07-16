@@ -17,6 +17,7 @@
 #   ./dev/sandbox.sh --dry-run --no-branch   # try long options
 #   ./dev/sandbox.sh --keep                  # don't wipe the sandbox on exit
 #   ./dev/sandbox.sh --remote -v 2.0.0 -p origin  # add a bare 'origin' so a real push succeeds
+#   ./dev/sandbox.sh --setup-only --remote   # scaffold + print the repo (and remote) paths; don't run ver-bump
 #
 # After a run with --keep you can `cd` into the printed path to poke around.
 
@@ -33,12 +34,14 @@ fi
 KEEP=0
 QUIET=0
 MK_REMOTE=0
+SETUP_ONLY=0
 PASSTHROUGH=()
 while (( $# )); do
   case "$1" in
     -k|--keep) KEEP=1; shift ;;
     -q|--quiet) QUIET=1; shift ;;
     --remote) MK_REMOTE=1; shift ;;
+    --setup-only) SETUP_ONLY=1; shift ;;
     -h|--help-sandbox)
       # Pass -h / --help through to ver-bump; print our own help only for
       # this long alias so we don't shadow ver-bump's usage output.
@@ -139,6 +142,19 @@ for msg in "${seeds[@]}"; do
 done
 
 say "sandbox: seeded $(git rev-list --count HEAD) commits on $(git rev-parse --abbrev-ref HEAD)"
+
+# Scaffold-and-hand-off: print the sandbox repo (and bare origin, if any) paths
+# on stdout so a caller can `cd` in and drive ver-bump directly — the demo tape
+# does this to record a clean `ver-bump …` invocation. We leave both dirs in
+# place (the caller owns cleanup) and drop our own trap so nothing is removed
+# and no status line pollutes stdout.
+if (( SETUP_ONLY )); then
+  trap - EXIT INT TERM
+  printf '%s\n' "$SANDBOX_DIR"
+  printf '%s\n' "$REMOTE_DIR"
+  exit 0
+fi
+
 say "sandbox: running ver-bump ${PASSTHROUGH[*]:-<no args>}"
 say "---"
 

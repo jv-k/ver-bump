@@ -17,10 +17,13 @@ foreground process group; bash defers traps until the foreground child
 exits, so both processes are signalled explicitly).
 
 Also in `dev/` (unspecced tooling, no requirements): `screenshots.sh` drives
-the VHS tapes (`help`, `dry-run`, `completions`, `demo`) that render the README
-panels + demo GIF — VHS runs a real terminal emulator, so the inverted-video
-section pills and dim markers render faithfully; and `prepublish-version-guard.sh`.
+the VHS tapes (`help`, `demo`) that render the README's `--help` still and the
+demo GIF (plus its final-frame still `img/demo-final.png`) — VHS runs a real
+terminal emulator, so the inverted-video section pills and dim markers render
+faithfully; and `prepublish-version-guard.sh`.
 `sandbox.sh --remote` adds a throwaway bare `origin` so a real `-p origin`
-push path can be exercised (used by the demo tape).
+push path can be exercised; `sandbox.sh --setup-only` scaffolds the repo (and
+remote), prints their paths, and hands off without running ver-bump — the demo
+tape `cd`s in and drives a clean `ver-bump …` command itself.
 
 Modules: `dev/sandbox.sh`.

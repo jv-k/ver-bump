@@ -255,3 +255,36 @@ sandbox_dir_from_output() {
   case "$remote" in "${repo_dir}"*) bats_fail "remote ${remote} inside host repo" ;; esac
   [ ! -d "$remote" ]
 }
+
+# ── --setup-only: scaffold, print paths, hand off without running ver-bump ────
+
+@test "sandbox: --setup-only scaffolds and hands off without running ver-bump" {
+  cd "$(scratch_repo)"
+
+  # Status chatter is on stderr; the two paths we consume are on stdout. The
+  # caller owns cleanup (no trap fired), so we register the dirs ourselves.
+  run bash -c '"$1" --setup-only --remote 2>/dev/null' _ "$(sandbox_script)"
+  assert_success
+
+  local sbx rmt
+  sbx="${lines[0]}"
+  rmt="${lines[1]}"
+  [ -n "$sbx" ]
+  [ -n "$rmt" ]
+  CLEANUP_CMDS+=("rm -rf '${sbx}' '${rmt}'")
+
+  # Both dirs were handed off intact (not wiped) and live outside the host repo.
+  [ -d "$sbx" ]
+  [ -d "$rmt" ]
+  case "$sbx" in "${repo_dir}"*) bats_fail "sandbox ${sbx} inside host repo" ;; esac
+  case "$rmt" in "${repo_dir}"*) bats_fail "remote ${rmt} inside host repo" ;; esac
+
+  # ver-bump never ran: the repo is still seeded at 0.1.0 (tagged), unbumped.
+  assert_equal "$(jsonfile_get_ver "${sbx}/package.json")" "0.1.0"
+  run git -C "$sbx" tag -l v0.1.0
+  assert_output "v0.1.0"
+
+  # The bare origin is wired up as 'origin' so a later push has somewhere to go.
+  run git -C "$sbx" remote get-url origin
+  assert_output "$rmt"
+}

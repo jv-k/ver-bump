@@ -7,14 +7,13 @@ name: Screenshots
 # it flattens inverse-video and ignores SGR-faint, so it could not show the
 # restyled output correctly.)
 #
-#   img/screenshot.png   — vhs, `ver-bump --help`
-#   img/dry-run.png      — vhs, sandbox `--dry-run` bump
-#   img/completions.png  — vhs, `--completions zsh`
+#   img/screenshot.png   — vhs, `ver-bump --help` (header logo + full flag set)
 #   img/demo.gif         — vhs, sandbox-driven real bump recording
+#   img/demo-final.png   — the demo's finished DONE frame, as a still
 #
 # Triggers: cut a release (auto — visuals track the shipped version) or run
-# it by hand. Locally: `pnpm screenshots` (or `:help` / `:dry-run` /
-# `:completions` / `:demo`) — see dev/screenshots.sh.
+# it by hand. Locally: `pnpm screenshots` (or `:help` / `:demo`) — see
+# dev/screenshots.sh.
 
 on:
   workflow_dispatch:
@@ -55,17 +54,7 @@ jobs:
         with:
           path: dev/help.tape
 
-      - name: Render dry-run panel
-        uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
-        with:
-          path: dev/dry-run.tape
-
-      - name: Render completions panel
-        uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
-        with:
-          path: dev/completions.tape
-
-      - name: Render demo gif
+      - name: Render demo gif (also emits img/demo-final.png)
         uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
         with:
           path: dev/demo.tape
@@ -82,9 +71,8 @@ jobs:
           name: screenshots
           path: |
             img/screenshot.png
-            img/dry-run.png
-            img/completions.png
             img/demo.gif
+            img/demo-final.png
           retention-days: 7
           if-no-files-found: error
 
@@ -113,7 +101,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5.2.0
         with:
           branch: main
-          file_pattern: img/screenshot.png img/dry-run.png img/completions.png img/demo.gif
+          file_pattern: img/screenshot.png img/demo.gif img/demo-final.png
           commit_message: "docs(img): regenerate screenshots [skip ci]"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"

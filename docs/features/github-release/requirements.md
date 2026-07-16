@@ -5,7 +5,7 @@ Resolves the "automate a release" ask (issue #25, #43).
 
 | ID | Requirement | Status |
 | --- | --- | --- |
-| R-REL-1 | `--release` runs `gh release create <tag> --notes "<notes>"` after the tag is pushed. | ✅ shipped — `test/release.bats` (20) |
+| R-REL-1 | `--release` runs `gh release create <tag> --generate-notes` (default) or `--notes "<notes>"` (custom `VER_BUMP_RELEASE_NOTES_CMD`, R-REL-2) after the tag is pushed. | ✅ shipped — `test/release.bats` (22) |
 | R-REL-2 | Notes default to `gh release create --generate-notes`; a custom `VER_BUMP_RELEASE_NOTES_CMD` is captured via `--notes`. | ✅ shipped |
 | R-REL-3 | `--release` requires `-p <remote>`; missing → exit `2` naming the flag. | ✅ shipped |
 | R-REL-4 | `gh` is conditional: required only with `--release` (missing → `3`). `node`/`npx` only if `VER_BUMP_RELEASE_NOTES_CMD` is overridden. Default ver-bump path never invokes `gh`/`node`/`npx`. | ✅ shipped |

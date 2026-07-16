@@ -42,6 +42,7 @@ It does several things that are typically required for releasing a Git repositor
   - [Pre-requisites](#pre-requisites)
   - [CLI](#cli)
 - [Options](#options)
+  - [Flags](#flags)
   - [Config file (`.ver-bumprc`)](#config-file-ver-bumprc)
   - [Version suggestion](#version-suggestion)
   - [Dry-run](#dry-run)
@@ -293,14 +294,7 @@ skipped with a notice; every change is staged and listed in the bump commit.
 ### CLI
 
 ```sh
-$ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... \
-           [-p|--push <remote>] [-t|--tag-prefix <p>] [-B|--branch-prefix <p>] \
-           [-d|--dry-run] [-n|--no-commit] [-b|--no-branch] \
-           [-c|--no-changelog] [-l|--pause-changelog] [-y|--yes] [-q|--quiet] [-h|--help] \
-           [--source <file.json>] [--bump <spec>]... [--branch] [--pr] [--base <branch>] \
-           [--allow-dirty] [--allow-empty] [--no-fetch] [--no-hooks] \
-           [--undo [<version>]] [--major | --minor | --patch] [--preid <id>] [--release] \
-           [--completions <shell>] [--install-completions[=<shell>]] [--about]
+$ ver-bump [-v <version>] [options]
 ```
 
 <p>
@@ -310,7 +304,82 @@ $ ver-bump [-v|--version [<v>]] [-m|--message <msg>] [-f|--file <file.json>]... 
 ## Options
 
 Every option has a short form and a GNU-style long form. Long forms accept
-`--name value` or `--name=value`.
+`--name value` or `--name=value`. Grouped below the way `ver-bump --help`
+lists them.
+
+### Flags
+
+#### Choose the new version
+
+| Flag | Description |
+| --- | --- |
+| `-v`, `--version [<version>]` | Without a value, print the tool version and exit. With a value, set an explicit SemVer. |
+| `--major` | Force a major bump from the current version. |
+| `--minor` | Force a minor bump from the current version. |
+| `--patch` | Force a patch bump from the current version. Without `--preid`, any of the three drops an existing prerelease/build and bumps the stable core (`1.2.3-dev.5 --patch → 1.2.4`). |
+| `--preid <id>` | Start or advance a prerelease line; conflicts with `-v`. With a level: bump it, then enter `<id>.1` (`1.2.3 --major --preid rc → 2.0.0-rc.1`). Alone on a prerelease: same id increments the counter, a different id resets to `.1`. |
+
+#### Files to bump
+
+| Flag | Description |
+| --- | --- |
+| `--source <file.json>` | Version source + primary bump target (default: `package.json`). If the file is missing, the current version derives from the latest matching git tag. |
+| `--bump <spec>` | Also bump a JSON / TOML / YAML / text file. Repeatable. `<file>` (top-level `.version` by file type), `<file>:@<path>` (explicit dotted path, e.g. `pyproject.toml:@tool.poetry.version`), or `'<file>:<pattern>'` (text search/replace; the pattern must contain `{{version}}`). |
+| `-f`, `--file <file.json>` | Also bump `"version"` in this JSON file. Repeatable. Superseded by `--bump`. |
+
+#### Commit, tag & changelog
+
+| Flag | Description |
+| --- | --- |
+| `-m`, `--message <message>` | Custom annotated-tag release message. |
+| `-t`, `--tag-prefix <prefix>` | Override the tag prefix (default: `v`). |
+| `--sign` | Create a signed tag (`git tag -s`; uses your git signing config). |
+| `-c`, `--no-changelog` | Disable updating `CHANGELOG.md`. |
+| `-l`, `--pause-changelog` | Pause before commit so `CHANGELOG.md` can be edited. |
+| `-n`, `--no-commit` | Disable commit (and tag + push) after bumping files. |
+
+#### Push, branch & publish
+
+| Flag | Description |
+| --- | --- |
+| `-p`, `--push <remote>` | Push the release branch + tag to `<remote>` at the end of the run. |
+| `--pr` | Branch + push + open a release PR via `gh` (GitHub-only; implies push to origin). |
+| `--base <branch>` | Base branch for `--pr` (GitHub-only; default: the branch you ran ver-bump from). |
+| `--release` | Publish a GitHub release for the new tag (GitHub-only; requires `-p`, uses `gh`). |
+| `--branch` | Cut a `release-x.x.x` branch; otherwise tag in place (the default). |
+| `-B`, `--branch-prefix <prefix>` | Override the branch prefix (default: `release-`). |
+| `-b`, `--no-branch` | Deprecated no-op — tag-in-place is the default now. |
+
+#### Skip preflight checks
+
+| Flag | Description |
+| --- | --- |
+| `--allow-dirty` | Skip the clean-working-tree check (untracked files never trigger it). |
+| `--allow-empty` | Release even with no new commits since the previous tag. |
+| `--no-fetch` | Skip the remote-sync preflight (no fetch / behind-upstream check). |
+| `--no-hooks` | Skip the `PRE_BUMP_CMD` / `POST_TAG_CMD` release hooks for this run. |
+
+#### Undo a release
+
+| Flag | Description |
+| --- | --- |
+| `--undo [<version>]` | Locally delete `release-X.Y.Z` + tag `vX.Y.Z` (refuses if pushed or dirty). |
+
+#### Run mode & output
+
+| Flag | Description |
+| --- | --- |
+| `-d`, `--dry-run` | Print every side-effect without executing. |
+| `-y`, `--yes` | Skip interactive confirmation prompts. |
+| `-q`, `--quiet` | Suppress decoration; print only the new version on stdout (needs `-y`, `-v`, a bump level, or `--preid`). |
+
+#### Help & completions
+
+| Flag | Description |
+| --- | --- |
+| `-h`, `--help` | Show the help message (paged through `less`/`more` when the terminal is short). |
+| `--completions <shell>` | Emit a completion script for bash, zsh, or fish. |
+| `--install-completions[=<shell>]` | Install the completion script (auto-detects the shell). |
 
 ### Config file (`.ver-bumprc`)
 
@@ -446,117 +515,6 @@ bump commit uses the same rendered message (first line, in both `flat`
 and `grouped` styles), so the two never drift apart. The template applies
 to the bump commit only; the annotated tag's message keeps its own knob,
 `-m` / `--message`.
-
-```text
--v, --version [<version>]     Without a value: print tool version and exit.
-                              With a value: set manual SemVer (validated against 2.0).
--m, --message <message>       Custom annotated-tag release message.
--f, --file <filename.json>    Also bump "version" in this JSON file. Repeatable:
-                                ver-bump -f src/plugin/package.json -f composer.json
--p, --push <remote>           Push branch + tag to <remote> (e.g. origin) as the last step.
--t, --tag-prefix <prefix>     Override tag prefix (default: "v" → v1.2.3).
--B, --branch-prefix <prefix>  Override branch prefix (default: "release-").
--d, --dry-run                 Print every side-effect (file write, git add, commit,
-                              tag, push) without executing any of them.
--n, --no-commit               Disable commit (also skips tag + push).
--b, --no-branch               (deprecated) No-op — tag-in-place is the default now.
--c, --no-changelog            Disable updating CHANGELOG.md automatically.
--l, --pause-changelog         Pause before commit so CHANGELOG.md can be hand-edited.
--y, --yes                     Skip interactive confirmation prompts.
--q, --quiet                   Suppress decorative output — on success stdout carries
-                              exactly one line: the new version (no tag prefix, no
-                              colour); everything else goes to stderr. Errors keep
-                              the usual exit codes; a no-op run (nothing to release)
-                              prints nothing and exits 0. Requires --yes, -v,
-                              --major/--minor/--patch, or --preid, and refuses
-                              -l/--pause-changelog (a hidden prompt would hang the
-                              pipeline). CI capture:
-                                NEW_VERSION=$(ver-bump --yes --quiet -p origin)
--h, --help                    Show help message.
-    --source <file.json>      Version source + primary bump target (default:
-                              package.json). Replaces package.json for reading the
-                              current version and writing the bump; the built-in
-                              package-lock.json companion bump only applies when the
-                              source really is package.json. If the file doesn't
-                              exist, the current version is derived from the latest
-                              matching git tag instead and nothing is written for it
-                              (tag + CHANGELOG release; with nothing staged, the
-                              commit is skipped and the tag lands on HEAD). Also
-                              available as the SOURCE_FILE config/env key.
-    --bump <spec>             Also bump the version in a JSON / TOML / YAML / text
-                              file. Repeatable. <spec> is one of:
-                                <file>                 structured, top-level .version
-                                                       by file type (jq / tomlq / yq)
-                                <file>:@<path>         structured, explicit dotted path
-                                                       (e.g. pyproject.toml:@tool.poetry.version)
-                                '<file>:<pattern>'     text search/replace; <pattern>
-                                                       must contain the {{version}} token
-                              Text patterns need no extra tool and rewrite only the
-                              matching line (Go const, Makefile, Dockerfile, plain
-                              VERSION, …). TOML/YAML @paths need the jq-based yq suite
-                              (tomlq / yq); a missing helper exits 3 and points you at
-                              the text-pattern alternative. Also available as the
-                              BUMP_FILES config/env key (newline-separated specs).
-    --undo [<version>]        Locally delete the release branch + tag for <version>
-                              (refuses if pushed, dirty, or already merged).
-    --major                   Force a major bump from the current version.
-                              Mutually exclusive with --minor / --patch and -v.
-                              From a prerelease (X.Y.Z-dev.N), drops the prerelease
-                              before bumping the stable component (unless combined
-                              with --preid — see below).
-    --minor                   Force a minor bump (see --major for semantics).
-    --patch                   Force a patch bump (see --major for semantics).
-    --preid <id>              Start or advance a prerelease line. Combined with
-                              --major/--minor/--patch: bump that level, then enter
-                              the prerelease at <id>.1 (1.2.3 --major --preid rc ->
-                              2.0.0-rc.1). Alone, on a version that already has a
-                              prerelease: the same id increments the trailing
-                              counter (4.0.0-dev.6 -> 4.0.0-dev.7); a different id
-                              swaps it and resets the counter (2.0.0-alpha.3 +
-                              --preid rc -> 2.0.0-rc.1). Alone on a stable version
-                              is ambiguous and exits 2 — combine with a bump-level
-                              switch. Mutually exclusive with -v. <id> is validated
-                              against the SemVer prerelease grammar (dot-separated
-                              alphanumeric/hyphen identifiers, no leading-zero
-                              numeric parts) before anything is mutated.
-    --allow-dirty             Skip the clean-working-tree check and release with
-                              uncommitted changes to tracked files. Untracked files
-                              never trigger the check. Also available as the
-                              ALLOW_DIRTY config/env key.
-    --allow-empty             Release even when there are no new commits since the
-                              previous tag. Without it, such a run prints a notice
-                              (a stdout line starting with "no-release") and exits 0
-                              without changing anything — safe to run unconditionally
-                              in CI.
-    --no-fetch                Skip the remote-sync preflight: no 'git fetch <remote>
-                              --tags' and no behind-upstream check before releasing.
-                              Remote-only tag collisions then surface at push time
-                              instead. Also available as the NO_FETCH config/env key.
-    --no-hooks                Skip the PRE_BUMP_CMD / POST_TAG_CMD release hooks for
-                              this run (like git's --no-verify). CLI-only — there is
-                              no env or .ver-bumprc equivalent.
-    --branch                  Cut a release-<version> branch (the pre-2.0 default).
-                              Otherwise ver-bump tags the current branch in place.
-    --pr                      Create the release branch, push it, then open a pull
-                              request (GitHub-only, requires the `gh` CLI). Implies a
-                              push to origin (override the remote with -p). Base
-                              resolves to --base, else the branch you ran ver-bump from.
-    --base <branch>           Base branch for the --pr pull request (GitHub-only;
-                              only used with --pr, which requires `gh`).
-    --release                 After pushing, publish a GitHub release for the new tag
-                              (GitHub-only, requires `gh` and -p / --push <remote>).
-                              Notes are read from $VER_BUMP_RELEASE_NOTES_CMD (default
-                              `npx jv-k/releasetool`).
-    --sign                    Create a signed tag (git tag -s) instead of an annotated
-                              one. The signing key and program come from your git
-                              config (user.signingkey, gpg.format) — ver-bump does no
-                              key management. Also available as the TAG_SIGN
-                              config/env key.
-    --about                   Print name, version, author, and homepage; then exit.
-    --completions <shell>     Emit completion script for bash, zsh, or fish to stdout.
-    --install-completions [=<shell>]
-                              Install completion script (auto-detects shell if omitted).
-```
 
 ### Version suggestion
 

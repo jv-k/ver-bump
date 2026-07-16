@@ -281,7 +281,7 @@ do-changelog() {
     # Append existing log
     cat CHANGELOG.md >> "$TMP"
   else
-    printf '\nNo existing [%bCHANGELOG.md%b] found — creating one.\n' "${S_VAL}" "${RESET}"
+    printf 'No existing [%bCHANGELOG.md%b] found — creating one.\n' "${S_VAL}" "${RESET}"
   fi
 
   if [ "$FLAG_DRYRUN" = true ]; then

@@ -29,7 +29,9 @@ process-version() {
     V_PREV=$( jq -r '.version // empty' "$VER_FILE" 2>/dev/null )
 
     if [ -n "$V_PREV" ]; then
-      echo -e "\nCurrent version read from <${S_VAL}${VER_FILE}${RESET}>: ${S_VAL}$V_PREV${RESET}"
+      # No leading blank: this is the first line under the Verify pill (or it
+      # follows the remote-sync warning) — keep it tight to the header.
+      echo -e "Current version read from <${S_VAL}${VER_FILE}${RESET}>: ${S_VAL}$V_PREV${RESET}"
       # Only compute a suggestion when we'll actually prompt for it. With -v,
       # --major/--minor/--patch, or --preid the suggestion is discarded;
       # running it anyway printed a contradictory "suggesting <level> bump"
@@ -69,7 +71,7 @@ process-version() {
         fi
         V_PREV=""
       else
-        echo -e "\n<${S_VAL}${VER_FILE}${RESET}> ${reason} — current version derived from git tag <${S_VAL}${derived_tag}${RESET}>: ${S_VAL}$V_PREV${RESET}"
+        echo -e "<${S_VAL}${VER_FILE}${RESET}> ${reason} — current version derived from git tag <${S_VAL}${derived_tag}${RESET}>: ${S_VAL}$V_PREV${RESET}"
         if [ -z "$V_USR_SUPPLIED" ] && [ -z "${BUMP_LEVEL-}" ] && [ -z "${PRE_ID-}" ]; then
           set-v-suggest "$V_PREV" # full suggestion machinery, unchanged (R-SRC-2)
         fi

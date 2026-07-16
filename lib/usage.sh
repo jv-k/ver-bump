@@ -206,26 +206,44 @@ usage() {
     fi
   }
 
+  # _print-example-desc <text> — the description half of an example row, wrapped
+  # (on a TTY) and hung under OPT_COL. Shared by the inline and stacked layouts.
+  _print-example-desc() {
+    if (( TERM_COLS > 0 )) && [[ "$1" != *"  "* ]]; then
+      local wline
+      while IFS= read -r wline; do
+        printf '%*s' "$OPT_COL" ''
+        echo -e "$wline"
+      done < <(_help_wrap "$(_help_desc_avail)" "$1")
+    else
+      printf '%*s' "$OPT_COL" ''
+      echo -e "$1"
+    fi
+  }
+
   # print-example-row <command> <description> — 2-space gutter, bold command,
-  # description column aligned to OPT_COL. No "-x, --long" pattern.
+  # description column aligned to OPT_COL. A command that fits the column gets a
+  # clean two-column row (description wraps and hangs under OPT_COL). A command
+  # longer than the column would shove its description out of alignment — and,
+  # once wrapped, zig-zag back to the column — so it is stacked instead: the
+  # command sits alone on its line (also easier to copy) and the description
+  # hangs under OPT_COL on the line(s) below.
   print-example-row() {
     local cmd="$1" desc="$2"
-    local plain pad
-    plain="  ${cmd}"
+    local plain="  ${cmd}"
+
     if (( ${#plain} >= OPT_COL )); then
-      # Command overflows the column: keep a single-space gap before the
-      # description (the trailing ${pad# } strips one leading space, so two
-      # spaces here render as one).
-      pad="  "
-    else
-      printf -v pad '%*s' $((OPT_COL - ${#plain})) ''
+      printf '  %b%s%b\n' "${BOLD-}" "${cmd}" "${RESET-}"
+      [ -n "$desc" ] && _print-example-desc "$desc"
+      return
     fi
-    # Fluid: wrap the description, hanging continuations under OPT_COL.
+
+    local pad; printf -v pad '%*s' $((OPT_COL - ${#plain})) ''
     if (( TERM_COLS > 0 )) && [ -n "$desc" ] && [[ "$desc" != *"  "* ]]; then
       local wline first=1
       while IFS= read -r wline; do
         if (( first )); then
-          printf '  %b%s%b%s%s\n' "${BOLD-}" "${cmd}" "${RESET-}" "${pad# }" "${wline}"
+          printf '  %b%s%b%s%s\n' "${BOLD-}" "${cmd}" "${RESET-}" "$pad" "${wline}"
           first=0
         else
           printf '%*s' "$OPT_COL" ''
@@ -233,7 +251,7 @@ usage() {
         fi
       done < <(_help_wrap "$(_help_desc_avail)" "$desc")
     else
-      printf '  %b%s%b%s%s\n' "${BOLD-}" "${cmd}" "${RESET-}" "${pad# }" "${desc}"
+      printf '  %b%s%b%s%s\n' "${BOLD-}" "${cmd}" "${RESET-}" "$pad" "${desc}"
     fi
   }
 

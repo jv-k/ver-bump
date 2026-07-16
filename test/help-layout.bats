@@ -62,6 +62,18 @@ load 'test_helper'
   assert_output --partial "ver-bump [--source <file.json>] [--branch] [--pr] [--base <branch>] [--major | --minor | --patch] [--preid <id>] [--release] [--sign] [--completions <shell>] [--install-completions[=<shell>]] [--about]"
 }
 
+@test "help-layout: an over-long EXAMPLES command stacks above its description" {
+  # A command wider than the description column sits alone on its line (so the
+  # grid stays aligned and the command is easy to copy); the description hangs
+  # under the column on the next line. Guards against the old inline layout that
+  # shoved the description out of alignment.
+  run get_help_msg
+  assert_success
+  strip_ansi_output
+  assert_line "  ver-bump --bump 'main.go:Version = \"{{version}}\"'"
+  assert_output --partial "                                        Also bump a Go const"
+}
+
 @test "help-layout: piped (non-TTY) --help keeps descriptions on one line" {
   # The fluid wrap only engages on a real terminal; captured/piped output must
   # stay byte-stable so grepping the help — and these very tests — keeps

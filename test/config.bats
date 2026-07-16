@@ -44,6 +44,38 @@ _clear_config_env() {
   assert_equal "$TAG_PREFIX" "x"
 }
 
+# Unknown-key heuristic warning (ADR-05, R-CFG-7) ##############################
+
+@test "load-config: warns (non-fatal) on an unknown .ver-bumprc key" {
+  source ${profile_script}
+  local repo
+  repo="$(scratch_repo)"
+  cd "$repo"
+  _clear_config_env
+
+  printf 'TAG_PREFIX=ok\nTAG_PREFX=typo\n' > "$repo/.ver-bumprc"
+
+  run load-config
+  assert_success
+  strip_ansi_output
+  assert_output --partial "Unknown .ver-bumprc key 'TAG_PREFX'"
+  refute_output --partial "key 'TAG_PREFIX'"
+}
+
+@test "load-config: all-known keys (incl. deprecated) emit no unknown-key warning" {
+  source ${profile_script}
+  local repo
+  repo="$(scratch_repo)"
+  cd "$repo"
+  _clear_config_env
+
+  printf 'TAG_PREFIX=v\nREL_PREFIX=rel-\nFLAG_NOBRANCH=true\n' > "$repo/.ver-bumprc"
+
+  run load-config
+  assert_success
+  refute_output --partial "Unknown .ver-bumprc key"
+}
+
 @test "load-config: walks up to find .ver-bumprc in an ancestor directory" {
   source ${profile_script}
   local repo sub

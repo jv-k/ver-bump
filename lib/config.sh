@@ -100,6 +100,34 @@ _assert-rc-safe() {
   fi
 }
 
+# Warn (non-fatal, exit stays 0) on top-level assignments to keys outside the
+# supported allowlist — a lint heuristic that catches typos like TAG_PREFX=.
+# It reads the file text, so it only sees literal column-0 `NAME=` lines, not
+# computed or indented assignments; it is a footgun-catcher, NOT a security
+# control (that boundary is _assert-rc-safe). Emits to stderr so it never
+# pollutes the completions/--about stdout that main() produces later. R-CFG.
+_warn-unknown-rc-keys() {
+  local rc=$1 line key k known
+  while IFS= read -r line || [ -n "$line" ]; do
+    # Only bare column-0 `NAME=...` lines; a leading space (assignment nested
+    # in shell control-flow) is skipped so it can't trip a false positive.
+    case "$line" in
+      [A-Za-z_]*=*) key=${line%%=*} ;;
+      *) continue ;;
+    esac
+    # Reject anything that isn't a plain identifier (e.g. `export X`, `f() { X`).
+    case "$key" in
+      *[!A-Za-z0-9_]*) continue ;;
+    esac
+    known=0
+    for k in "${_CONFIG_KEYS[@]}"; do
+      [ "$key" = "$k" ] && { known=1; break; }
+    done
+    [ "$known" -eq 0 ] && log_warn "Unknown .ver-bumprc key '$key' — not a supported setting; it will have no effect." >&2
+  done < "$rc"
+  return 0  # non-fatal helper: never let the last key-check's status escape (set -e)
+}
+
 # Discover and source .ver-bumprc, preserving env-set values.
 # Absent file = silent no-op. World-writable file = exit 3.
 # Writes nothing to stdout (must stay clean; other codepaths emit
@@ -108,6 +136,7 @@ load-config() {
   local rc
   rc=$(_find-rc-upward) || return 0
   _assert-rc-safe "$rc"
+  _warn-unknown-rc-keys "$rc"
 
   # Snapshot env-exported values BEFORE sourcing, so env wins over file.
   # We only snapshot variables that were inherited from the environment

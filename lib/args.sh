@@ -573,6 +573,14 @@ process-arguments() {
     esac
   done
 
+  # -f/--file is the JSON-only forerunner of --bump. It still works exactly as
+  # before (routed to bump-json-files); when it is used, nudge the user toward
+  # --bump once — same JSON behaviour, plus TOML / YAML / text. Deliberately a
+  # soft suggestion, not a loud "deprecated" banner.
+  if [ "${#JSON_FILES[@]}" -gt 0 ]; then
+    log_warn "Consider ${S_VAL}--bump${RESET} instead of -f/--file — it bumps JSON the same way, and also handles TOML / YAML / text."
+  fi
+
   # --quiet and interactive prompts are incompatible by construction — a
   # hidden prompt is a hung pipeline (R-OUT-2). Fail fast at parse time
   # rather than mid-release. FLAG_CHANGELOG_PAUSE is checked here (not in

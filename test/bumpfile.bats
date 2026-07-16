@@ -123,3 +123,19 @@ load 'test_helper'
   assert_output --partial "not found"
   assert_output --partial "would set .version = '1.0.1' in other.json"
 }
+
+@test "-f/--file nudges the user toward --bump (still works, not hard-deprecated)" {
+  local repo
+  repo="$(scratch_repo)"
+  cd "$repo"
+  printf '{ "version": "1.0.0" }\n' > package.json
+  printf '{ "version": "1.0.0" }\n' > extra.json
+  git add -A && git commit -qm "seed"
+
+  run ${profile_script} -d -b -c -p origin -v 1.0.1 -f extra.json
+  strip_ansi_output
+  assert_success
+  # The suggestion appears, but -f still performs the bump.
+  assert_output --partial "Consider --bump instead of -f/--file"
+  assert_output --partial "would set .version = '1.0.1' in extra.json"
+}

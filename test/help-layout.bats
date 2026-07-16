@@ -65,14 +65,13 @@ load 'test_helper'
   refute_output --partial "[--install-completions[=<shell>]]"
 }
 
-@test "help-layout: OPTIONS lists the long flag first, short alias second" {
+@test "help-layout: OPTIONS lists the short alias first, long flag second" {
   run get_help_msg
   assert_success
   strip_ansi_output
-  assert_output --partial "--version, -v"
-  assert_output --partial "--message, -m"
-  # The old short-first order is gone.
-  refute_output --partial "-v, --version"
+  assert_output --partial "-v, --version"
+  assert_output --partial "-m, --message"
+  refute_output --partial "--version, -v"
 }
 
 @test "help-layout: no blank line after the name/version header pill" {

@@ -127,19 +127,19 @@ usage() {
   }
 
   # print-opt-row <short> <long> <arg-or-empty> <description>
-  # 2-space left gutter on every row. The long flag ("--noun") leads in bold;
-  # the short alias ("-x") follows it, dimmed (S_DIM) so it reads as secondary.
-  # Every row's long flag starts at the same column, so long-only rows need no
-  # extra indent.
+  # 2-space left gutter on every row. The short alias ("-x") leads, dimmed
+  # (S_DIM) so it reads as secondary; the long flag ("--noun") follows in bold.
+  # Long-only rows indent to align their long flag under the others'.
   print-opt-row() {
     local short="$1" long="$2" arg="$3" desc="$4"
     local plain label pad head_plain head_label
     if [ -n "$short" ]; then
-      head_plain="  ${long}, ${short}"
-      head_label="  ${BOLD-}${long}${RESET-}${S_DIM-}, ${short}${RESET-}"
+      head_plain="  ${short}, ${long}"
+      head_label="  ${S_DIM-}${short}${RESET-}, ${BOLD-}${long}${RESET-}"
     else
-      head_plain="  ${long}"
-      head_label="  ${BOLD-}${long}${RESET-}"
+      # Align long-only rows under the long-flag column: 2-space gutter + "-x, " = 6 chars.
+      head_plain="      ${long}"
+      head_label="      ${BOLD-}${long}${RESET-}"
     fi
     if [ -n "$arg" ]; then
       plain="${head_plain} ${arg}"

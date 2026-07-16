@@ -19,7 +19,8 @@
 
 `ver-bump` is **an opinionated release tool for Git projects with a
 `package.json`** — primarily Node / JS / TS, but also usable for any SemVer
-repo via `-f <file>.json` for the bump target. It automates the mechanical
+repo via `--source <file>` (or a git-tag fallback) for the version source,
+plus `-f` / `--bump` for extra bump targets. It automates the mechanical
 parts of cutting a release (SemVer bump, CHANGELOG, commit, tag, push),
 driven by Conventional Commits, across three selectable workflows:
 **tag-in-place** (default), **release branch** (`--branch`), or **release
@@ -323,7 +324,7 @@ Each requirement has an ID so tests and PRs can reference it.
 
 ## 10. Testing strategy
 
-- **Unit level** — one `.bats` file per feature under `test/` (`args.bats`, `version.bats`, `release.bats`, `pr.bats`, `undo.bats`, `sandbox.bats`, …) covers every requirement in §5. Currently **347 tests** across 29 files — every `R-*` bucket now has coverage (AC-1 holds), including the `R-SAFE` safety preflights (`worktree-clean.bats`, `release-branch-guard.bats`, `remote-sync.bats`, `no-release.bats`).
+- **Unit level** — one `.bats` file per feature under `test/` (`args.bats`, `version.bats`, `release.bats`, `pr.bats`, `undo.bats`, `sandbox.bats`, …) covers every requirement in §5. Currently **518 tests** across 38 files — every `R-*` bucket now has coverage (AC-1 holds), including the `R-SAFE` safety preflights (`worktree-clean.bats`, `release-branch-guard.bats`, `remote-sync.bats`, `no-release.bats`).
 - **Contract level** — exit-code table is asserted per branch in `fail()` unit tests (`test/errors.bats`).
 - **Regression** — running the test suite must not mutate the host repo: anything touching git state runs inside a `scratch_repo` throwaway (`test/test_helper.bash`).
 - **Emitted artefacts** — every completion script is syntax-checked (`bash -n` / `zsh -n` / `fish --no-execute`) in `test/completions-syntax.bats`.

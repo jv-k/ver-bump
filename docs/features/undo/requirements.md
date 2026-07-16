@@ -5,11 +5,11 @@ anything is pushed. Never touches a remote.
 
 | ID | Requirement | Status |
 | --- | --- | --- |
-| R-UNDO-1 | `--undo [version]` deletes the release branch + tag for `<version>` (default: current `package.json` version) and reverts the bump commit when it is `HEAD`. Local only. | ✅ shipped (`f8d65ea`) — `test/undo.bats` (12) |
+| R-UNDO-1 | `--undo [version]` deletes the release branch + tag for `<version>` (default: current `package.json` version) and reverts the bump commit when it is `HEAD`. Local only. | ✅ shipped (`f8d65ea`) — `test/undo.bats` (15) |
 | R-UNDO-2 | Honours `--dry-run`, `--yes`, `--tag-prefix`, `--branch-prefix` regardless of position in argv; worktree marker respected (`d32d426`). | ✅ shipped |
 | R-UNDO-3 | Prompts for confirmation before deleting; `-y` bypasses. | ✅ shipped |
 | R-UNDO-5 | Tag-in-place releases (no release branch — the 2.0 default, ADR-12) are handled: the tag is deleted and the bump commit kept. | ✅ shipped (PR #49) — `test/undo.bats` |
-| R-UNDO-4 | Precondition refusals and aborts use contract exit codes via `fail`. | ⚠️ mostly — one path exits `3` directly after `log_warn` instead of via `fail` (#51, being fixed in parallel). |
+| R-UNDO-4 | Precondition refusals and aborts use contract exit codes via `fail`. | ✅ shipped — every precondition refusal and abort routes through `fail` (`2`/`3`/`5`); no bare `exit` remains in `do-undo`. |
 
 Modules: `lib/args.sh` (pre-scan), `lib/git-actions.sh` (`do-undo`).
 Tests: `test/undo.bats`.

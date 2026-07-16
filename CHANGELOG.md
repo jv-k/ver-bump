@@ -4,9 +4,23 @@
 - **BREAKING:** bare `-v` / `--version` (no value) now prints the tool version and exits `0`; in 1.x it was a parse error. `-v <semver>` is unchanged.
 - **BREAKING:** exit codes are now a fixed contract — `0` success, `2` usage/parse, `3` precondition, `4` hook failure, `5` user abort; 1.x used `1` for everything. Wrappers branching on `0` vs non-zero are unaffected; those branching on specific codes must update.
 - **BREAKING:** `npm` is no longer invoked at runtime, so `npm version` lifecycle scripts (`preversion` / `version` / `postversion`) no longer fire as a side-effect. Migration: run them explicitly, or set `PRE_BUMP_CMD` / `POST_TAG_CMD` in `.ver-bumprc`.
+- feat: `--source <file>` sets the version source + primary bump target (default `package.json`), with a git-tag fallback so non-Node repos work.
+- feat: `--bump <spec>` also bumps JSON / TOML / YAML / text files (repeatable; `file:@dotted.path` or a `{{version}}` text pattern). TOML/YAML paths need `tomlq` / `yq` (conditional deps).
+- feat: `--major` / `--minor` / `--patch` force an explicit bump level from the current version.
+- feat: `--preid <id>` starts or advances a prerelease line (e.g. `1.2.0-rc.1`); conflicts with `-v`.
 - feat: `--pr` opens a release pull request via the `gh` CLI (branch + push + PR). Base resolves to `--base <branch>`, else `PR_BASE`, else the invocation branch, else the remote default branch.
 - feat: `--branch` opts into the `release-<version>` branch workflow; `--base <branch>` sets the `--pr` PR base.
-- feat(config): `.ver-bumprc` gains `FLAG_BRANCH` and `PR_BASE` keys.
+- feat: `--release` publishes a GitHub release for the new tag via `gh` (GitHub-only; requires `-p`). Notes default to `gh release create --generate-notes`, overridable with `$VER_BUMP_RELEASE_NOTES_CMD`.
+- feat: `--sign` creates a signed tag (`git tag -s`; config `TAG_SIGN`).
+- feat: `--undo [<version>]` rolls back a local release — deletes the tag (and any `release-*` branch) and reverts the bump commit, refusing when the tag was already pushed or the tree is dirty.
+- feat: `-q` / `--quiet` prints only the new version on stdout for scripting (needs `-y`, `-v`, a bump level, or `--preid`).
+- feat: `--completions <shell>` emits and `--install-completions` installs bash / zsh / fish completions.
+- feat(config): `.ver-bumprc` config file — a permission-guarded loader with `CLI > env > file > default` precedence; unknown keys draw a non-fatal warning. Keys include `TAG_PREFIX`, `SOURCE_FILE`, `BUMP_FILES`, `CHANGELOG_STYLE`, `FLAG_BRANCH`, and `PR_BASE`.
+- feat(config): `PRE_BUMP_CMD` / `POST_TAG_CMD` release hooks run before the bump / after the tag; a non-zero hook exits `4`. `--no-hooks` skips both for one run. Hooks see `VER_BUMP_VERSION`, `VER_BUMP_PREV_VERSION`, and `VER_BUMP_TAG`.
+- feat(config): `COMMIT_MSG_TEMPLATE` customises the bump commit subject via `${version}` placeholders.
+- feat(changelog): `CHANGELOG_STYLE=grouped` renders Conventional-Commit-grouped release notes; the default `flat` stays byte-identical to 1.x.
+- feat(checks): safety preflights — `--allow-dirty`, `--allow-empty`, `--no-fetch`, plus a `RELEASE_BRANCHES` branch guard.
+- feat(distribution): checksummed `curl … | bash` installer.
 - deprecate: `-b` / `--no-branch` is now a no-op (kept for back-compat) and prints a deprecation notice.
 
 ## 1.1.8 (August 23, 2023)

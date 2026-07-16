@@ -65,7 +65,7 @@ The command `ver-bump` will execute the following steps:
 ### Verify + Prepare Release
 
 - Verify some commits exist
-- Selects a semantic version number for the release branch & tag
+- Selects a semantic version number for the tag (and release branch, when `--branch` / `--pr` is used)
 - Suggests the next version based on Conventional Commits since the previous tag (`feat!:` → major, `feat:` → minor, otherwise patch), or bumps the trailing counter on a prerelease version (`4.0.0-dev.6` → `4.0.0-dev.7`)
   - Checks to see a tagged release with the chosen version already exists
 
@@ -73,10 +73,10 @@ The command `ver-bump` will execute the following steps:
 
 - Bump version number in `package.json`
 - Write `CHANGELOG.md`
-- Create release branch
-- Commit changes to files made by this script
+- Commit the changes made by this script to the current branch
 - Create a Git tag
-- Push release branch + tag to remote
+- Optionally push the commit + tag to the remote
+- *With `--branch` / `--pr`:* cut a `release-<version>` branch first and commit/tag there instead (the pre-2.0 default)
 
 ## Release Steps: In detail 🔎
 
@@ -100,13 +100,13 @@ The command `ver-bump` will execute the following steps:
     </tr>
     <tr>
       <td>Determine Release Version</td>
-      <td>If <code>&lt;package.json&gt;</code> doesn't exist, warn + exit. <br><br>If <code>-v</code> option is
-        specified, set version from that.<br><br> Or, grab from version from <code>package.json</code>.<br><br>Suggest
+      <td>If the version source (e.g. <code>&lt;package.json&gt;</code>) doesn't exist, derive the current version from the latest matching git tag (<code>vX.Y.Z</code>); exit only if no such tag exists either. <br><br>If <code>-v</code> option is
+        specified, set version from that.<br><br> Or, grab the version from the source file.<br><br>Suggest
         incremented version number in the form of <code>MAJOR.MINOR.PATCH</code> (incrementing <code>PATCH</code>), as
         per Semver 2.0.0.<br><br>Give the user the option to modify/confirm suggested version bump.</td>
     </tr>
     <tr>
-      <td>Check branch exist</td>
+      <td>Check branch exist <em>(only with <code>--branch</code> / <code>--pr</code>)</em></td>
       <td>Ensure a release branch with the chosen version number doesn't already exist, if so exit.</td>
     </tr>
     <tr>
@@ -124,15 +124,15 @@ The command `ver-bump` will execute the following steps:
         messages for files modified by this script itself. Stages changes for commit action later.</td>
     </tr>
     <tr>
-      <td>Create release branch</td>
-      <td>Create a branch with the name <code>release-MAJOR.MINOR.PATCH</code> and switch to it (following the <a
+      <td>Create release branch <em>(only with <code>--branch</code> / <code>--pr</code>)</em></td>
+      <td>By default ver-bump tags in place on the current branch and skips this step. With <code>--branch</code> / <code>--pr</code> it creates a branch named <code>release-MAJOR.MINOR.PATCH</code> and switches to it (following the <a
           href="https://nvie.com/posts/a-successful-git-branching-model/" rel="nofollow">Git branch-based
           workflow</a>).</td>
     </tr>
     <tr>
       <td>Commit changed files</td>
-      <td>Commits changes to <code>package.json</code> and CHANGELOG.md` (staged in the previous steps) to the release
-        branch.</td>
+      <td>Commits changes to <code>package.json</code> and <code>CHANGELOG.md</code> (staged in the previous steps) to the current
+        branch (or the release branch when <code>--branch</code> / <code>--pr</code> is used).</td>
     </tr>
     <tr>
       <td>Create Git tag</td>
@@ -140,7 +140,7 @@ The command `ver-bump` will execute the following steps:
     </tr>
     <tr>
       <td>Push</td>
-      <td>Optionally, push the release branch to origin.</td>
+      <td>Optionally, push the commit + tag to origin (plus the release branch when <code>--branch</code> / <code>--pr</code> is used).</td>
     </tr>
   </tbody>
 </table>
@@ -576,13 +576,12 @@ $ ver-bump --dry-run
 [dry-run] git add package.json
 [dry-run] git add package-lock.json
 [dry-run] would replace CHANGELOG.md with: ...
-[dry-run] would run: git branch release-1.0.1 && git checkout release-1.0.1
 [dry-run] would run: git commit -m 'chore: updated package.json, ...'
 [dry-run] would run: git tag -a v1.0.1 -m 'Tag version 1.0.1.'
 ```
 
-Combine with `--no-branch` / `--no-commit` / `--no-changelog` to narrow the
-preview down to just the steps you want to see.
+Combine with `--no-commit` / `--no-changelog` to narrow the preview down to
+just the steps you want to see.
 
 ### Release hooks
 
@@ -672,7 +671,7 @@ Then restart the shell (or `compinit` / `source` the file). You get:
 
 > This example assumes that a `package.json` contains `version: "1.0.0"`, and the user is working in the branch to be released with pre-existing un-released commits.
 
-1. This will create a new Git branch called `release-1.0.1` and a Git tag named `v1.0.1`:
+1. By default `ver-bump` **tags in place** — it commits the bump and tags your current branch, with no release branch. This bumps `package.json` to `1.0.1` and creates the tag `v1.0.1`:
 
     ```sh
     $ ver-bump
@@ -681,52 +680,38 @@ Then restart the shell (or `compinit` / `source` the file). You get:
     Output:
 
     ```text
-    Current version read from <package.json> file: 1.0.0
+     VERIFY 
+    Current version read from <package.json>: 1.0.0
 
-    Enter a new version number or press <enter> to use [1.0.1]: <pressed enter>
+    Enter a new version number, <enter> for [1.0.1], or <esc> to quit: ⏎
 
-    ––––––
+     RELEASE 
+    ✔ Bumped version in <package.json>.
 
-    ✅ Updated file <package.json> from 1.0.0 -> 1.0.1
-
-    ✅ Updated [CHANGELOG.md] file
-
-    Make adjustments to [CHANGELOG.md] if required now. Press <enter> to continue.
-
-    Creating new release branch...
-
-    ✅ Switched to branch 'release-1.0.1'
-    M CHANGELOG.md
-    M package.json
+     CHANGELOG 
+    No existing [CHANGELOG.md] found — creating one.
+    ✔ Created [CHANGELOG.md].
 
     Committing...
+    ✔ [main ace8b1e] chore: updated package.json, created CHANGELOG.md, bumped 1.0.0 -> 1.0.1
+     2 files changed, 7 insertions(+), 1 deletion(-)
+     create mode 100644 CHANGELOG.md
+    ✔ Tagged v1.0.1
 
-    ✅ [release-1.0.1 ace8b1e] Updated package.json, Updated CHANGELOG.md, Bumped 1.0.0 –> 1.0.1
-    2 files changed, 9 insertions(+), 1 deletion(-)
+    ? Push branch + tags to <origin>? [N/y] y
 
-    ✅ Added GIT tag
+    Pushing branch + tag to <origin>...
+    ✔ To github.com:acme/widget.git
+       9abef73..ace8b1e  main -> main
+     * [new tag]         v1.0.1 -> v1.0.1
 
-    Push tags to <origin>? [N/y]: n
-
-    ––––––
-
-    ✅ Bumped 1.0.0 –> 1.0.1
-
-    🏁 Done!
+     DONE 
+    ✔ Bumped 1.0.0 -> 1.0.1
     ```
 
-2. After checking out the changes in the branch and confirming them, test the release, and push the release branch to your remote if you didn't choose to push it automatically. Alternatively, use `$ ver-bump -p origin` to bypass the prompt and push the release branch anyway to the remote automatically.
-3. If your code checks out, then open a Pull Request to merge the release branch into your `develop` or main branch.
+    The commit and tag land on your current branch. If you declined the push prompt, push later on a re-run with `-p origin`, or manually with `git push --follow-tags`.
 
-    You can merge the release branch into your development branch or main branch like this, without fast-forwarding so that the branch topology is preseved as you're merging in a release branch that hasn't diverged (apart from new changes to `CHANGELOG.md` and `package.json`) and you want to ensure it's clearly evident when reading the history that a merge was performed, as opposed to a fast-forward merge, where new commits performed by the merge will become descendents of the last commit before the merge.
-
-    A release branch shouldn't normally diverge from the branch it was created during the time `ver-bump` is operating, so a non-fastforward should be possible instead of a normal merge, which would simply looks like a new commit was made to the main or development branch.
-
-    ```sh
-    $ git checkout develop # Switch to development branch from the new release branch
-
-    $ git merge --no-ff release-1.0.1 # Merge the new release branch to your development branch
-    ```
+2. **Prefer a release branch + PR instead?** Run `ver-bump --pr` (or `--branch`) to cut a `release-1.0.1` branch, push it, and open a pull request for review rather than tagging in place — the pre-2.0 workflow. With `--pr`, `gh` opens the PR against your base branch (`--base`, else the branch you ran from). See [Workflows](#workflows).
 
 ## Development
 

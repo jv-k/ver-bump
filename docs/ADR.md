@@ -26,7 +26,7 @@ B-3); `jq` becomes a hard dependency; the tool works in any SemVer repo.
 
 ---
 
-## ADR-02 — Fixed exit-code contract (0–5, 4 reserved)
+## ADR-02 — Fixed exit-code contract (0–5)
 
 **Status:** Accepted (2.0) · PRD §5.6, R-EXIT
 
@@ -34,13 +34,13 @@ B-3); `jq` becomes a hard dependency; the tool works in any SemVer repo.
 distinguish usage errors from preconditions from user aborts.
 
 **Decision:** `0` success, `1` generic, `2` usage/parse, `3` precondition,
-`4` reserved for a future hook system, `5` user abort. All exits go through
-`fail <code> <message> [hint]` (`lib/errors.sh`). The contract is versioned
-with the major release.
+`4` hook failure (`PRE_BUMP_CMD` / `POST_TAG_CMD` exited non-zero), `5` user
+abort. All exits go through `fail <code> <message> [hint]` (`lib/errors.sh`).
+The contract is versioned with the major release.
 
 **Consequences:** Scriptable failure classes; every new error path needs an
-`errors.bats` case. Reserving `4` pre-commits a slot so the future hook
-system isn't a breaking change.
+`errors.bats` case. Code `4` was reserved up front for the release-hook
+system, which shipped in 2.0 (`lib/hooks.sh`) and now owns it.
 
 ---
 
@@ -103,11 +103,10 @@ allowlist; unknown keys draw a **non-fatal** warning (exit stays `0`) — a lint
 heuristic over top-level `KEY=` assignment lines that catches typos, not
 computed assignments, and is explicitly *not* a security control.
 
-**Update (grill 2026-07-16):** the warning was specced in the release plan but
-never built — `.ver-bumprc` keys were being silently sourced, so a typo'd key
-was accepted in silence (contra G2). This ADR is the authority for
-implementing it as the heuristic above; the code + `config.bats` case are on
-the 2.0 enactment queue.
+**Update (grill 2026-07-16, landed):** the warning is implemented as
+`_warn-unknown-rc-keys` (`lib/config.sh`) and covered by `config.bats`.
+Unknown top-level `KEY=` lines draw a non-fatal warning (exit stays `0`);
+computed or indented assignments are deliberately not flagged.
 
 ---
 
@@ -121,8 +120,8 @@ change touched one grab-bag file, and review diffs were unreadable.
 **Decision:** Split into focused modules with one reason to change each:
 `args`, `version`, `validate`, `changelog`, `git-checks`, `git-actions`,
 `config`, `json`, `errors`, `completions`, `usage`, `ui`, `styles`,
-`icons`. `ver-bump.sh` keeps globals + `main()` orchestration and
-implements nothing.
+`icons`, `hooks`, `textbump`. `ver-bump.sh` keeps globals + `main()`
+orchestration and implements nothing.
 
 **Consequences:** Globals are the integration surface between modules
 (documented at the top of `ver-bump.sh`); shellcheck lints files in
@@ -157,7 +156,7 @@ expansions so sourcing without styles never explodes.
 **Context:** A single `ver-bump.bats` monolith (54 tests) was slow to
 navigate and git-state leaks between tests corrupted the host repo.
 
-**Decision:** One `.bats` file per feature (20 files, 206 tests at
+**Decision:** One `.bats` file per feature (38 files, 518 tests at
 reconciliation time); anything touching git runs inside a `mktemp`-backed
 `scratch_repo`; shared setup lives in `test_helper.bash`; assertions use
 bats-assert with explicit exit codes.

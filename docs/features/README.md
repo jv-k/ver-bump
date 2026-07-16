@@ -19,7 +19,7 @@ contract); IDs added after the PRD are backfilled here first.
 | [exit-codes](./exit-codes/requirements.md) | R-EXIT | `errors.bats` |
 | [config-file](./config-file/requirements.md) | R-CFG | `config.bats`, `config-env.bats` |
 | [completions](./completions/requirements.md) | R-COMP | `args.bats`, `completions-syntax.bats`, `install-completions.bats` |
-| [changelog](./changelog/requirements.md) | R-LOG | `changelog.bats` |
+| [changelog](./changelog/requirements.md) | R-LOG, R-CHLOG | `changelog.bats`, `changelog-grouped.bats` |
 | [commit-template](./commit-template/requirements.md) | R-TPL | `commit-template.bats` |
 | [release-flow](./release-flow/requirements.md) | R-FLOW | `git-ops.bats`, `pr.bats`, `prefixes.bats`, `e2e-live.bats` |
 | [signed-tags](./signed-tags/requirements.md) | R-SIGN | `signed-tags.bats`, `args.bats` |

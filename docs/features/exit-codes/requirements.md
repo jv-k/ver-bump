@@ -17,4 +17,4 @@ Stable machine contract (PRD G4) so CI wrappers can branch on failure class.
 | R-EXIT-2 | Contract is versioned with the major release; must not shift between `2.x` patches. | ✅ documented here + `lib/errors.sh` |
 
 Modules: `lib/errors.sh` (`fail <code> <message> [hint]`).
-Tests: `test/errors.bats` (19) — every new `fail` site needs a case here.
+Tests: `test/errors.bats` (21) — every new `fail` site needs a case here.

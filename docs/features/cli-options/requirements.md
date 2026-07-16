@@ -22,5 +22,5 @@ in `normalize-long-opts` before `getopts` runs; flags they honour
 Known doc drift: the `normalize-long-opts` header comment says unknown long
 options "exit 1"; the code (correctly, per R-OPT-3) uses `fail 2`.
 
-Modules: `lib/args.sh`, `lib/usage.sh`. Tests: `test/args.bats` (51),
+Modules: `lib/args.sh`, `lib/usage.sh`. Tests: `test/args.bats` (76),
 `test/prefixes.bats`.

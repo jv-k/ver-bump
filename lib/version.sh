@@ -159,6 +159,10 @@ process-version() {
         "Re-run and enter a version (or <enter> for the suggestion), or pass -v <version> to skip the prompt."
     fi
     if [ -z "$_first" ]; then
+      # Enter accepted the suggestion, but the silent read swallowed the
+      # keystroke unechoed — terminate the (no-newline) prompt line so the
+      # next section header keeps its blank line above.
+      printf '\n'
       V_USR_INPUT=""
     elif [ -t 0 ] && (( ${BASH_VERSINFO[0]:-0} >= 4 )); then
       # Interactive on bash 4+: pre-fill readline so the first char stays

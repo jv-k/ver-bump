@@ -50,5 +50,5 @@ labels already in the repo. See
 ### Domain docs
 
 **Single-context.** ADRs live in a single `docs/ADR.md` (`ADR-NN` sections),
-alongside `docs/PRD.md` and `docs/features/*/requirements.md`; `CONTEXT.md` is
-created lazily. See [`docs/agents/domain.md`](docs/agents/domain.md).
+alongside `docs/PRD.md` and `docs/features/*/requirements.md`; `docs/CONTEXT.md`
+is created lazily. See [`docs/agents/domain.md`](docs/agents/domain.md).

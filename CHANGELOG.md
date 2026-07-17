@@ -1,3 +1,9 @@
+## 2.0.0 (2026-07-17)
+- chore: updated package.json, updated CHANGELOG.md, bumped 2.0.0-rc.1 -> 2.0.0
+- ci(screenshots): drop the release trigger to avoid the GA main-reset race
+- ci(screenshots): pre-install ffmpeg for the flaky vhs-action install
+- fix: stop dev/verify-rc.sh check 4 hanging on the push-offer prompt
+
 ## 2.0.0-rc.1 (2026-07-17)
 - chore: updated package.json, updated CHANGELOG.md, bumped 1.1.8 -> 2.0.0-rc.1
 - chore: add dev/verify-rc.sh for release-candidate verification

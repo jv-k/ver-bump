@@ -61,7 +61,10 @@ if [ -n "$BIN" ] && [ -x "$BIN" ]; then
       && printf '{ "version": "1.0.0" }\n' > package.json \
       && git add -A && git commit -qm seed \
       && printf 'TAG_PREFX=oops\n' > .ver-bumprc )
-  out=$(cd "$sb" && "$BIN" --dry-run -v 1.0.1 --allow-dirty -y 2>&1 || true)
+  # -n skips commit/tag/push (avoids the interactive push-offer prompt, which -y
+  # does not auto-answer); </dev/null hard-guards against any read blocking. The
+  # unknown-key warning fires at load-config, before any of that.
+  out=$(cd "$sb" && "$BIN" --dry-run -v 1.0.1 --allow-dirty -y -n </dev/null 2>&1 || true)
   if printf '%s\n' "$out" | grep -q "Unknown .ver-bumprc key 'TAG_PREFX'"; then
     ok "unknown-key warning fired"
   else

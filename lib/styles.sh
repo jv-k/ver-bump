@@ -65,8 +65,6 @@ fi
 # these rather than raw colour vars so a single edit here re-skins the tool.
 S_NORM="${BOLD}"      # emphasis = bold of the terminal's own fg (no colour)
 S_LIGHT="${DIM}"      # markers/secondary = dim the terminal fg (theme-adaptive)
-S_QUESTION="${YELLOW}"
-S_PROMPT="${CYAN}"    # accent for the leading prompt glyph only
 S_WARN="${LIGHTRED}"
 S_ERROR="${RED}"
 S_DIM="${DIM}"
@@ -82,8 +80,9 @@ S_VAL="${GREEN}"      # inline values (versions, paths, remotes) in run output
 S_NOTICE="${GREEN}"
 
 # Inverted-video bold pills for section headers — ` TEXT ` reads as a solid
-# coloured bar. Four severity variants: cyan (primary), green (secondary),
-# yellow (outdated / warning), red (error). Close with S_HDR_END.
+# coloured bar. Five variants: cyan (primary), green (secondary), yellow
+# (outdated / warning), red (error), magenta (interactive prompt — awaiting
+# user input). Close with S_HDR_END.
 #
 # Built from a single combined ANSI sequence (7=invert, 1=bold, 3N=fg) rather
 # than ${INVERT}${BOLD}${COLOUR} concatenated, because the standalone fg codes
@@ -93,7 +92,8 @@ if [ "$USE_COLOR" = 1 ]; then
   S_HDR_SUB=$'\033[7;1;32m'
   S_HDR_YELLOW=$'\033[7;1;33m'
   S_HDR_RED=$'\033[7;1;31m'
+  S_HDR_PURPLE=$'\033[7;1;35m'
   S_HDR_END=$'\033[0m'
 else
-  S_HDR_CYAN=''; S_HDR_SUB=''; S_HDR_YELLOW=''; S_HDR_RED=''; S_HDR_END=''
+  S_HDR_CYAN=''; S_HDR_SUB=''; S_HDR_YELLOW=''; S_HDR_RED=''; S_HDR_PURPLE=''; S_HDR_END=''
 fi

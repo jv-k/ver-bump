@@ -40,6 +40,9 @@ log_trace() {
 # section    <TEXT> [<count>]  — cyan pill  (primary heading)
 # subsection <TEXT> [<count>]  — green pill (secondary heading)
 # subsection_warn / subsection_error for yellow / red variants.
+# prompt_input / prompt_confirm — magenta pills announcing interactive
+# prompts (INPUT = free-text entry, CONFIRM = y/N or press-enter); the
+# question line follows on the next line with no leading glyph.
 
 _render_pill() {
   local colour="$1" text="$2" count="${3-}" upper label
@@ -49,13 +52,15 @@ _render_pill() {
   else
     label=" ${upper} "
   fi
-  printf '\n%b%s%b\n' "${colour}" "${label}" "${S_HDR_END-}"
+  printf '\n %b%s%b\n' "${colour}" "${label}" "${S_HDR_END-}"
 }
 
 section()          { _render_pill "${S_HDR_CYAN-}"   "$1" "${2-}"; }
 subsection()       { _render_pill "${S_HDR_SUB-}"  "$1" "${2-}"; }
 subsection_warn()  { _render_pill "${S_HDR_YELLOW-}" "$1" "${2-}"; }
 subsection_error() { _render_pill "${S_HDR_RED-}"    "$1" "${2-}"; }
+prompt_input()     { _render_pill "${S_HDR_PURPLE-}" "INPUT"; }
+prompt_confirm()   { _render_pill "${S_HDR_PURPLE-}" "CONFIRM"; }
 
 # ── Branded version block — multi-line splash ─────────────────────────────
 # Shown by --about and at the top of --help. Pulls name / version / author

@@ -10,9 +10,10 @@
 #   - Emphasis              → S_NORM (bold of the terminal's own fg — never
 #                              a fixed colour like the old WHITE/1;37)
 #   - Interpolated values  → S_VAL (green)
-#   - Soft prompts          → S_PROMPT-accented leading glyph (I_PROMPT),
-#                              then default-fg question text, value in
-#                              S_VAL, choice hint (e.g. "[N/y]") in S_DIM
+#   - Soft prompts          → magenta INPUT/CONFIRM pill (prompt_input /
+#                              prompt_confirm), then default-fg question
+#                              text, value in S_VAL, choice hint (e.g.
+#                              "[N/y]") in S_DIM
 #   - Warning bodies        → S_WARN "Warning:" prefix + plain body
 #   - Errors                → via fail helper (S_ERROR label, S_NORM body)
 #   - Dim markers            → S_LIGHT ("[dry-run]", "Option set:") — a
@@ -106,14 +107,16 @@ ui_repo() {
   refute_output --partial $'\033[0;37m'
 }
 
-@test "UI: push prompt shows the S_PROMPT-accented glyph + default-fg question text" {
+@test "UI: push prompt shows the magenta CONFIRM pill + default-fg question text" {
   ui_repo
   run bash -c "echo n | env CLICOLOR_FORCE=1 '${profile_script}' -d -y -v 1.0.1"
   assert_failure 5
-  # Cyan glyph (S_PROMPT+I_PROMPT), reset, then the question in the
-  # terminal's own default fg (no colour wrap) up to the S_VAL-accented
-  # PUSH_DEST value.
-  assert_output --partial $'\033[0;36m?\033[0m Push branch + tags to <\033[0;32morigin\033[0m>? \033[2m[N/y]\033[0m'
+  # Magenta inverted pill on its own line (with the one-space lead-in all
+  # pills share), then the question in the terminal's own default fg (no
+  # colour wrap, no leading glyph) up to the S_VAL-accented PUSH_DEST value.
+  assert_output --partial $' \033[7;1;35m CONFIRM \033[0m\nPush branch + tags to <\033[0;32morigin\033[0m>? \033[2m[N/y]\033[0m'
+  # No more cyan "?" glyph (old S_PROMPT+I_PROMPT) on this prompt.
+  refute_output --partial $'\033[0;36m?\033[0m Push branch'
   # No more whole-line yellow (old S_QUESTION) wrap on this prompt.
   refute_output --partial $'\033[1;33mPush branch'
 }
@@ -122,8 +125,9 @@ ui_repo() {
   ui_repo
   run bash -c "echo n | env CLICOLOR_FORCE=1 '${profile_script}' -d -y -v 1.0.1"
   assert_failure 5
-  # subsection() renders an inverted bold-green pill: \e[7;1;32m TEXT \e[0m
-  assert_output --partial $'\033[7;1;32m CHANGELOG \033[0m'
+  # subsection() renders an inverted bold-green pill, indented one space:
+  # " \e[7;1;32m TEXT \e[0m"
+  assert_output --partial $' \033[7;1;32m CHANGELOG \033[0m'
 }
 
 @test "UI: NO_COLOR strips all ANSI, including the new tokens" {

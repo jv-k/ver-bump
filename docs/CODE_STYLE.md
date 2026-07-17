@@ -60,9 +60,11 @@ those regression tests.
   - interpolated values → `S_VAL` (green)
   - emphasis → `S_NORM` (bold of the terminal's own fg — never a fixed
     colour; the old `WHITE`/`1;37` hardcode fought light/dark themes)
-  - soft (confirmation) prompts → a coloured leading glyph (`S_PROMPT` +
-    `I_PROMPT`), then default-fg question text, the value in `S_VAL`, and
-    the choice hint (e.g. `[N/y]`) in `S_DIM` — not a whole-line colour wrap
+  - interactive prompts → a magenta pill heading (`prompt_input` for
+    free-text entry, `prompt_confirm` for y/N or press-enter pauses), then
+    default-fg question text on the next line, the value in `S_VAL`, and
+    the choice hint (e.g. `[N/y]`) in `S_DIM` — no leading glyph, not a
+    whole-line colour wrap
   - warnings → `S_ATTN` / `S_WARN` + plain body
   - errors → via `fail` (uses `S_ERROR`)
   - dim markers → `S_LIGHT` (`[dry-run]`, `Option set:`) — theme-adaptive

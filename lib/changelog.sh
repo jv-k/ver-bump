@@ -302,7 +302,8 @@ do-changelog() {
 
   # Optionally pause & allow user to open and edit the file:
   if [ "$FLAG_CHANGELOG_PAUSE" = true ] && [ "$FLAG_DRYRUN" != true ]; then
-    printf '\n%bMake adjustments to [%bCHANGELOG.md%b] if required now. Press <enter> to continue.%b' "${S_QUESTION}" "${S_VAL}" "${S_QUESTION}" "${RESET}"
+    prompt_confirm
+    printf 'Make adjustments to [%bCHANGELOG.md%b] if required now. Press <enter> to continue. ' "${S_VAL-}" "${RESET-}"
     read -r
   fi
 

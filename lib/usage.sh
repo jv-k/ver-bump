@@ -113,7 +113,7 @@ usage() {
   # USAGE — a concise synopsis (à la `gh`), not an enumeration of every flag.
   # The version is an OPTION value (-v <version>), not a positional, so it is
   # shown as such; the rest of the flag list lives in OPTIONS below.
-  printf '\n%bUSAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  printf '\n %b USAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   printf '  %b%s%b [-v <version>] [options]\n' "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
 
   # Column width for label + 2-space gutter. Longest label is
@@ -279,7 +279,7 @@ usage() {
   # OPTIONS — grouped by task, in the order you meet them during a release.
   # --about is intentionally not listed here (it still works). The "long forms
   # accept …" note is at the bottom.
-  printf '\n%bOPTIONS %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  printf '\n %b OPTIONS %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
 
   print-opt-group "Choose the new version"
   print-opt-row "-v" "--version"       "[<version>]" "Without a value: print tool version and exit. With a value: set manual SemVer."
@@ -340,7 +340,7 @@ usage() {
   print-opt-row ""   "--install-completions" "[=<shell>]" "Install completion script (auto-detects shell)."
 
   # EXAMPLES section pill
-  printf '\n%bEXAMPLES %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  printf '\n %b EXAMPLES %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   print-example-row "${SCRIPT_NAME}"                       "Interactive — reads commits, suggests bump, prompts."
   print-example-row "${SCRIPT_NAME} -v 2.0.0"              "Non-interactive, explicit version."
   print-example-row "${SCRIPT_NAME} --dry-run"             "Preview every side-effect without executing."

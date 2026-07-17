@@ -136,8 +136,8 @@ process-version() {
     fi
   else
     # Display a suggested version
-    printf '\n%b%s%b Enter a new version number, %b<enter> for [%b%s%b], or <esc> to quit:%b ' \
-      "${S_PROMPT-}" "${I_PROMPT-}" "${RESET-}" \
+    prompt_input
+    printf 'Enter a new version number, %b<enter> for [%b%s%b], or <esc> to quit:%b ' \
       "${S_DIM-}" \
       "${S_VAL-}" "$V_SUGGEST" "${RESET-}${S_DIM-}" \
       "${RESET-}"

@@ -111,10 +111,10 @@ ui_repo() {
   ui_repo
   run bash -c "echo n | env CLICOLOR_FORCE=1 '${profile_script}' -d -y -v 1.0.1"
   assert_failure 5
-  # Magenta inverted pill on its own line (with the one-space lead-in all
-  # pills share), then the question in the terminal's own default fg (no
-  # colour wrap, no leading glyph) up to the S_VAL-accented PUSH_DEST value.
-  assert_output --partial $' \033[7;1;35m CONFIRM \033[0m\nPush branch + tags to <\033[0;32morigin\033[0m>? \033[2m[N/y]\033[0m'
+  # Magenta inverted pill on its own line, flush to the margin, then the
+  # question in the terminal's own default fg (no colour wrap, no leading
+  # glyph) up to the S_VAL-accented PUSH_DEST value.
+  assert_output --partial $'\n\033[7;1;35m CONFIRM \033[0m\nPush branch + tags to <\033[0;32morigin\033[0m>? \033[2m[N/y]\033[0m'
   # No more cyan "?" glyph (old S_PROMPT+I_PROMPT) on this prompt.
   refute_output --partial $'\033[0;36m?\033[0m Push branch'
   # No more whole-line yellow (old S_QUESTION) wrap on this prompt.
@@ -125,9 +125,9 @@ ui_repo() {
   ui_repo
   run bash -c "echo n | env CLICOLOR_FORCE=1 '${profile_script}' -d -y -v 1.0.1"
   assert_failure 5
-  # subsection() renders an inverted bold-green pill, indented one space:
-  # " \e[7;1;32m TEXT \e[0m"
-  assert_output --partial $' \033[7;1;32m CHANGELOG \033[0m'
+  # subsection() renders an inverted bold-green pill, flush to the margin:
+  # "\e[7;1;32m TEXT \e[0m"
+  assert_output --partial $'\n\033[7;1;32m CHANGELOG \033[0m'
 }
 
 @test "UI: NO_COLOR strips all ANSI, including the new tokens" {

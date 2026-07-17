@@ -52,7 +52,7 @@ _render_pill() {
   else
     label=" ${upper} "
   fi
-  printf '\n %b%s%b\n' "${colour}" "${label}" "${S_HDR_END-}"
+  printf '\n%b%s%b\n' "${colour}" "${label}" "${S_HDR_END-}"
 }
 
 section()          { _render_pill "${S_HDR_CYAN-}"   "$1" "${2-}"; }

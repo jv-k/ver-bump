@@ -458,3 +458,28 @@ encouraged but not a hard gate — maintainer discretion.
 **Consequences:** "Done" is a checklist, not a feeling; the gate is the last
 guard before the ADR-19 reset. Behavioural changes introduced during hardening
 extend criterion 5.
+
+---
+
+## ADR-21 — `main` is the canonical working branch post-2.0
+
+**Status:** Accepted (2.0.1) · 2026-07-17 · supersedes the `develop`-centric model of ADR-09 / ADR-19
+
+**Context:** ADR-09 made `develop` the integration branch and ADR-19 planned a
+`develop`→`main` **reset** at GA. In practice the 2.0.0 GA and the follow-up
+work — dependabot action bumps, a `fix(ui)` prompt-newline, the 2.0.1 bump —
+were done directly on `main`, leaving `develop` behind at `2.0.0-rc.1`. `main`
+is a clean superset of `develop` (no divergence), so the GA effectively landed
+"main forward" rather than by the planned reset.
+
+**Decision:** From 2.0 onward, **`main` is the canonical working *and* release
+branch**. Ongoing work and release cuts happen on `main`; `develop` is
+fast-forwarded to **track** `main` (a mirror, not an independent integration
+line). ADR-09's "local `develop` is canonical" and ADR-19's "reset
+main→develop at GA" clauses are superseded — GA landed the other way, and that
+is the go-forward model.
+
+**Consequences:** One primary branch — simpler for a solo maintainer.
+`develop` only ever fast-forwards to `main`; it never leads. ADR-17's
+force-push-window / branch-protection intent now applies to `main`. Future
+release ADRs and runbooks reference `main`, not `develop`.

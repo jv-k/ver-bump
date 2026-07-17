@@ -1,3 +1,14 @@
+## 2.0.1 (2026-07-17)
+- chore: updated package.json, updated CHANGELOG.md, bumped 2.0.0 -> 2.0.1
+- Merge pull request #99 from jv-k/dependabot/github_actions/stefanzweifel/git-auto-commit-action-7.2.0
+- Merge pull request #101 from jv-k/fix/input-prompt-newline
+- Merge pull request #98 from jv-k/dependabot/github_actions/actions/setup-node-7.0.0
+- Merge pull request #97 from jv-k/dependabot/github_actions/actions/upload-artifact-7.0.1
+- fix(ui): terminate prompt line when enter accepts the suggestion
+- ci: bump stefanzweifel/git-auto-commit-action from 5.2.0 to 7.2.0
+- ci: bump actions/setup-node from 4.4.0 to 7.0.0
+- ci: bump actions/upload-artifact from 4.6.2 to 7.0.1
+
 ## 2.0.0 (2026-07-17)
 - chore: updated package.json, updated CHANGELOG.md, bumped 2.0.0-rc.1 -> 2.0.0
 - ci(screenshots): drop the release trigger to avoid the GA main-reset race

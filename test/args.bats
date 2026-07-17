@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 # Argument parsing: short flags, long flags, -h, --completions, option errors.
-# Tests were migrated verbatim from the monolithic ver-bump.bats; see
+# Tests were migrated verbatim from the monolithic VerBump.bats; see
 # test/test_helper.bash for the shared setup/teardown/helpers.
 
 load 'test_helper'
@@ -313,7 +313,7 @@ load 'test_helper'
 @test "completions: --completions bash emits a parseable script" {
   run ${profile_script} --completions bash
   assert_success
-  assert_output --partial "complete -F _ver_bump ver-bump"
+  assert_output --partial "complete -F _ver_bump VerBump"
   # Script must be syntactically valid bash
   tmp=$(mktemp)
   echo "$output" > "$tmp"
@@ -324,7 +324,7 @@ load 'test_helper'
 @test "completions: --completions zsh emits a #compdef script" {
   run ${profile_script} --completions zsh
   assert_success
-  assert_output --partial "#compdef ver-bump"
+  assert_output --partial "#compdef VerBump"
   assert_output --partial "_arguments"
 }
 
@@ -338,7 +338,7 @@ load 'test_helper'
 @test "completions: --completions=<shell> form works" {
   run ${profile_script} --completions=zsh
   assert_success
-  assert_output --partial "#compdef ver-bump"
+  assert_output --partial "#compdef VerBump"
 }
 
 @test "completions: unknown shell exits non-zero" {
@@ -350,7 +350,7 @@ load 'test_helper'
 @test "completions: no shell argument prints usage hint" {
   run ${profile_script} --completions
   assert_success
-  assert_output --partial "Usage: ver-bump --completions"
+  assert_output --partial "Usage: VerBump --completions"
 }
 
 @test "process-arguments: -m: fail when not supplying release note" {

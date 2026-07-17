@@ -58,8 +58,8 @@ load 'test_helper'
   assert_success
   strip_ansi_output
   # The version is an option value, not a positional — shown as -v <version>.
-  assert_output --partial "ver-bump [-v <version>] [options]"
-  refute_output --partial "ver-bump [<version>] [options]"
+  assert_output --partial "VerBump [-v <version>] [options]"
+  refute_output --partial "VerBump [<version>] [options]"
   # The old exhaustive per-flag synopsis is gone (flags live in OPTIONS).
   refute_output --partial "[-B <branch-prefix>]"
   refute_output --partial "[--install-completions[=<shell>]]"
@@ -131,7 +131,7 @@ load 'test_helper'
   run get_help_msg
   assert_success
   strip_ansi_output
-  assert_line "  ver-bump --bump 'main.go:Version = \"{{version}}\"'"
+  assert_line "  VerBump --bump 'main.go:Version = \"{{version}}\"'"
   assert_output --partial "                                        Also bump a Go const"
 }
 

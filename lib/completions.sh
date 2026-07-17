@@ -4,19 +4,19 @@
 true
 
 # Emit a shell completion script to stdout. Supported: bash, zsh, fish.
-# Usage: ver-bump --completions <shell>
+# Usage: VerBump --completions <shell>
 emit-completions() {
   case "$1" in
     bash) _emit-bash-completion ;;
     zsh)  _emit-zsh-completion  ;;
     fish) _emit-fish-completion ;;
     ''|-h|--help)
-      echo "Usage: ver-bump --completions <bash|zsh|fish>"
+      echo "Usage: VerBump --completions <bash|zsh|fish>"
       echo
       echo "Install:"
-      echo "  bash: ver-bump --completions bash > /usr/local/etc/bash_completion.d/ver-bump"
-      echo "  zsh:  ver-bump --completions zsh  > \"\${fpath[1]}/_ver-bump\"  # then autoload"
-      echo "  fish: ver-bump --completions fish > ~/.config/fish/completions/ver-bump.fish"
+      echo "  bash: VerBump --completions bash > /usr/local/etc/bash_completion.d/VerBump"
+      echo "  zsh:  VerBump --completions zsh  > \"\${fpath[1]}/_VerBump\"  # then autoload"
+      echo "  fish: VerBump --completions fish > ~/.config/fish/completions/VerBump.fish"
       return 0
     ;;
     *)
@@ -54,7 +54,7 @@ install-completions() {
   case "$shell" in
     bash)
       dir="${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions"
-      dest="${dir}/ver-bump"
+      dest="${dir}/VerBump"
       content=$(_emit-bash-completion)
       ;;
     zsh)
@@ -62,12 +62,12 @@ install-completions() {
       # ($XDG_DATA_HOME/bash-completion/completions/) and with common
       # project-local conventions elsewhere.
       dir="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions"
-      dest="${dir}/_ver-bump"
+      dest="${dir}/_VerBump"
       content=$(_emit-zsh-completion)
       ;;
     fish)
       dir="${__fish_config_dir:-${XDG_CONFIG_HOME:-$HOME/.config}/fish}/completions"
-      dest="${dir}/ver-bump.fish"
+      dest="${dir}/VerBump.fish"
       content=$(_emit-fish-completion)
       ;;
     *)
@@ -124,7 +124,7 @@ install-completions() {
 
 _emit-bash-completion() {
   cat <<'BASH_EOF'
-# ver-bump bash completion — source this or drop it in your bash_completion.d
+# VerBump bash completion — source this or drop it in your bash_completion.d
 # shellcheck disable=SC2207
 _ver_bump() {
     local cur prev opts
@@ -155,15 +155,15 @@ _ver_bump() {
           -v -m -f -p -t -B -d -n -b -c -l -y -q -h"
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 }
-complete -F _ver_bump ver-bump
+complete -F _ver_bump VerBump
 complete -F _ver_bump ver-bump.sh
 BASH_EOF
 }
 
 _emit-zsh-completion() {
   cat <<'ZSH_EOF'
-#compdef ver-bump ver-bump.sh
-# ver-bump zsh completion — put this file as _ver-bump in a dir on $fpath,
+#compdef VerBump ver-bump.sh
+# VerBump zsh completion — put this file as _VerBump in a dir on $fpath,
 # then `autoload -U compinit && compinit`.
 
 _ver_bump() {
@@ -209,8 +209,8 @@ ZSH_EOF
 
 _emit-fish-completion() {
   cat <<'FISH_EOF'
-# ver-bump fish completion — save to ~/.config/fish/completions/ver-bump.fish
-for _cmd in ver-bump ver-bump.sh
+# VerBump fish completion — save to ~/.config/fish/completions/VerBump.fish
+for _cmd in VerBump ver-bump.sh
     complete -c $_cmd -s v -l version        -d 'Print tool version (no arg) or set manual SemVer'
     complete -c $_cmd -s m -l message        -r -d 'Custom annotated-tag message'
     complete -c $_cmd -s f -l file           -r -a '(__fish_complete_suffix .json)' -d 'Bump version in extra JSON file'

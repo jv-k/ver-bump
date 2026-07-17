@@ -3,7 +3,7 @@
 <!-- Canonical standards doc.
      Derived from ver-bump.sh, lib/*, test/*, and git history. -->
 
-ver-bump is a Bash release tool. Standards below reflect the conventions
+VerBump is a Bash release tool. Standards below reflect the conventions
 already in the tree — new code should match, not invent.
 
 ## Style
@@ -142,7 +142,7 @@ pipe them cleanly.
   regressions in hints are the easiest way to degrade UX silently.
 - Inside a test body, use `bats_fail "<message>"` to force a failure
   through bats' reporter — not bare `fail`. Once a test `source`s
-  ver-bump's libs, `fail` is ver-bump's own `<code> <msg> [<hint>]`
+  VerBump's libs, `fail` is VerBump's own `<code> <msg> [<hint>]`
   error helper (asserted via `run`), which shadows bats-support's
   `fail <message>`. `test_helper.bash` captures bats-support's original
   as `bats_fail` before that can happen (see `test/fail-shadowing.bats`).
@@ -289,7 +289,7 @@ without a template should be rewritten to fit one before triage.
 ### Body expectations
 
 - **Bugs:** what you ran, what happened, what you expected, OS +
-  bash version, `ver-bump --about` output. A minimal reproducer
+  bash version, `VerBump --about` output. A minimal reproducer
   (a scratch repo + the exact command) closes issues faster than any
   amount of prose.
 - **Features:** lead with the user-facing problem, then the proposed
@@ -308,7 +308,7 @@ Pick **exactly one type** + any applicable area/milestone labels.
 - `docs` — README / inline docs / CHANGELOG
 - `chore` — maintenance, tooling, hygiene
 - `question` — user question, not an action item
-- `invalid` — doesn't reproduce / not a ver-bump issue
+- `invalid` — doesn't reproduce / not a VerBump issue
 - `duplicate` — already tracked elsewhere (link the original)
 - `wontfix` — out of scope by design
 

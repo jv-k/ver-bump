@@ -2,7 +2,7 @@
 
 # End-to-end behaviour of TAG_PREFIX / REL_PREFIX overrides across do-tag,
 # do-branch, check-tag-exists, do-changelog. Migrated verbatim from the
-# monolithic ver-bump.bats; shared setup lives in test/test_helper.bash.
+# monolithic VerBump.bats; shared setup lives in test/test_helper.bash.
 
 load 'test_helper'
 

@@ -66,15 +66,16 @@ prompt_confirm()   { _render_pill "${S_HDR_PURPLE-}" "CONFIRM"; }
 # Shown by --about and at the top of --help. Pulls name / version / author
 # / homepage from package.json via jq, with a grep fallback.
 version_block() {
-  local ver author home name desc
+  # Display brand is "VerBump"; the npm package name (.name) stays lowercase
+  # "ver-bump" because npm forbids uppercase, so it is deliberately not read here.
+  local ver author home name="VerBump" desc
   if command -v jq >/dev/null 2>&1; then
     ver=$(   jq -r '.version     // ""' "$MODULE_DIR/package.json" )
     author=$(jq -r '.author      // ""' "$MODULE_DIR/package.json" )
     home=$(  jq -r '.homepage    // ""' "$MODULE_DIR/package.json" )
-    name=$(  jq -r '.name        // "ver-bump"' "$MODULE_DIR/package.json" )
     desc=$(  jq -r '.description // ""' "$MODULE_DIR/package.json" )
   else
-    ver="" author="" home="" name="ver-bump" desc=""
+    ver="" author="" home="" desc=""
   fi
 
   printf '\n'

@@ -1,4 +1,4 @@
-# ver-bump — Product Requirements Document
+# VerBump — Product Requirements Document
 
 | | |
 | --- | --- |
@@ -17,7 +17,7 @@
 
 ## 1. Summary
 
-`ver-bump` is **an opinionated release tool for Git projects with a
+`VerBump` is **an opinionated release tool for Git projects with a
 `package.json`** — primarily Node / JS / TS, but also usable for any SemVer
 repo via `--source <file>` (or a git-tag fallback) for the version source,
 plus `-f` / `--bump` for extra bump targets. It automates the mechanical
@@ -54,7 +54,7 @@ execute.
 
 ## 2. Background & motivation
 
-`ver-bump` lives in a crowded niche (`semantic-release`, `release-please`,
+`VerBump` lives in a crowded niche (`semantic-release`, `release-please`,
 `release-it`, `bumpversion`, `changeset`, `goreleaser`). Its defensible pitch
 is **plain bash, no Node ecosystem lock-in — `git` + `jq` only** for solo devs and
 small teams that want a predictable release script.
@@ -110,8 +110,8 @@ real script (not just dry-run) without touching their working repo.
 ## 4. Target users
 
 1. **Solo maintainer / small team lead**, Git-native, shell-comfortable, wants a predictable release step in a plain-bash script they can read.
-2. **CI author** embedding `ver-bump` in a GitHub Actions / GitLab CI step, needs stable exit codes and non-interactive flags.
-3. **Contributor to `ver-bump` itself**, needs to exercise the tool end-to-end during development.
+2. **CI author** embedding `VerBump` in a GitHub Actions / GitLab CI step, needs stable exit codes and non-interactive flags.
+3. **Contributor to `VerBump` itself**, needs to exercise the tool end-to-end during development.
 
 Out of audience: users who want a GUI, users who want the tool to also publish to a registry, users who want a plugin marketplace.
 
@@ -157,7 +157,7 @@ Each requirement has an ID so tests and PRs can reference it.
 | **R-OPT-5** | `--completions <bash\|zsh\|fish>` emits a shell completion script to stdout and exits `0`. It does not require a `package.json`, a git repo, or any mutation. Unknown shell exits `1`. |
 | **R-OPT-6** | `-t <prefix>` / `--tag-prefix` overrides the tag prefix (default `v`). `-B <prefix>` / `--branch-prefix` overrides the branch prefix (default `release-`). The chosen prefix is used consistently by every step that reads or writes tags / branches. |
 | **R-OPT-7** | The repo's own `package-lock.json` is bumped built-in when present; `-f`/`--file` is for *additional* JSON files only (resolves Q-3). |
-| **R-OPT-8** | `--about` prints a branded info block and exits `0` without requiring a `package.json` or git repo. Bare `-v`/`--version` (no value) prints the tool's own version — a plain, parseable `ver-bump <ver>` token when colour is off — and exits `0`. |
+| **R-OPT-8** | `--about` prints a branded info block and exits `0` without requiring a `package.json` or git repo. Bare `-v`/`--version` (no value) prints the tool's own version — a plain, parseable `VerBump <ver>` token when colour is off — and exits `0`. |
 
 ### 5.5 Dry-run
 
@@ -170,7 +170,7 @@ Each requirement has an ID so tests and PRs can reference it.
 
 ### 5.6 Exit codes
 
-`ver-bump` commits to the following contract:
+`VerBump` commits to the following contract:
 
 | Code | Meaning |
 | ---- | ------- |
@@ -194,7 +194,7 @@ Each requirement has an ID so tests and PRs can reference it.
 | **R-COMP-2** | Completions must offer every short and long flag. |
 | **R-COMP-3** | After `-f`/`--file`, completion must restrict to `*.json`. |
 | **R-COMP-4** | After `--completions`, completion must offer `bash zsh fish`. |
-| **R-COMP-5** | Completions must be registered for both `ver-bump` and `ver-bump.sh` command names. |
+| **R-COMP-5** | Completions must be registered for both `VerBump` and `ver-bump.sh` command names. |
 | **R-COMP-6** | `--install-completions [shell]` auto-detects the user's shell from `$SHELL` when no argument is given (exit `2` if detection fails), and installs the matching script to a user-scope location (zsh: `~/.local/share/zsh/site-functions`, with an oh-my-zsh-aware setup hint). |
 | **R-COMP-7** | `--install-completions` honours `--dry-run` regardless of flag order on the command line. |
 
@@ -213,7 +213,7 @@ Each requirement has an ID so tests and PRs can reference it.
 
 | ID | Requirement |
 | --- | --- |
-| **R-DEV-1** | `pnpm dev` / `./dev/sandbox.sh` creates an isolated throwaway git repo, runs `ver-bump` inside it, and cleans up on exit (including Ctrl-C). |
+| **R-DEV-1** | `pnpm dev` / `./dev/sandbox.sh` creates an isolated throwaway git repo, runs `VerBump` inside it, and cleans up on exit (including Ctrl-C). |
 | **R-DEV-2** | The sandbox's cleanup must never fire against the host repo. |
 | **R-DEV-3** | Environment variables `SANDBOX_VERSION` and `SANDBOX_COMMITS` customise the starting version and seed commits respectively. `--keep` / `-k` preserves the temp dir for inspection. |
 
@@ -264,14 +264,14 @@ Each requirement has an ID so tests and PRs can reference it.
 
 ## 6. User stories
 
-1. **US-1** — *As a solo maintainer*, I run `ver-bump`, see a bump suggestion derived from my recent commits, press Enter, and the release happens. Outcome: correct bump without me having to think.
-2. **US-2** — *As a maintainer working on a pre-release*, I'm on `4.0.0-dev.6`. I run `ver-bump`, see `4.0.0-dev.7` suggested, press Enter.
-3. **US-3** — *As a cautious maintainer*, I run `ver-bump --dry-run` first, read the side-effects, satisfy myself nothing surprising is about to happen, then re-run without `--dry-run`.
-4. **US-4** — *As a CI author*, I run `ver-bump -v 1.2.3 -p origin -n` in a GH Actions job and branch on exit code: `0` succeeds, `2` fails the workflow with an "invalid input" message, `3` fails with a "precondition" message.
-5. **US-5** — *As a new user*, I pipe `ver-bump --completions zsh` into `_ver-bump` on my `fpath`, restart my shell, and get tab-completion for every flag.
+1. **US-1** — *As a solo maintainer*, I run `VerBump`, see a bump suggestion derived from my recent commits, press Enter, and the release happens. Outcome: correct bump without me having to think.
+2. **US-2** — *As a maintainer working on a pre-release*, I'm on `4.0.0-dev.6`. I run `VerBump`, see `4.0.0-dev.7` suggested, press Enter.
+3. **US-3** — *As a cautious maintainer*, I run `VerBump --dry-run` first, read the side-effects, satisfy myself nothing surprising is about to happen, then re-run without `--dry-run`.
+4. **US-4** — *As a CI author*, I run `VerBump -v 1.2.3 -p origin -n` in a GH Actions job and branch on exit code: `0` succeeds, `2` fails the workflow with an "invalid input" message, `3` fails with a "precondition" message.
+5. **US-5** — *As a new user*, I pipe `VerBump --completions zsh` into `_VerBump` on my `fpath`, restart my shell, and get tab-completion for every flag.
 6. **US-6** — *As a contributor*, I clone the repo, run `pnpm dev`, and can exercise the real release flow end-to-end without touching my clone's working tree.
-7. **US-7** — *As someone with a typo-prone setup*, I run `ver-bump -v banana` and get exit `2` with a clear message before anything is mutated.
-8. **US-8** — *As a user with a custom tagging convention*, I run `ver-bump --tag-prefix=release/` and get `release/1.2.3` tags instead of `v1.2.3`.
+7. **US-7** — *As someone with a typo-prone setup*, I run `VerBump -v banana` and get exit `2` with a clear message before anything is mutated.
+8. **US-8** — *As a user with a custom tagging convention*, I run `VerBump --tag-prefix=release/` and get `release/1.2.3` tags instead of `v1.2.3`.
 
 ---
 
@@ -282,7 +282,7 @@ Each requirement has an ID so tests and PRs can reference it.
 - **AC-3** The test suite (`pnpm tests:run`) reports `0 failures`.
 - **AC-4** Running `./ver-bump.sh --dry-run -v 1.1.9` against this repo leaves `git status --porcelain` byte-identical to its pre-run state.
 - **AC-5** A fresh container with only `bash`, `git`, `jq` installed can run `./ver-bump.sh --dry-run -v 0.0.1` against a minimal repo without missing-dependency errors.
-- **AC-6** `ver-bump --completions bash | bash -n` exits `0`; same for `zsh -n`.
+- **AC-6** `VerBump --completions bash | bash -n` exits `0`; same for `zsh -n`.
 - **AC-7** `README.md` and `./ver-bump.sh --help` enumerate the same set of flags.
 
 ---
@@ -293,8 +293,8 @@ Each requirement has an ID so tests and PRs can reference it.
 
 - **B-1 — `-v` rejects non-SemVer.** Existing calls like `-v banana` will fail with exit `2`. This was never guaranteed; old behaviour tagged a corrupt version. **Migration**: fix the input.
 - **B-2 — Exit codes change.** `1.1.x` used `exit 1` for nearly every error. `2.0.0` uses `2`/`3`/`5` for usage, precondition, and user-abort failures. **Migration**: CI wrappers that branched on exit code `0` vs. non-zero are unaffected; wrappers that branched on specific non-zero codes must update.
-- **B-3 — `npm` no longer invoked.** `npm version`'s lifecycle scripts (`preversion`, `version`, `postversion`) will no longer fire as a side-effect of running `ver-bump`. **Migration**: if you relied on them, invoke them explicitly or move the logic into a separate step. *Post-2.0, the release hooks (issue #62) close the common case: `PRE_BUMP_CMD="npm test"` in `.ver-bumprc` restores a `preversion`-style test gate — see [`docs/features/hooks`](features/hooks/requirements.md).*
-- **B-4 — bare `-v` / `--version` prints the tool version.** In `1.1.x`, `-v` without a value was an argument-parse error. In `2.0.0` it prints `ver-bump <ver>` and exits `0` (matching every modern CLI). With a value, `-v <semver>` keeps its `1.1.x` meaning. **Migration**: none expected — no working `1.1.x` invocation relied on the error.
+- **B-3 — `npm` no longer invoked.** `npm version`'s lifecycle scripts (`preversion`, `version`, `postversion`) will no longer fire as a side-effect of running `VerBump`. **Migration**: if you relied on them, invoke them explicitly or move the logic into a separate step. *Post-2.0, the release hooks (issue #62) close the common case: `PRE_BUMP_CMD="npm test"` in `.ver-bumprc` restores a `preversion`-style test gate — see [`docs/features/hooks`](features/hooks/requirements.md).*
+- **B-4 — bare `-v` / `--version` prints the tool version.** In `1.1.x`, `-v` without a value was an argument-parse error. In `2.0.0` it prints `VerBump <ver>` and exits `0` (matching every modern CLI). With a value, `-v <semver>` keeps its `1.1.x` meaning. **Migration**: none expected — no working `1.1.x` invocation relied on the error.
 - **B-5 — tag-in-place is the new default workflow.** `1.1.x` always cut a `release-<version>` branch; `2.0.0` commits and tags the current branch in place (§5.14, ADR-12). `-b`/`--no-branch` becomes a no-op. **Migration**: pass `--branch` per run, or set `FLAG_BRANCH=true` in `.ver-bumprc` to keep the old behaviour as a team default.
 
 ### 8.2 Non-breaking
@@ -337,7 +337,7 @@ Each requirement has an ID so tests and PRs can reference it.
 
 1. Land remaining uncommitted work on `develop` as `fix:` / `feat:` commits following Conventional Commits.
 2. Draft `CHANGELOG.md` entry for `2.0.0` summarising each `R-*` bucket.
-3. Cut a `release-2.0.0` branch via `ver-bump` itself (dog-fooding against the sandbox first).
+3. Cut a `release-2.0.0` branch via `VerBump` itself (dog-fooding against the sandbox first).
 4. Open PR to `main`.
 5. Tag `v2.0.0`, publish GitHub release with the PRD changelog.
 6. `npm publish` (optional — install path remains supported).

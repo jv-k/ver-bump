@@ -9,7 +9,9 @@
     "url": "https://github.com/jv-k/ver-bump.git"
   },
   "license": "MIT",
-  "bin": "./ver-bump.sh",
+  "bin": {
+    "VerBump": "./ver-bump.sh"
+  },
   "files": [
     "ver-bump.sh",
     "lib/",

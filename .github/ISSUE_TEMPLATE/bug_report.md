@@ -13,7 +13,7 @@ assignees: ''
 ## What you ran
 
 ```sh
-ver-bump ...
+VerBump ...
 ```
 
 ## What happened
@@ -27,10 +27,10 @@ ver-bump ...
 
 - OS:
 - `bash --version`:
-- `ver-bump --about`:
+- `VerBump --about`:
 
 ## Minimal reproducer (optional)
 
 <!-- Closes issues faster than any amount of prose: a scratch repo + the
      exact command — seed commits, starting tag, .ver-bumprc if relevant,
-     then the ver-bump invocation. -->
+     then the VerBump invocation. -->

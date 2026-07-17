@@ -2,7 +2,7 @@
 
 # `fail` helper behaviour and exit-code coverage for the Task 1.9 contract
 # (argument parsing -> 2, preconditions -> 3, user-abort reserved -> 5).
-# Migrated verbatim from the monolithic ver-bump.bats; shared setup lives
+# Migrated verbatim from the monolithic VerBump.bats; shared setup lives
 # in test/test_helper.bash.
 
 load 'test_helper'

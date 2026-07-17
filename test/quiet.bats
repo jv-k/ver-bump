@@ -3,7 +3,7 @@
 # -q/--quiet (R-OUT-1..4, issue #65): machine-readable stdout for CI.
 # On success stdout carries exactly one line — the new version, bare —
 # and everything decorative is rerouted to stderr, so
-# NEW_VERSION=$(ver-bump --yes --quiet …) captures cleanly. Quiet and
+# NEW_VERSION=$(VerBump --yes --quiet …) captures cleanly. Quiet and
 # interactive prompts are incompatible by construction (a hidden prompt
 # is a hung pipeline): missing --yes/-v/level, or -l/--pause-changelog,
 # exits 2 at parse time. A quiet no-op (R-SAFE-14) prints nothing on

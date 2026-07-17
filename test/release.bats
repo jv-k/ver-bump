@@ -4,7 +4,7 @@
 # `gh` CLI. Notes default to `gh release create --generate-notes`; setting
 # $VER_BUMP_RELEASE_NOTES_CMD captures that command's stdout via --notes.
 # Conditional dependency — `gh` is only required when --release is passed (a
-# custom notes command may add more); the default ver-bump path stays
+# custom notes command may add more); the default VerBump path stays
 # bash + git + jq only.
 
 load 'test_helper'

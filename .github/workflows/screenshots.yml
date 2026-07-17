@@ -7,7 +7,7 @@ name: Screenshots
 # it flattens inverse-video and ignores SGR-faint, so it could not show the
 # restyled output correctly.)
 #
-#   img/screenshot.png   — vhs, `ver-bump --help` (header logo + full flag set)
+#   img/screenshot.png   — vhs, `VerBump --help` (header logo + full flag set)
 #   img/demo.gif         — vhs, sandbox-driven real bump recording
 #   img/demo-final.png   — the demo's finished DONE frame, as a still
 #

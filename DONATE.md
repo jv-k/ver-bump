@@ -1,6 +1,6 @@
-# Support ver-bump
+# Support VerBump
 
-Thank you for considering supporting the development of `ver-bump`. Your contributions help keep the project actively maintained and evolving.
+Thank you for considering supporting the development of `VerBump`. Your contributions help keep the project actively maintained and evolving.
 
 If you find this tool useful, please consider one of the following ways to show your support:
 

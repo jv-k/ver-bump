@@ -21,7 +21,7 @@ setup() {
   echo '{"version":"1.0.0"}' > package.json
   git add . && git commit -q -m "init"
   git checkout -q -b feat/x
-  # Set up the artefacts a ver-bump run would produce — release branch with
+  # Set up the artefacts a VerBump run would produce — release branch with
   # a bump commit, tag pointing at it. Bypasses the real bump pipeline so
   # the test doesn't have to feed the interactive push prompt.
   git checkout -q -b release-1.2.0

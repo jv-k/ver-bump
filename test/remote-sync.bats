@@ -72,7 +72,7 @@ synced_repo() {
   cd "$repo"
   printf '{ "version": "1.0.0" }\n' > package.json
   git add package.json && git commit -qm "chore: seed package.json"
-  git remote add origin /nonexistent/ver-bump-remote.git
+  git remote add origin /nonexistent/VerBump-remote.git
 
   run ${profile_script} -d -b -c -p origin -v 1.0.1
   assert_success

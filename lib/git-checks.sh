@@ -4,7 +4,7 @@
 true
 
 # Refuse to release from a dirty working tree (R-SAFE-1..4). do-commit runs a
-# bare `git commit -m …`, so anything staged before ver-bump ran — and any
+# bare `git commit -m …`, so anything staged before VerBump ran — and any
 # modified tracked file `git add`-ed along the way — would be silently swept
 # into the release commit. Untracked files are ignored (same contract as
 # --undo's dirty check). Skipped under -n/--no-commit (nothing is committed,
@@ -42,7 +42,7 @@ check-worktree-clean() {
 # Unset/empty (the default) = no guard, zero behaviour change. When set, a
 # release from a non-matching branch — or from a detached HEAD — exits 3.
 # Deliberately NOT bypassed by --yes: this is a guard, not a prompt. The
-# one-shot bypass is an empty env override (RELEASE_BRANCHES= ver-bump …),
+# one-shot bypass is an empty env override (RELEASE_BRANCHES= VerBump …),
 # which beats the rc value per R-CFG-3. Release flow only: --undo,
 # --completions, --about, and --help all exit before the Verify section.
 check-release-branch() {
@@ -53,7 +53,7 @@ check-release-branch() {
   if [ -z "$branch" ]; then
     fail 3 \
       "RELEASE_BRANCHES is set (${RELEASE_BRANCHES}) but HEAD is detached — a release must be cut from a named branch." \
-      "Checkout an allowed branch first, or clear the guard for one run: RELEASE_BRANCHES= ver-bump …"
+      "Checkout an allowed branch first, or clear the guard for one run: RELEASE_BRANCHES= VerBump …"
   fi
 
   # Glob-match against each pattern. Word-splitting of the unquoted list and
@@ -68,11 +68,11 @@ check-release-branch() {
   if [ "$matched" != true ]; then
     fail 3 \
       "Branch '${branch}' is not a release branch (RELEASE_BRANCHES: ${RELEASE_BRANCHES})." \
-      "Checkout an allowed branch, adjust RELEASE_BRANCHES in .ver-bumprc, or clear the guard for one run: RELEASE_BRANCHES= ver-bump …"
+      "Checkout an allowed branch, adjust RELEASE_BRANCHES in .ver-bumprc, or clear the guard for one run: RELEASE_BRANCHES= VerBump …"
   fi
 }
 
-# Remote-sync preflight (R-SAFE-5..9). ver-bump otherwise never talks to the
+# Remote-sync preflight (R-SAFE-5..9). VerBump otherwise never talks to the
 # remote before mutating: check-tag-exists consults local tags only, and a
 # stale local HEAD happily tags code that's already superseded on the remote.
 # Fetch (with tags) from the configured remote so (a) a behind-upstream HEAD

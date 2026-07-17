@@ -51,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # ver-bump targets Linux + macOS (and WSL/Git-bash). The bats harness
+        # VerBump targets Linux + macOS (and WSL/Git-bash). The bats harness
         # can't run natively on Windows: bats-core rejects the drive-letter
         # path (D:/...) as non-absolute in `load`. Windows users run it via WSL.
         os: [ubuntu-latest, macos-latest]
@@ -115,12 +115,12 @@ jobs:
       - name: Pack and smoke-test the tarball
         run: |
           npm pack
-          size=$(wc -c < ver-bump-*.tgz)
+          size=$(wc -c < VerBump-*.tgz)
           echo "tarball bytes: $size"
           test "$size" -lt 524288 || { echo '::error::tarball >512KB — files allowlist regressed'; exit 1; }
 
       # Tokenless publish via OIDC Trusted Publishing. Requires a one-time setup
-      # on npmjs.com: ver-bump > Settings > Trusted Publishers > add this repo's
+      # on npmjs.com: VerBump > Settings > Trusted Publishers > add this repo's
       # ci.yml workflow. Provenance is generated automatically under OIDC, so no
       # --provenance flag and no NPM_TOKEN are needed.
       - name: Publish via OIDC (prereleases -> 'next', stable -> 'latest')
@@ -178,4 +178,4 @@ jobs:
             sleep 10
           done
           [ "$installed" = true ]
-          "$VER_BUMP_PREFIX/bin/ver-bump" --about
+          "$VER_BUMP_PREFIX/bin/VerBump" --about

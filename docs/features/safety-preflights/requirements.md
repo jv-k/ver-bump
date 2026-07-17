@@ -34,7 +34,7 @@ contract (R-EXIT-2) is untouched.
 | ID | Requirement | Status | Tests |
 | --- | --- | --- | --- |
 | R-SAFE-10 | Config/env key `RELEASE_BRANCHES`: space-separated glob list (e.g. `"main develop release/*"`). Unset/empty (default) = no guard — zero behaviour change for existing users (regression-pinned). | ✅ `check-release-branch` | `release-branch-guard.bats` |
-| R-SAFE-11 | When set and the current branch matches no pattern: exit `3` naming the branch and the allowed list. **Not** bypassed by `--yes` — it's a guard, not a prompt; the one-shot bypass is `RELEASE_BRANCHES= ver-bump …` (env beats rc per R-CFG-3). | ✅ | `release-branch-guard.bats` |
+| R-SAFE-11 | When set and the current branch matches no pattern: exit `3` naming the branch and the allowed list. **Not** bypassed by `--yes` — it's a guard, not a prompt; the one-shot bypass is `RELEASE_BRANCHES= VerBump …` (env beats rc per R-CFG-3). | ✅ | `release-branch-guard.bats` |
 | R-SAFE-12 | Detached HEAD with the guard active → exit `3` (can't match a branch you're not on). | ✅ | `release-branch-guard.bats` |
 | R-SAFE-13 | Applies to the release flow only; `--undo`, `--completions`, `--about`, `--help` are unaffected (they exit before the Verify section). | ✅ | `release-branch-guard.bats` |
 

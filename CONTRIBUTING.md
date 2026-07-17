@@ -1,4 +1,4 @@
-# Contributing to ver-bump
+# Contributing to VerBump
 
 Thanks for helping! This is the short version — the canonical coding
 standards, commit conventions, and test requirements live in
@@ -22,7 +22,7 @@ pnpm tests:run       # bats suite — must pass 100%
 pnpm dev             # exercise your change in a throwaway sandbox repo
 ```
 
-`pnpm dev` runs ver-bump inside a temp git repo seeded with conventional
+`pnpm dev` runs VerBump inside a temp git repo seeded with conventional
 commits, so you never dirty a real repo — see the README's
 [Development](README.md#development) section.
 

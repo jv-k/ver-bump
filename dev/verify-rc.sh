@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# verify-rc.sh — post-cut verification for a ver-bump release candidate.
+# verify-rc.sh — post-cut verification for a VerBump release candidate.
 #   Usage:  ./verify-rc.sh 2.0.0-rc.1
 #
 # Read-only against the published rc; only creates throwaway temp dirs.
@@ -30,9 +30,9 @@ else
 fi
 
 echo "▶ 2/4  npm dist-tag 'next' + provenance"
-nt=$(npm view ver-bump dist-tags.next 2>/dev/null || true)
+nt=$(npm view VerBump dist-tags.next 2>/dev/null || true)
 if [ "$nt" = "$VER" ]; then ok "dist-tag next → ${VER}"; else no "dist-tag next is '${nt:-<none>}' (expected ${VER}; CI publish may still be running)"; fi
-if npm view "ver-bump@${VER}" --json 2>/dev/null | grep -qiE 'provenance|attestation|sigstore'; then
+if npm view "VerBump@${VER}" --json 2>/dev/null | grep -qiE 'provenance|attestation|sigstore'; then
   ok "provenance/attestation metadata present"
 else
   no "no provenance metadata found (OIDC publish not done yet?)"
@@ -40,9 +40,9 @@ fi
 
 echo "▶ 3/4  clean install runs with node STRIPPED from PATH (default-path purity)"
 tmp=$(mktemp -d); mkdir -p "$tmp/pfx"
-if npm install -g --prefix "$tmp/pfx" "ver-bump@${VER}" >/dev/null 2>&1; then
-  BIN="$tmp/pfx/bin/ver-bump"
-  if [ -x "$BIN" ]; then ok "installed ver-bump ${VER} from npm"; else no "ver-bump binary missing after install"; fi
+if npm install -g --prefix "$tmp/pfx" "VerBump@${VER}" >/dev/null 2>&1; then
+  BIN="$tmp/pfx/bin/VerBump"
+  if [ -x "$BIN" ]; then ok "installed VerBump ${VER} from npm"; else no "VerBump binary missing after install"; fi
   # keep git/jq (homebrew, /usr/bin), drop any node/npm/nvm/fnm dirs
   nonode=$(printf '%s' "$PATH" | tr ':' '\n' | grep -viE 'node|npm|nvm|fnm|\.n/' | paste -sd: -)
   if v=$(PATH="${nonode}:$tmp/pfx/bin" "$BIN" --version 2>/dev/null); then
@@ -51,7 +51,7 @@ if npm install -g --prefix "$tmp/pfx" "ver-bump@${VER}" >/dev/null 2>&1; then
     no "failed to run --version without node on PATH"
   fi
 else
-  no "npm install ver-bump@${VER} failed (not yet on npm?)"
+  no "npm install VerBump@${VER} failed (not yet on npm?)"
 fi
 
 echo "▶ 4/4  behaviour: unknown .ver-bumprc key warns (ADR-05 / R-CFG-7)"

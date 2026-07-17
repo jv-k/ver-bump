@@ -153,7 +153,7 @@ expansions so sourcing without styles never explodes.
 
 **Status:** Accepted (2.0) · commit `81167d8`
 
-**Context:** A single `ver-bump.bats` monolith (54 tests) was slow to
+**Context:** A single `VerBump.bats` monolith (54 tests) was slow to
 navigate and git-state leaks between tests corrupted the host repo.
 
 **Decision:** One `.bats` file per feature (38 files, 518 tests at
@@ -243,7 +243,7 @@ deprecated no-op for script back-compat. The `--pr` base resolves
 HEAD. `--undo` learns tag-in-place releases (deletes the tag, keeps the
 bump commit).
 
-**Consequences:** **Breaking** — bare `ver-bump` no longer cuts a branch
+**Consequences:** **Breaking** — bare `VerBump` no longer cuts a branch
 (PRD B-5); teams keep the old default via `--branch` or `FLAG_BRANCH=true`
 in `.ver-bumprc`. `.ver-bumprc` gains `FLAG_BRANCH` + `PR_BASE`;
 `FLAG_NOBRANCH` remains recognised for compatibility.
@@ -254,7 +254,7 @@ in `.ver-bumprc`. `.ver-bumprc` gains `FLAG_BRANCH` + `PR_BASE`;
 
 **Status:** Deferred · issue #24
 
-**Context:** The release plan (M6) targeted a `jv-k/homebrew-ver-bump` tap
+**Context:** The release plan (M6) targeted a `jv-k/homebrew-VerBump` tap
 for 2.0; shipping 2.0 was prioritised over standing up a second repo and
 formula audit.
 
@@ -446,7 +446,7 @@ practice, so the gate protecting it must be explicit and checkable.
    macOS** (AC-3); `shellcheck -x` zero warnings (AC-2); AC-4/AC-5/AC-6 pass.
 3. **No open blockers** — the 2.0 milestone has no open P0/P1; **#51** (undo
    `fail`-shadowing) is closed.
-4. **Real dogfood** — `rc` cut *with `ver-bump` itself* (PRD §11.3), installed
+4. **Real dogfood** — `rc` cut *with `VerBump` itself* (PRD §11.3), installed
    on a clean `bash`/`git`/`jq`-only machine via the rc tarball, with a live
    bump run in the sandbox.
 5. **Behavioural changes verified end-to-end** — `--release` default produces a

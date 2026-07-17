@@ -81,6 +81,7 @@ VerBump             # cut it: reads commits, suggests a bump, prompts before pus
   - [Basher](#basher)
 - [Workflows](#workflows)
 - [Migrating from 1.x](#migrating-from-1x)
+- [Command renamed to VerBump](#command-renamed-to-verbump)
 - [Options](#options)
   - [Choosing the new version](#choosing-the-new-version)
   - [Bumping files](#bumping-files)
@@ -189,6 +190,8 @@ pnpm add -g ver-bump
 npm install -g ver-bump
 ```
 
+> The npm package is named **`ver-bump`** (npm package names can't contain uppercase), but it installs the command as **`VerBump`** — that's what you run.
+
 ### Manual install
 
 Clone and symlink the script:
@@ -221,6 +224,14 @@ The `--pr` base branch resolves in this order: `--base <branch>`, then `PR_BASE`
 ## Migrating from 1.x
 
 **The default changed.** VerBump 1.x always cut a `release-<version>` branch. 2.0 **tags the current branch in place** by default. Pass `--branch` to keep the old behaviour. The old `-b` / `--no-branch` flag is now a no-op (kept so existing scripts don't break).
+
+## Command renamed to VerBump
+
+The command is now **`VerBump`** (it was `ver-bump` through 2.x). Update any aliases, scripts, CI steps, or shell completions that invoke `ver-bump`. Notes:
+
+- The **npm package stays `ver-bump`** (npm package names can't be uppercase), so you still `npm install -g ver-bump` — it just installs the `VerBump` command.
+- **Upgrading?** A prior install's `ver-bump` symlink keeps working until you remove it; only fresh installs drop it. So `ver-bump` and `VerBump` may coexist on an upgraded machine.
+- Config (`.ver-bumprc`), environment variables (`VER_BUMP_*`, `PRE_BUMP_CMD`, `POST_TAG_CMD`), and the default tag prefix are unchanged.
 
 ## Options
 

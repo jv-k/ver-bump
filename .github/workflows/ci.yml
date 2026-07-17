@@ -133,27 +133,6 @@ jobs:
           echo "publishing $ver to dist-tag: $tag (OIDC trusted publishing, provenance auto)"
           npm publish --access public --tag "$tag"
 
-  publish-github:
-    name: Publish to GitHub registry
-    needs: tests
-    # Stable releases only — prereleases just validate the npmjs provenance path.
-    if: github.event.action == 'published' && github.event.release.prerelease == false
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          registry-url: "https://npm.pkg.github.com"
-      - name: Scope package name as required by GHPR
-        run: npm init -y --scope ${{ github.repository_owner }}
-      - run: npm publish --ignore-scripts
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   publish-release-assets:
     name: Upload release tarball + sha256
     needs: tests

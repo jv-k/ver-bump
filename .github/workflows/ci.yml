@@ -97,7 +97,7 @@ jobs:
           fetch-depth: 0   # full history + tags so the prepublish version guard can run
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version: 22   # npm OIDC Trusted Publishing requires Node >= 22.14
           registry-url: https://registry.npmjs.org/
 
       - name: Use an npm with OIDC trusted publishing (>= 11.5.1)

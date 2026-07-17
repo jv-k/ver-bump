@@ -93,7 +93,14 @@ if [ "$USE_COLOR" = 1 ]; then
   S_HDR_YELLOW=$'\033[7;1;33m'
   S_HDR_RED=$'\033[7;1;31m'
   S_HDR_PURPLE=$'\033[7;1;35m'
+  # Subdued pill for sub-headings nested inside a section (help opt-groups):
+  # invert + faint + white fg — a mid-gray bar one level below the coloured
+  # section pills. Faint-of-white (not bright-black) so the bar tracks the
+  # theme's normal fg brightness; themes with a near-background brightBlack
+  # would otherwise render it invisible.
+  S_HDR_GRAY=$'\033[7;2;37m'
   S_HDR_END=$'\033[0m'
 else
-  S_HDR_CYAN=''; S_HDR_SUB=''; S_HDR_YELLOW=''; S_HDR_RED=''; S_HDR_PURPLE=''; S_HDR_END=''
+  S_HDR_CYAN=''; S_HDR_SUB=''; S_HDR_YELLOW=''; S_HDR_RED=''; S_HDR_PURPLE=''
+  S_HDR_GRAY=''; S_HDR_END=''
 fi

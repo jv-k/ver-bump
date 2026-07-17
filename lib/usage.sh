@@ -89,15 +89,15 @@ usage() {
     case "$TERM_COLS" in ''|*[!0-9]*) TERM_COLS=80 ;; esac
   fi
 
-  # rip off the oh-my-zsh logo, clearly ;)
-  printf  "%s _ _  %s___  %s___ %s     %s ___  %s_ _ %s __ __ %s ___  %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
-  printf  "%s| | |%s| __>%s| . \%s ___ %s| . >%s| | |%s|  \  \%s| . \ %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
-  printf  "%s| ' |%s| _> %s|   /%s|___|%s| . \%s| ' |%s|     |%s|  _/ %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
-  printf  "%s|__/ %s|___>%s|_\_\%s     %s|___/%s\___/%s|_|_|_|%s|_|   %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
+  # figlet "future" (via pyfiglet) — one rainbow segment per letter, the dash
+  # riding the 4th segment, exactly like the old oh-my-zsh-style banner.
+  printf  "%s╻ ╻%s┏━╸%s┏━┓%s   %s┏┓ %s╻ ╻%s┏┳┓%s┏━┓%s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
+  printf  "%s┃┏┛%s┣╸ %s┣┳┛%s╺━╸%s┣┻┓%s┃ ┃%s┃┃┃%s┣━┛%s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
+  printf  "%s┗┛ %s┗━╸%s╹┗╸%s   %s┗━┛%s┗━┛%s╹ ╹%s╹  %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
 
   # Branded header pill + author/homepage bullets + dim tagline. No blank line
   # after the pill — the author bullet sits directly beneath it.
-  printf '\n %b %s v%s %b\n' "${S_HDR_SUB-}" "${SCRIPT_NAME}" "${SCRIPT_VER}" "${S_HDR_END-}"
+  printf '\n%b %s v%s %b\n' "${S_HDR_SUB-}" "${SCRIPT_NAME}" "${SCRIPT_VER}" "${S_HDR_END-}"
   printf ' %b%s%b Author:   %s\n'   "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_AUTH}"
   printf ' %b%s%b Homepage: %s\n\n' "${S_BULLET-}" "${I_BULLET-}" "${RESET-}" "${SCRIPT_HOME}"
   # Tool description (from package.json), dim and wrapped to the terminal.
@@ -113,7 +113,7 @@ usage() {
   # USAGE — a concise synopsis (à la `gh`), not an enumeration of every flag.
   # The version is an OPTION value (-v <version>), not a positional, so it is
   # shown as such; the rest of the flag list lives in OPTIONS below.
-  printf '\n %b USAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  printf '\n%b USAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   printf '  %b%s%b [-v <version>] [options]\n' "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
 
   # Column width for label + 2-space gutter. Longest label is
@@ -264,22 +264,29 @@ usage() {
     fi
   }
 
-  # print-opt-group <label> — a bold group heading inside OPTIONS that clusters
-  # related flags. A blank line precedes every group except the first (which
-  # sits directly under the pill — no blank line after a header pill). _optgrp
-  # tracks whether a group has already been emitted this run.
+  # print-opt-group <label> — a subdued gray pill heading inside OPTIONS that
+  # clusters related flags. A blank line precedes every group except the first
+  # (which sits directly under the pill — no blank line after a header pill).
+  # _optgrp tracks whether a group has already been emitted this run. Plain
+  # (no-colour) output keeps the historic bare-uppercase form — parseable, no
+  # stray pill padding.
   local _optgrp=""
   print-opt-group() {
     [ -n "$_optgrp" ] && printf '\n'
     _optgrp=1
-    local upper; upper=$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')
-    printf '  %b%s%b\n' "${S_NORM-}" "$upper" "${RESET-}"
+    local upper
+    upper=$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')
+    if [ "${USE_COLOR:-0}" = 1 ]; then
+      printf '  %b %s %b\n' "${S_HDR_GRAY-}" "$upper" "${S_HDR_END-}"
+    else
+      printf '  %s\n' "$upper"
+    fi
   }
 
   # OPTIONS — grouped by task, in the order you meet them during a release.
   # --about is intentionally not listed here (it still works). The "long forms
   # accept …" note is at the bottom.
-  printf '\n %b OPTIONS %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  printf '\n%b OPTIONS %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
 
   print-opt-group "Choose the new version"
   print-opt-row "-v" "--version"       "[<version>]" "Without a value: print tool version and exit. With a value: set manual SemVer."
@@ -340,7 +347,7 @@ usage() {
   print-opt-row ""   "--install-completions" "[=<shell>]" "Install completion script (auto-detects shell)."
 
   # EXAMPLES section pill
-  printf '\n %b EXAMPLES %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
+  printf '\n%b EXAMPLES %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
   print-example-row "${SCRIPT_NAME}"                       "Interactive — reads commits, suggests bump, prompts."
   print-example-row "${SCRIPT_NAME} -v 2.0.0"              "Non-interactive, explicit version."
   print-example-row "${SCRIPT_NAME} --dry-run"             "Preview every side-effect without executing."

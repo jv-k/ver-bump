@@ -46,7 +46,7 @@ normalize-long-opts() {
         # (program name + version, no stray pill padding) when it isn't —
         # so `ver-bump --version` piped into a script yields a clean token.
         if [ "${USE_COLOR:-0}" = 1 ]; then
-          printf ' %b ver-bump v%s %b\n' "${S_HDR_SUB-}" "${_ver}" "${S_HDR_END-}"
+          printf '%b ver-bump v%s %b\n' "${S_HDR_SUB-}" "${_ver}" "${S_HDR_END-}"
         else
           printf 'ver-bump %s\n' "${_ver}"
         fi

@@ -13,8 +13,7 @@
 
 [![bash 3.2+](https://img.shields.io/badge/bash-3.2%2B-1f425f?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/) [![CI](https://github.com/jv-k/ver-bump/actions/workflows/ci.yml/badge.svg)](https://github.com/jv-k/ver-bump/actions/workflows/ci.yml) [![CodeFactor](https://www.codefactor.io/repository/github/jv-k/ver-bump/badge)](https://www.codefactor.io/repository/github/jv-k/ver-bump) [![npm version](https://img.shields.io/npm/v/ver-bump?logo=npm&color=cb3837)](https://www.npmjs.com/package/ver-bump) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-<!-- TODO: revert to the main-pinned raw URL once the new images land on main -->
-<img src="img/screenshot.png" alt="ver-bump --help output: the header logo and the full flag reference, covering version input, bump levels, prerelease, changelog, tag, push, and GitHub release options.">
+<img src="https://raw.githubusercontent.com/jv-k/ver-bump/main/img/screenshot.png" alt="ver-bump --help output: the header logo and the full flag reference, covering version input, bump levels, prerelease, changelog, tag, push, and GitHub release options.">
 
 </div>
 
@@ -58,8 +57,7 @@ ver-bump             # cut it: reads commits, suggests a bump, prompts before pu
 ## Demo
 
 <div align="center">
-  <!-- TODO: revert to the main-pinned raw URL once the new images land on main -->
-  <img src="img/demo.gif" alt="Animated demo: ver-bump reads commits, sets the version, updates package.json and CHANGELOG, commits, tags in place, prompts before pushing, then pushes the tag to origin.">
+  <img src="https://raw.githubusercontent.com/jv-k/ver-bump/main/img/demo.gif" alt="Animated demo: ver-bump reads commits, sets the version, updates package.json and CHANGELOG, commits, tags in place, prompts before pushing, then pushes the tag to origin.">
 </div>
 
 ## Table of Contents

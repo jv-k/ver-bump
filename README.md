@@ -15,7 +15,7 @@ Reads your [conventional commits](https://www.conventionalcommits.org/) to sugge
 
 ## Quickstart
 
-### Install with curl (needs only bash, git, and jq):
+### Install with curl (no Node required):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/jv-k/ver-bump/main/install.sh | bash
@@ -26,6 +26,7 @@ curl -fsSL https://raw.githubusercontent.com/jv-k/ver-bump/main/install.sh | bas
 ```sh
 pnpm add -g ver-bump
 ```
+
 or
 
 ```sh
@@ -70,14 +71,14 @@ ver-bump             # cut it: reads commits, suggests a bump, prompts before pu
 - [Requirements](#requirements)
   - [Platform support](#platform-support)
 - [Installation](#installation)
-  - [Global installation `npm` / `pnpm`](#global-installation-npm--pnpm)
+  - [Install script](#install-script)
+  - [npm / pnpm](#npm--pnpm)
   - [Manual install](#manual-install)
   - [Homebrew](#homebrew)
   - [Basher](#basher)
 - [Workflows](#workflows)
 - [Migrating from 1.x](#migrating-from-1x)
 - [Options](#options)
-  - [All options, grouped the way <code>ver-bump --help</code> lists them](#all-options-grouped-the-way-codever-bump---helpcode-lists-them)
   - [Choosing the new version](#choosing-the-new-version)
   - [Bumping files](#bumping-files)
   - [Commit, tag & changelog](#commit-tag--changelog)
@@ -104,9 +105,9 @@ ver-bump             # cut it: reads commits, suggests a bump, prompts before pu
 
 ## Why `ver-bump`?
 
-I built ver-bump because cutting a release shouldn't require installing a bigger toolchain than the thing being released. 
+I built ver-bump because cutting a release shouldn't require installing a bigger toolchain than the thing being released.
 
-Release tooling has drifted into two camps: fully automated CI machinery like [semantic-release](https://github.com/semantic-release/semantic-release) — powerful, but Node-only, deliberately prompt-free, and a deep dependency tree for what is ultimately a git tag — and single-purpose bumpers like [bump-my-version](https://github.com/callowayproject/bump-my-version) that rewrite a version string and stop. I wanted the middle of that spectrum, for every repo and not just the Node ones: a tool that reads your Conventional Commits and *suggests* the right SemVer bump, then writes the changelog, tags, pushes, and opens the PR or GitHub release — with every side-effect previewable via `--dry-run`, reversible via `--undo`, and nothing to install beyond standard CLI tools:`git` + `jq`.
+Release tooling has drifted into two camps: fully automated CI machinery like [semantic-release](https://github.com/semantic-release/semantic-release) — powerful, but Node-only, deliberately prompt-free, and a deep dependency tree for what is ultimately a git tag — and single-purpose bumpers like [bump-my-version](https://github.com/callowayproject/bump-my-version) that rewrite a version string and stop. I wanted the middle of that spectrum, for every repo and not just the Node ones: a tool that reads your Conventional Commits and *suggests* the right SemVer bump, then writes the changelog, tags, pushes, and opens the PR or GitHub release — with every side-effect previewable via `--dry-run`, reversible via `--undo`, and nothing to install beyond standard CLI tools: `git` and `jq`.
 
 <!-- If ver-bump isn't your jam, the notable neighbours are: [semantic-release](https://github.com/semantic-release/semantic-release) for fully hands-off releases from CI, [release-it](https://github.com/release-it/release-it) as the closest interactive cousin when a Node dependency is fine, [release-please](https://github.com/googleapis/release-please) for Google's release-PR flow on GitHub, [changesets](https://github.com/changesets/changesets) for monorepos, [np](https://github.com/sindresorhus/np) for interactive npm publishing, and [GoReleaser](https://goreleaser.com) for building and shipping artifacts once a tag exists — that last one pairs well with ver-bump rather than replacing it. -->
 
@@ -135,7 +136,7 @@ Every side-effecting step honours `--dry-run`, and preconditions fail with a [do
 | 5 | ✅ **Three release workflows** | 1. **Tag-in-place** (default)<br />2. Release **branch** (`--branch`)<br />3. Release **PR** (`--pr`)<br />Pick per-run or set a default. (See [Workflows](#workflows).) |
 | 6 | ✅ **Safety preflights** | Refuses to release on a dirty tree, an out-of-sync remote, or a disallowed branch, each individually overridable. |
 | 7 | ✅ **Dry-run** | `--dry-run` prints every side-effect (file write, `git add`, commit, tag, push) without executing any of them. |
-| 8 | ✅ **Undo** | `--undo` rolls back a local release (tag, branch, bump commit) before anything is pushed. |
+| 8 | ✅ **Undo** | `--undo` rolls back a local release (tag + release branch) before anything is pushed. |
 | 9 | ✅ **GitHub releases & PRs** | `--release` publishes a GitHub release for the new tag. `--pr` opens a pull request. Both use the optional [`gh`](https://cli.github.com) CLI. |
 
 ### Misc Features
@@ -149,7 +150,7 @@ Every side-effecting step honours `--dry-run`, and preconditions fail with a [do
 
 ## Requirements
 
-A project in a **Git repository** with **`git`** and **`jq`** installed. 
+**Bash 3.2+**, a **Git repository**, and **`git`** + **`jq`** on your `PATH`.
 
 The [`gh`](https://cli.github.com) CLI is an optional dependency, used only by `--pr` and `--release`.
 
@@ -165,15 +166,17 @@ The [`gh`](https://cli.github.com) CLI is an optional dependency, used only by `
 
 ## Installation
 
-Download + install the latest GitHub release:
+### Install script
+
+Downloads the latest GitHub release, verifies its published sha256 checksum, and installs to `~/.local` (`share/ver-bump/` for the files, `bin/ver-bump` as the command). Re-running upgrades in place, and a failed install restores the previous one:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/jv-k/ver-bump/main/install.sh | bash
-
-# installs to `~/.local`:
 ```
 
-### Global installation `npm` / `pnpm`
+To pin a version or change the prefix, insert `VER_BUMP_INSTALL_VERSION=<x.y.z>` and/or `VER_BUMP_PREFIX=<dir>` before the final `bash` — or download the script and run `bash install.sh --version <x.y.z> --prefix <dir>`.
+
+### npm / pnpm
 
 ```sh
 pnpm add -g ver-bump
@@ -222,19 +225,20 @@ The `--pr` base branch resolves in this order: `--base <branch>`, then `PR_BASE`
 ver-bump [-v <version>] [options]
 ```
 
-Every option has a short form and a GNU-style long form. Long forms accept `--name value` or `--name=value`.
-
-### All options, grouped the way <code>ver-bump --help</code> lists them
+Every option has a short form and a GNU-style long form. Long forms accept `--name value` or `--name=value`. The groups below match `ver-bump --help`.
 
 ### Choosing the new version
 
 | Flag | Description |
 | --- | --- |
-| `-v`, `--version [<version>]` | Without a value, print the tool version and exit. With a value, set an explicit SemVer. |
+| `-v <version>`, `--version <version>` | Set an explicit SemVer as the new version (skips the suggestion and prompt). |
+| `-v`, `--version` *(no value)* | Print ver-bump's own version and exit. |
 | `--major` | Force a major bump from the current version. |
 | `--minor` | Force a minor bump from the current version. |
-| `--patch` | Force a patch bump from the current version. Without `--preid`, any of the three drops an existing prerelease/build and bumps the stable core (`1.2.3-dev.5 --patch → 1.2.4`). |
-| `--preid <id>` | Start or advance a prerelease line, and conflicts with `-v`. With a level: bump it, then enter `<id>.1` (`1.2.3 --major --preid rc → 2.0.0-rc.1`). Alone on a prerelease: same id increments the counter, a different id resets to `.1`. |
+| `--patch` | Force a patch bump from the current version. |
+| `--preid <id>` | Start or advance a prerelease line (conflicts with `-v`). With a level: bump it, then enter `<id>.1` (`1.2.3 --major --preid rc → 2.0.0-rc.1`). Alone on a prerelease: same id increments the counter, a different id resets to `.1`. |
+
+The three bump levels are mutually exclusive with each other and with `-v`. Without `--preid` they drop any existing prerelease/build metadata and bump the stable core (`1.2.3-dev.5 --patch → 1.2.4`) — the full rules live in [Version suggestion](#version-suggestion).
 
 ### Bumping files
 
@@ -263,7 +267,7 @@ Every option has a short form and a GNU-style long form. Long forms accept `--na
 | `--pr` | Branch, push, and open a release PR via `gh` (GitHub-only, and implies push to origin). |
 | `--base <branch>` | Base branch for `--pr` (GitHub-only, default: the branch you ran ver-bump from). |
 | `--release` | Publish a GitHub release for the new tag (GitHub-only, requires `-p`, uses `gh`). |
-| `--branch` | Cut a `release-x.x.x` branch, otherwise tag in place (the default). |
+| `--branch` | Cut a `release-<version>` branch instead of tagging the current branch in place. |
 | `-B`, `--branch-prefix <prefix>` | Override the branch prefix (default: `release-`). |
 | `-b`, `--no-branch` | Deprecated no-op. Tag-in-place is the default now. |
 
@@ -280,7 +284,7 @@ Every option has a short form and a GNU-style long form. Long forms accept `--na
 
 | Flag | Description |
 | --- | --- |
-| `--undo [<version>]` | Locally delete `release-X.Y.Z` and tag `vX.Y.Z` (refuses if pushed or dirty). |
+| `--undo [<version>]` | Delete an unpushed release's tag, plus its `release-X.Y.Z` branch when one was cut; with tag-in-place the bump commit stays on your branch. Refuses if pushed or dirty. |
 | `-d`, `--dry-run` | Print every side-effect without executing. |
 | `-y`, `--yes` | Skip interactive confirmation prompts. |
 | `-q`, `--quiet` | Suppress decoration and print only the new version on stdout (needs `-y`, `-v`, a bump level, or `--preid`). |
@@ -288,11 +292,11 @@ Every option has a short form and a GNU-style long form. Long forms accept `--na
 | `--completions <shell>` | Emit a completion script for bash, zsh, or fish. |
 | `--install-completions[=<shell>]` | Install the completion script (auto-detects the shell). |
 
-</details>
+**What `--undo` does and doesn't undo.** With tag-in-place (the default), `--undo` deletes the tag but the bump commit stays on your branch — for a full rollback, follow it with `git reset --hard HEAD~1` (run `git log -1` first to confirm HEAD is the bump commit). With `--branch` / `--pr` the undo is complete, because the bump commit lives on the release branch it deletes. Once anything has been pushed — or a release branch has been merged — `--undo` refuses: delete the remote tag/branch and `git revert` the bump commit instead.
 
 ## Configuration
 
-`ver-bump` reads a `.ver-bumprc` file, walking up from your current directory toward `/`. The first file found is shell-sourced, so teams + orgs can commit their project-wide defaults alongside the repo. Precedence, highest to lowest: **CLI flag** > **environment variable** > **`.ver-bumprc`** > **built-in default**.
+`ver-bump` reads a `.ver-bumprc` file, walking up from your current directory toward `/`. The first file found is shell-sourced, so a team can commit its defaults at the repo root. Precedence, highest to lowest: **CLI flag** > **environment variable** > **`.ver-bumprc`** > **built-in default**.
 
 <details>
 <summary><b>All config keys</b>, security, grouped changelog, and commit templates</summary>
@@ -359,7 +363,7 @@ By default the CHANGELOG section is a flat list of commit subjects (unchanged si
 - plain non-conventional message ([e0d3107](https://github.com/acme/widget/commit/e0d3107))
 ```
 
-Sections appear in that order and empty ones are omitted. Breaking changes are detected from a `<type>!:` subject or a `BREAKING CHANGE:` footer. Everything that isn't `feat`/`fix`/breaking (including commits that don't follow Conventional Commits at all) lands under **Other**, so nothing is ever dropped. Scopes render as a bold `**scope:**` prefix. With a non-GitHub remote (or no remote) the same grouping renders as plain text without links. Any other `CHANGELOG_STYLE` value behaves as `flat`, whose output stays byte-identical to previous releases.
+Sections appear in that order and empty ones are omitted. Breaking changes are detected from a `<type>!:` subject or a `BREAKING CHANGE:` footer. Everything that isn't `feat`/`fix`/breaking (including commits that don't follow Conventional Commits at all) lands under **Other**, so nothing is ever dropped. Scopes render as a bold `**scope:**` prefix. With a non-GitHub remote (or no remote) the same grouping renders as plain text without links. Any other `CHANGELOG_STYLE` value falls back to `flat`.
 
 ### Commit message template (`COMMIT_MSG_TEMPLATE`)
 
@@ -521,14 +525,21 @@ Under `--dry-run` the hook command is printed with the `[dry-run]` prefix and no
 
 ## Exit codes
 
+Every run ends with a stable, documented exit code, so scripts and CI can branch on `$?`.
+
+<details>
+<summary><b>All codes</b>, 0–5</summary>
+
 | Code | Meaning |
 | ---: | --- |
 | `0` | Success. |
 | `1` | Generic runtime error (failed commit, jq write error, etc.). |
 | `2` | Usage / argument-parse error (unknown flag, missing value). |
-| `3` | Precondition failure (missing `package.json`, missing `git`/`jq`, SemVer validation, insecure `.ver-bumprc`, branch/tag already exists). |
+| `3` | Precondition failure (missing `git`/`jq`, dirty tree, disallowed branch, SemVer validation, insecure `.ver-bumprc`, branch/tag already exists). |
 | `4` | Hook failure: `PRE_BUMP_CMD` or `POST_TAG_CMD` exited non-zero (see [Release hooks](#release-hooks)). |
 | `5` | User abort (declined a prompt, e.g. push confirmation). |
+
+</details>
 
 ## Shell completions
 
@@ -608,7 +619,7 @@ DONE
 
 The commit and tag land on your current branch. If you declined the push prompt, push later on a re-run with `-p origin`, or manually with `git push --follow-tags`.
 
-Prefer a release branch and PR instead? Run `ver-bump --pr` (or `--branch`) to cut a `release-1.0.1` branch, push it, and open a pull request for review rather than tagging in place, the pre-2.0 workflow. With `--pr`, `gh` opens the PR against your base branch (`--base`, else the branch you ran from). See [Workflows](#workflows).
+Prefer a release branch and PR instead? `ver-bump --pr` cuts a `release-1.0.1` branch, pushes it, and opens a pull request via `gh` against your base branch (`--base`, else the branch you ran from) — the pre-2.0 workflow. `ver-bump --branch` cuts the branch and stops there, leaving push and merge to you. See [Workflows](#workflows).
 
 ## Development
 
@@ -636,7 +647,7 @@ You can invoke the script directly if you prefer: `./dev/sandbox.sh -v 2.0.0` ne
 
 ## Tests
 
-This project uses [bats](https://github.com/bats-core/bats-core) to test ver-bump's functionality. Install the pre-requisites, then run the suite:
+Tests are written with [bats](https://github.com/bats-core/bats-core):
 
 ```sh
 pnpm tests:install   # one-time: vendors bats-core + helpers
@@ -649,8 +660,8 @@ The suite covers short/long option parsing, SemVer validation (including prerele
 
 ## Contributing
 
-Contributions are welcome. Please open [an issue or pull request](https://github.com/jv-k/ver-bump/issues/new/choose). Coding standards, commit conventions, and the test/lint workflow live in [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md).
+Contributions are welcome — start with [`CONTRIBUTING.md`](CONTRIBUTING.md), then open [an issue or pull request](https://github.com/jv-k/ver-bump/issues/new/choose). Coding standards, commit conventions, and the test/lint workflow live in [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md).
 
 ## License
 
-The scripts and documentation in this project are released under the [MIT license](https://github.com/jv-k/ver-bump/blob/master/LICENSE).
+The scripts and documentation in this project are released under the [MIT license](LICENSE).

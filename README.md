@@ -204,10 +204,10 @@ ln -s ~/.local/share/ver-bump/ver-bump.sh ~/.local/bin/VerBump   # ensure ~/.loc
 ### Homebrew
 
 ```sh
-brew install jv-k/ver-bump/ver-bump
+brew install jv-k/tap/verbump
 ```
 
-Installs from the [`jv-k/ver-bump` tap](https://github.com/jv-k/homebrew-ver-bump), with the `bash` and `jq` dependencies included. The tap's formula tracks the latest stable release automatically.
+Installs from the [`jv-k/tap` tap](https://github.com/jv-k/homebrew-tap) with the `bash` and `jq` dependencies included. The command it installs is `VerBump`, and the tap's formula tracks the latest stable release automatically.
 
 ### Basher
 

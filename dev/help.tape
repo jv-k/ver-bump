@@ -19,8 +19,8 @@ Set Width 1000
 Set Height 2700
 # Monokai Pro palette with a Carbon (#191816) background for the terminal itself.
 Set Theme { "background": "#191816", "foreground": "#FCFCFA", "cursor": "#FCFCFA", "black": "#2D2A2E", "red": "#FF6188", "green": "#A9DC76", "yellow": "#FFD866", "blue": "#FC9867", "magenta": "#AB9DF2", "cyan": "#78DCE8", "white": "#FCFCFA", "brightBlack": "#727072", "brightRed": "#FF6188", "brightGreen": "#A9DC76", "brightYellow": "#FFD866", "brightBlue": "#FC9867", "brightMagenta": "#AB9DF2", "brightCyan": "#78DCE8", "brightWhite": "#FCFCFA", "selection": "#5B595C" }
-Set Padding 24
-Set Margin 20
+Set Padding 12
+Set Margin 8
 Set MarginFill ""
 Set BorderRadius 10
 Set WindowBar Colorful
@@ -28,10 +28,14 @@ Set WindowBarSize 40
 Set TypingSpeed 40ms
 
 Hide
+# Define `ver-bump` so the screenshot shows the installed-command form,
+# not the in-repo `./ver-bump.sh` path. Clear AFTER defining it so the
+# function line doesn't linger on screen when we Show.
+Type 'ver-bump() { ./ver-bump.sh "$@"; }' Enter
 Type "clear" Enter
 Show
 
-Type "./ver-bump.sh --help"
+Type "ver-bump --help"
 Sleep 400ms
 Enter
 Sleep 2s

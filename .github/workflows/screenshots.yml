@@ -11,14 +11,14 @@ name: Screenshots
 #   img/demo.gif         — vhs, sandbox-driven real bump recording
 #   img/demo-final.png   — the demo's finished DONE frame, as a still
 #
-# Triggers: cut a release (auto — visuals track the shipped version) or run
-# it by hand. Locally: `pnpm screenshots` (or `:help` / `:demo`) — see
-# dev/screenshots.sh.
+# Triggers: run by hand (workflow_dispatch). Intentionally NOT on release —
+# the tracked img/* are maintained on develop and reach main via the release
+# merge/reset (ADR-19), so auto-rendering on release was redundant and raced
+# the reset (it also rendered from main, which lags until then). Locally:
+# `pnpm screenshots` (or `:help` / `:demo`) — see dev/screenshots.sh.
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
 
 concurrency:
   group: screenshots-${{ github.ref }}

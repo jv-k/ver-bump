@@ -39,7 +39,7 @@ git clone https://github.com/jv-k/ver-bump.git ~/.local/share/ver-bump
 ln -s ~/.local/share/ver-bump/ver-bump.sh ~/.local/bin/ver-bump   # ensure ~/.local/bin is on $PATH
 ```
 
-See [Installation](#installation) for checksum verification, version pinning, prefix options, and the planned Homebrew path.
+See [Installation](#installation) for checksum verification, version pinning, prefix options, and the Homebrew path.
 
 ### Use it in your repo folder:
 
@@ -194,7 +194,11 @@ ln -s ~/.local/share/ver-bump/ver-bump.sh ~/.local/bin/ver-bump   # ensure ~/.lo
 
 ### Homebrew
 
-> [Coming soon](https://github.com/jv-k/ver-bump/issues/24)
+```sh
+brew install jv-k/ver-bump/ver-bump
+```
+
+Installs from the [`jv-k/ver-bump` tap](https://github.com/jv-k/homebrew-ver-bump), with the `bash` and `jq` dependencies included. The tap's formula tracks the latest stable release automatically.
 
 ### Basher
 

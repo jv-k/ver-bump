@@ -249,7 +249,7 @@ RC
 
   # After a successful hooked run, the parent environment written by the
   # release itself (git config, files) must not contain VER_BUMP_VERSION —
-  # verify via a second hook that runs in the same ver-bump process ordering.
+  # verify via a second hook that runs in the same VerBump process ordering.
   PRE_BUMP_CMD='env | grep -c "^VER_BUMP_" > hook-env' \
     run ${profile_script} -v 1.0.1 -y -n -c
   assert_success

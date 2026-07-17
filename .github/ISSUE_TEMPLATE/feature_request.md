@@ -1,20 +1,26 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Propose an enhancement
 title: ''
-labels: ''
+labels: feature
 assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+<!-- Title: short and declarative, no "feature:" prefix — the label carries
+     the type. -->
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+## The problem
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+<!-- Lead with the user-facing problem: what can't you do today, and in
+     which workflow does it bite? -->
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+## Proposed shape
+
+<!-- The flag / config key / behaviour you have in mind. A mock CLI session
+     in a fenced block helps. -->
+
+## Alternatives considered
+
+<!-- Other shapes you thought about and why they lost — the reviewer will
+     ask. -->

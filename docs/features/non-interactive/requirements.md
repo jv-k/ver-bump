@@ -1,6 +1,6 @@
 # Non-interactive mode
 
-`-y` / `--yes` lets CI (US-4) and scripts run ver-bump with no prompts.
+`-y` / `--yes` lets CI (US-4) and scripts run VerBump with no prompts.
 Resolved PRD Q-1 in favour of shipping in 2.0.
 
 | ID | Requirement | Status |

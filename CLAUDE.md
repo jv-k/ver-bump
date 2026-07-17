@@ -1,6 +1,6 @@
-# ver-bump — project instructions
+# VerBump — project instructions
 
-`ver-bump` is a single-file Bash release tool (`ver-bump.sh` + `lib/*.sh`),
+`VerBump` is a single-file Bash release tool (`ver-bump.sh` + `lib/*.sh`),
 tested with bats and linted with shellcheck. **The canonical coding standards
 live in [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md)** — read it before writing
 code, commits, PRs, or issues. This file is the short entry point; that doc is

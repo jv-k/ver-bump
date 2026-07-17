@@ -12,7 +12,7 @@ normalized to their short forms before parsing.
 | R-OPT-5 | `--completions <bash\|zsh\|fish>` — see [completions](../completions/requirements.md). | ✅ shipped |
 | R-OPT-6 | `-t`/`--tag-prefix` and `-B`/`--branch-prefix` overrides used consistently by every tag/branch step. | ✅ shipped — `test/prefixes.bats`; honoured by `--undo` too (`d32d426`) |
 | R-OPT-7 | Repo's own `package-lock.json` bumped built-in; `-f` is for *additional* files. | ✅ shipped |
-| R-OPT-8 | `--about` prints branded info, exit 0, no repo needed; bare `-v`/`--version` prints `ver-bump <ver>` (parseable when colour is off). | ✅ shipped (`988fa8c`, `27014c7`) — `test/about.bats` |
+| R-OPT-8 | `--about` prints branded info, exit 0, no repo needed; bare `-v`/`--version` prints `VerBump <ver>` (parseable when colour is off). | ✅ shipped (`988fa8c`, `27014c7`) — `test/about.bats` |
 
 Pre-scanned modes (`--about`, `--undo`, `--completions`,
 `--install-completions`, `--release`, `--major/--minor/--patch`) are handled

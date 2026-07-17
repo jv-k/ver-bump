@@ -2,13 +2,13 @@
 
 # dev/sandbox.sh — the contributor sandbox (R-DEV-1..3).
 #
-# R-DEV-1  creates an isolated throwaway git repo, runs ver-bump inside it,
+# R-DEV-1  creates an isolated throwaway git repo, runs VerBump inside it,
 #          and cleans it up on exit — including on signals.
 # R-DEV-2  cleanup must never fire against the host repo.
 # R-DEV-3  SANDBOX_VERSION / SANDBOX_COMMITS customise the start state;
 #          --keep / -k preserves the temp dir.
 #
-# ver-bump itself is driven non-interactively: either --dry-run with -p (so
+# VerBump itself is driven non-interactively: either --dry-run with -p (so
 # do-push auto-confirms and short-circuits), or a live run whose declined
 # push exits 5 by design (same recipe as e2e-live.bats).
 
@@ -25,16 +25,16 @@ sandbox_dir_from_output() {
   printf '%s\n' "$output" | sed -n 's/^sandbox: \(\/.*\)$/\1/p' | head -n 1
 }
 
-# ── R-DEV-1: isolation, ver-bump execution, cleanup on exit ─────────────────
+# ── R-DEV-1: isolation, VerBump execution, cleanup on exit ─────────────────
 
-@test "sandbox: runs ver-bump in a throwaway repo and wipes it on exit" {
+@test "sandbox: runs VerBump in a throwaway repo and wipes it on exit" {
   cd "$(scratch_repo)"
 
   run "$(sandbox_script)" -v 0.2.0 --dry-run -p origin
   strip_ansi_output
   assert_success
 
-  # ver-bump really ran, against the sandbox's seeded 0.1.0 package.json
+  # VerBump really ran, against the sandbox's seeded 0.1.0 package.json
   assert_output --partial "Bumped 0.1.0 -> 0.2.0"
 
   # sandbox announced its temp dir ...
@@ -51,10 +51,10 @@ sandbox_dir_from_output() {
   [ ! -d "$dir" ]
 }
 
-@test "sandbox: cleanup still fires when ver-bump fails (exit code propagates)" {
+@test "sandbox: cleanup still fires when VerBump fails (exit code propagates)" {
   cd "$(scratch_repo)"
 
-  # Invalid SemVer makes ver-bump fail 2; set -e aborts the sandbox and the
+  # Invalid SemVer makes VerBump fail 2; set -e aborts the sandbox and the
   # trap must still remove the temp dir while preserving the exit code.
   run "$(sandbox_script)" -v not-semver
   assert_failure 2
@@ -74,18 +74,18 @@ sandbox_dir_from_output() {
   out="${work}/out.log"
   mkfifo "$fifo"
 
-  # No -v: ver-bump blocks on its version prompt, reading the held-open
+  # No -v: VerBump blocks on its version prompt, reading the held-open
   # fifo — a stable "mid-run" state to signal.
   "$(sandbox_script)" < "$fifo" > "$out" 2>&1 &
   pid=$!
-  exec 9>"$fifo" # hold the writer open so ver-bump's read blocks
+  exec 9>"$fifo" # hold the writer open so VerBump's read blocks
 
-  # Wait until the sandbox has handed off to ver-bump ("---" marker).
+  # Wait until the sandbox has handed off to VerBump ("---" marker).
   for ((i = 0; i < 100; i++)); do
     grep -q -- '---' "$out" 2>/dev/null && break
     sleep 0.1
   done
-  grep -q -- '---' "$out" || { exec 9>&-; bats_fail "sandbox never reached ver-bump (out: $(cat "$out"))"; }
+  grep -q -- '---' "$out" || { exec 9>&-; bats_fail "sandbox never reached VerBump (out: $(cat "$out"))"; }
 
   dir="$(sed -n 's/^sandbox: \(\/.*\)$/\1/p' "$out" | head -n 1)"
   [ -n "$dir" ]
@@ -93,7 +93,7 @@ sandbox_dir_from_output() {
   CLEANUP_CMDS+=("rm -rf '${dir}'")
 
   # Ctrl-C sends the signal to the whole foreground process group; from a
-  # test we reproduce that by signalling the sandbox AND its ver-bump child
+  # test we reproduce that by signalling the sandbox AND its VerBump child
   # (bash defers traps until the foreground child exits).
   child="$(pgrep -P "$pid" | head -n 1)"
   kill -TERM "$pid" 2>/dev/null
@@ -256,9 +256,9 @@ sandbox_dir_from_output() {
   [ ! -d "$remote" ]
 }
 
-# ── --setup-only: scaffold, print paths, hand off without running ver-bump ────
+# ── --setup-only: scaffold, print paths, hand off without running VerBump ────
 
-@test "sandbox: --setup-only scaffolds and hands off without running ver-bump" {
+@test "sandbox: --setup-only scaffolds and hands off without running VerBump" {
   cd "$(scratch_repo)"
 
   # Status chatter is on stderr; the two paths we consume are on stdout. The
@@ -279,7 +279,7 @@ sandbox_dir_from_output() {
   case "$sbx" in "${repo_dir}"*) bats_fail "sandbox ${sbx} inside host repo" ;; esac
   case "$rmt" in "${repo_dir}"*) bats_fail "remote ${rmt} inside host repo" ;; esac
 
-  # ver-bump never ran: the repo is still seeded at 0.1.0 (tagged), unbumped.
+  # VerBump never ran: the repo is still seeded at 0.1.0 (tagged), unbumped.
   assert_equal "$(jsonfile_get_ver "${sbx}/package.json")" "0.1.0"
   run git -C "$sbx" tag -l v0.1.0
   assert_output "v0.1.0"

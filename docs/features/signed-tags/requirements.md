@@ -4,7 +4,7 @@ Opt-in signed release tags for provenance-conscious teams
 ([#68](https://github.com/jv-k/ver-bump/issues/68)): `--sign` (or
 `TAG_SIGN=true`) switches `do-tag` from `git tag -a` to `git tag -s`. Key
 and signing-program selection stay entirely in git's own config
-(`user.signingkey`, `gpg.format`) — ver-bump adds **no** key management and
+(`user.signingkey`, `gpg.format`) — VerBump adds **no** key management and
 no new dependency checks; git's own error output is the error surface.
 
 | ID | Requirement | Status | Tests |

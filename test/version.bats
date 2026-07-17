@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 # Version-string primitives: is_semver, set-v-suggest, bump-prerelease,
-# process-version. Migrated verbatim from the monolithic ver-bump.bats;
+# process-version. Migrated verbatim from the monolithic VerBump.bats;
 # shared setup lives in test/test_helper.bash.
 
 load 'test_helper'

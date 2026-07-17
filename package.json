@@ -1,6 +1,6 @@
 {
   "name": "ver-bump",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Release tool for any Git repo: reads your Conventional Commits to suggest a SemVer bump, then updates the changelog, tags, and pushes. Optional release-branch and PR workflows — no Node toolchain, just git + jq.",
   "author": "John Valai <git@jvk.to>",
   "homepage": "https://github.com/jv-k/ver-bump",
@@ -9,7 +9,9 @@
     "url": "https://github.com/jv-k/ver-bump.git"
   },
   "license": "MIT",
-  "bin": "./ver-bump.sh",
+  "bin": {
+    "VerBump": "./ver-bump.sh"
+  },
   "files": [
     "ver-bump.sh",
     "lib/",

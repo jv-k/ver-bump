@@ -1,38 +1,36 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Something isn't working
 title: ''
-labels: ''
+labels: bug
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+<!-- Title: short and declarative, no "bug:" prefix — the label carries the
+     type. e.g. "Completion script misses --install-completions on zsh" -->
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+## What you ran
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+```sh
+VerBump ...
+```
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+## What happened
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+<!-- Paste output in a fenced block. Strip ANSI codes, or say if the colour
+     itself is the bug. -->
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+## What you expected
 
-**Additional context**
-Add any other context about the problem here.
+## Environment
+
+- OS:
+- `bash --version`:
+- `VerBump --about`:
+
+## Minimal reproducer (optional)
+
+<!-- Closes issues faster than any amount of prose: a scratch repo + the
+     exact command — seed commits, starting tag, .ver-bumprc if relevant,
+     then the VerBump invocation. -->

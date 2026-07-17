@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 # FLAG_DRYRUN=true behaviour across do-packagefile-bump, do-commit, do-tag,
-# do-changelog. Migrated verbatim from the monolithic ver-bump.bats;
+# do-changelog. Migrated verbatim from the monolithic VerBump.bats;
 # shared setup lives in test/test_helper.bash.
 
 load 'test_helper'

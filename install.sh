@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# install.sh — checksummed installer for ver-bump (issue #66, R-DIST-1..5).
+# install.sh — checksummed installer for VerBump (issue #66, R-DIST-1..5).
 #
 # Downloads a GitHub release tarball, verifies its published sha256, and
 # installs under ${VER_BUMP_PREFIX:-$HOME/.local}:
 #
 #   <prefix>/share/ver-bump/   the release tree (ver-bump.sh + lib/ + …)
-#   <prefix>/bin/ver-bump      symlink to share/ver-bump/ver-bump.sh
+#   <prefix>/bin/VerBump      symlink to share/ver-bump/ver-bump.sh
 #
 # Designed to be piped —
 #
@@ -37,7 +37,7 @@ BACKUP_DIR=""        # previous install moved aside during the swap; removed
 
 usage() {
   cat <<'EOF'
-ver-bump installer — download a release, verify its sha256, install it.
+VerBump installer — download a release, verify its sha256, install it.
 
 Usage:
   curl -fsSL https://raw.githubusercontent.com/jv-k/ver-bump/main/install.sh | bash
@@ -54,7 +54,7 @@ Environment:
 
 Layout:
   <prefix>/share/ver-bump/   the release tree (ver-bump.sh + lib/)
-  <prefix>/bin/ver-bump      symlink to share/ver-bump/ver-bump.sh
+  <prefix>/bin/VerBump      symlink to share/ver-bump/ver-bump.sh
 
 Re-running upgrades an existing install in place.
 EOF
@@ -65,7 +65,7 @@ EOF
 # anything is installed, so it must stay self-contained.
 bail() {
   local code=$1
-  printf 'ver-bump install: error: %s\n' "$2" >&2
+  printf 'VerBump install: error: %s\n' "$2" >&2
   if [ -n "${3:-}" ]; then
     printf '  hint: %s\n' "$3" >&2
   fi
@@ -83,7 +83,7 @@ is_semver() {
 }
 
 # R-DIST-3: bash + tar + (curl|wget) + (sha256sum|shasum) is the entire
-# dependency surface. git/jq are ver-bump *runtime* deps — the tool checks
+# dependency surface. git/jq are VerBump *runtime* deps — the tool checks
 # those itself on first run, deliberately not here.
 check-install-deps() {
   local missing=()
@@ -144,7 +144,7 @@ parse-args() {
 install-paths() {
   SHARE_DIR="${INSTALL_PREFIX}/share/ver-bump"
   BIN_DIR="${INSTALL_PREFIX}/bin"
-  BIN_LINK="${BIN_DIR}/ver-bump"
+  BIN_LINK="${BIN_DIR}/VerBump"
 }
 
 # asset-url <file> — release-asset URL for <file>: GitHub's stable
@@ -190,12 +190,12 @@ verify_checksum() {
   local hex_re='^[0-9a-fA-F]{64}$'
   read -r expected rest < "$sumfile" || true
   if ! [[ "$expected" =~ $hex_re ]]; then
-    printf 'ver-bump install: checksum file is malformed (expected a sha256 digest)\n' >&2
+    printf 'VerBump install: checksum file is malformed (expected a sha256 digest)\n' >&2
     return 1
   fi
   actual=$(sha256_of "$file") || return 1
   if [ "$actual" != "$expected" ]; then
-    printf 'ver-bump install: checksum mismatch for %s\n  expected: %s\n  actual:   %s\n' \
+    printf 'VerBump install: checksum mismatch for %s\n  expected: %s\n  actual:   %s\n' \
       "${file##*/}" "$expected" "$actual" >&2
     return 1
   fi
@@ -209,7 +209,7 @@ unpack-tarball() {
 }
 
 # read-tree-version <dir> — the "version" field of the unpacked
-# package.json, parsed with bash alone (jq is a ver-bump runtime dep, not
+# package.json, parsed with bash alone (jq is a VerBump runtime dep, not
 # an installer one). Prints "unknown" rather than failing: version display
 # is cosmetic, the checksum is the integrity gate.
 read-tree-version() {
@@ -272,9 +272,9 @@ _restore-backup() {
   if [ -n "$BACKUP_DIR" ] && [ -e "$BACKUP_DIR" ]; then
     if mv "$BACKUP_DIR" "$SHARE_DIR"; then
       BACKUP_DIR=""
-      printf 'ver-bump install: swap failed — previous installation restored\n' >&2
+      printf 'VerBump install: swap failed — previous installation restored\n' >&2
     else
-      printf 'ver-bump install: swap failed — previous installation preserved at %s\n' \
+      printf 'VerBump install: swap failed — previous installation preserved at %s\n' \
         "$BACKUP_DIR" >&2
     fi
   fi
@@ -310,7 +310,7 @@ main() {
   WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/ver-bump-install.XXXXXX") || \
     bail 1 "could not create a temporary directory"
 
-  printf 'Installing ver-bump (%s) to %s ...\n' \
+  printf 'Installing VerBump (%s) to %s ...\n' \
     "${INSTALL_VERSION:-latest}" "$INSTALL_PREFIX"
 
   local url
@@ -337,10 +337,10 @@ main() {
     bail 1 "could not install to ${SHARE_DIR}" \
            "check permissions, or point VER_BUMP_PREFIX at a writable prefix"
 
-  printf 'Installed ver-bump %s\n' "$installed_version"
+  printf 'Installed VerBump %s\n' "$installed_version"
   printf '  %s -> %s\n' "$BIN_LINK" "$SHARE_DIR/ver-bump.sh"
   _path-hint
-  printf "Tip: run 'ver-bump --install-completions' to set up shell completions.\n"
+  printf "Tip: run 'VerBump --install-completions' to set up shell completions.\n"
 }
 
 # Run main when executed or piped into bash; skip it when sourced (tests

@@ -3,7 +3,7 @@
 # --pr flag: after the branch + tag are pushed, open a GitHub pull request for
 # the release branch via the `gh` CLI (head = release-<v>, base = $PR_BASE).
 # --pr implies --branch and a push, and — like --release — only needs `gh` when
-# it's passed; the default ver-bump path stays bash + git + jq only. Mirrors the
+# it's passed; the default VerBump path stays bash + git + jq only. Mirrors the
 # gh-shim-on-PATH pattern from release.bats.
 
 load 'test_helper'

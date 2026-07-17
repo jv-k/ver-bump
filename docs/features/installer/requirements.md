@@ -6,9 +6,9 @@ complements the tracked Homebrew (#24) and basher (#39) paths.
 
 | ID | Requirement | Status |
 | --- | --- | --- |
-| R-DIST-1 | `install.sh` at the repo root downloads the latest GitHub release tarball (or a pinned one via `VER_BUMP_INSTALL_VERSION=x.y.z` / `--version`), verifies its published sha256, and unpacks `ver-bump.sh` + `lib/` under `${VER_BUMP_PREFIX:-$HOME/.local}` (`share/ver-bump/` + a `bin/ver-bump` symlink). | ✅ shipped — `test/install.bats` |
+| R-DIST-1 | `install.sh` at the repo root downloads the latest GitHub release tarball (or a pinned one via `VER_BUMP_INSTALL_VERSION=x.y.z` / `--version`), verifies its published sha256, and unpacks `ver-bump.sh` + `lib/` under `${VER_BUMP_PREFIX:-$HOME/.local}` (`share/ver-bump/` + a `bin/VerBump` symlink). | ✅ shipped — `test/install.bats` |
 | R-DIST-2 | The release workflow publishes `ver-bump.tar.gz` + `ver-bump.tar.gz.sha256` as release assets (`publish-release-assets` job in `ci.yml`, extends the existing publish CI). | ✅ shipped — smoke step installs from the freshly published release and runs `--about` |
-| R-DIST-3 | Installer needs only `bash`, `curl` (or `wget`), `tar`, and `sha256sum`/`shasum`; it is idempotent (re-run upgrades in place), prints the installed version, and suggests `ver-bump --install-completions`. | ✅ shipped — `test/install.bats` |
+| R-DIST-3 | Installer needs only `bash`, `curl` (or `wget`), `tar`, and `sha256sum`/`shasum`; it is idempotent (re-run upgrades in place), prints the installed version, and suggests `VerBump --install-completions`. | ✅ shipped — `test/install.bats` |
 | R-DIST-4 | README install section leads with the one-liner, with the pipe-to-shell caveat and the download-then-inspect alternative spelled out honestly. | ✅ shipped — README `Installation` |
 | R-DIST-5 | Checksum mismatch or download failure → non-zero exit, nothing installed, partial files cleaned up. | ✅ shipped — negative cases in `test/install.bats` |
 

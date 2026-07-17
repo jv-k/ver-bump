@@ -1,4 +1,4 @@
-# vhs tape — renders ver-bump --help as a single PNG (macOS-window look).
+# vhs tape — renders VerBump --help as a single PNG (macOS-window look).
 # Run with: vhs dev/help.tape   (or: npm run screenshots:help)
 #
 # vhs emits a full animated GIF for any tape — we don't use it here, so it
@@ -31,14 +31,14 @@ Set WindowBarSize 40
 Set TypingSpeed 40ms
 
 Hide
-# Define `ver-bump` so the screenshot shows the installed-command form,
+# Define `VerBump` so the screenshot shows the installed-command form,
 # not the in-repo `./ver-bump.sh` path. Clear AFTER defining it so the
 # function line doesn't linger on screen when we Show.
-Type 'ver-bump() { ./ver-bump.sh "$@"; }' Enter
+Type 'VerBump() { ./ver-bump.sh "$@"; }' Enter
 Type "clear" Enter
 Show
 
-Type "ver-bump --help"
+Type "VerBump --help"
 Sleep 400ms
 Enter
 Sleep 2s

@@ -2,34 +2,34 @@
 
 # Regression coverage for #78.
 #
-# Tests source ver-bump's libraries to unit-test functions, which brings in
+# Tests source VerBump's libraries to unit-test functions, which brings in
 # `fail` from lib/errors.sh (signature: `fail <exit-code> <msg> [<hint>]`).
 # That shadows bats-support's `fail <message>` (used inside a test body to
 # force a failure through bats' own reporter), so a deliberately-failing
-# assertion in a sourcing test would invoke ver-bump's exit-code machinery
+# assertion in a sourcing test would invoke VerBump's exit-code machinery
 # instead — garbling the failure output.
 #
 # test/test_helper.bash's setup() captures bats-support's fail as `bats_fail`
-# immediately after bats-support loads, before any test can source ver-bump's
-# libs. This file proves the fix: `bats_fail` keeps working after ver-bump's
-# `fail` is sourced, ver-bump's own `fail` keeps its exit-code contract via
+# immediately after bats-support loads, before any test can source VerBump's
+# libs. This file proves the fix: `bats_fail` keeps working after VerBump's
+# `fail` is sourced, VerBump's own `fail` keeps its exit-code contract via
 # `run`, and the two coexist in the same test shell.
 
 load 'test_helper'
 
-@test "bats_fail: identical to bats-support's fail before any ver-bump lib is sourced" {
+@test "bats_fail: identical to bats-support's fail before any VerBump lib is sourced" {
   # Sanity check on the capture itself: at this point nothing has sourced
-  # ver-bump's lib/errors.sh yet, so `fail` is still bats-support's — the
+  # VerBump's lib/errors.sh yet, so `fail` is still bats-support's — the
   # captured `bats_fail` copy must match it body-for-body.
   assert_equal "$(declare -f bats_fail | sed '1s/^bats_fail /fail /')" "$(declare -f fail)"
 }
 
-@test "sourcing ver-bump's lib/errors.sh shadows fail() but leaves bats_fail() untouched" {
-  # Capture bats-support's fail BEFORE any ver-bump lib is sourced — at this
+@test "sourcing VerBump's lib/errors.sh shadows fail() but leaves bats_fail() untouched" {
+  # Capture bats-support's fail BEFORE any VerBump lib is sourced — at this
   # point `fail` is still bats-support's. We compare against this captured
-  # definition rather than matching any specific line of ver-bump's fail, so
+  # definition rather than matching any specific line of VerBump's fail, so
   # the test proves the *collision* without coupling to fail()'s internals: a
-  # contract-preserving refactor of ver-bump's fail must not break it.
+  # contract-preserving refactor of VerBump's fail must not break it.
   local support_fail support_fail_body
   support_fail="$(declare -f fail)"
   support_fail_body="$(declare -f fail | sed '1d')" # body only; name line differs
@@ -44,7 +44,7 @@ load 'test_helper'
   assert_equal "$(declare -f bats_fail | sed '1d')" "$support_fail_body"
 }
 
-@test "bats_fail: forces a bats-support-style failure through bats' reporter after ver-bump libs are sourced" {
+@test "bats_fail: forces a bats-support-style failure through bats' reporter after VerBump libs are sourced" {
   source ${profile_script}
 
   # bats-support's fail() prints the message to stderr and returns 1 — it
@@ -54,11 +54,11 @@ load 'test_helper'
   assert_output --partial "forced failure for regression coverage"
 }
 
-@test "collision proof: a bare fail() call after sourcing is ver-bump's and garbles a forced-failure message" {
+@test "collision proof: a bare fail() call after sourcing is VerBump's and garbles a forced-failure message" {
   source ${profile_script}
 
   # This is the bug #78 describes: calling the bats-support idiom `fail
-  # "<message>"` directly (instead of `bats_fail`) now hits ver-bump's
+  # "<message>"` directly (instead of `bats_fail`) now hits VerBump's
   # `fail <code> <msg> [<hint>]`. The single string argument is treated as
   # the exit code, so bash's own `exit` builtin rejects it — the process
   # exits 2 with a bash usage error, not bats-support's clean status 1 +
@@ -68,7 +68,7 @@ load 'test_helper'
   assert_output --partial "numeric argument required"
 }
 
-@test "coexistence: ver-bump's fail still enforces its exit-code contract via run" {
+@test "coexistence: VerBump's fail still enforces its exit-code contract via run" {
   source ${profile_script}
 
   run fail 3 "precondition failed" "a helpful hint"

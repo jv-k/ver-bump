@@ -51,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # ver-bump targets Linux + macOS (and WSL/Git-bash). The bats harness
+        # VerBump targets Linux + macOS (and WSL/Git-bash). The bats harness
         # can't run natively on Windows: bats-core rejects the drive-letter
         # path (D:/...) as non-absolute in `load`. Windows users run it via WSL.
         os: [ubuntu-latest, macos-latest]
@@ -178,4 +178,4 @@ jobs:
             sleep 10
           done
           [ "$installed" = true ]
-          "$VER_BUMP_PREFIX/bin/ver-bump" --about
+          "$VER_BUMP_PREFIX/bin/VerBump" --about

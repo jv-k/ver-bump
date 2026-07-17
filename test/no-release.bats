@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 # check-releasable-commits (R-SAFE-14..18, issue #60): when the previous
-# version's tag exists and HEAD has no commits since it, ver-bump prints a
+# version's tag exists and HEAD has no commits since it, VerBump prints a
 # notice with a stable `no-release` stdout token and exits 0 without mutating
 # anything — the semantic-release-style idempotent no-op that makes a release
 # step safe to run unconditionally in CI. --allow-empty forces the old

@@ -1,10 +1,10 @@
-# vhs tape — records a realistic ver-bump run against a throwaway sandbox repo.
+# vhs tape — records a realistic VerBump run against a throwaway sandbox repo.
 # Run with: vhs dev/demo.tape   (or: pnpm screenshots:demo)
 #
 # dev/sandbox.sh --setup-only scaffolds a temp repo (with a bare 'origin' via
-# --remote) and prints its path; we cd in and drive the REAL ver-bump through a
-# thin `ver-bump` function so the recording shows a clean `ver-bump …` command
-# rather than the dev scaffolding. No -p and no -y, so ver-bump asks before
+# --remote) and prints its path; we cd in and drive the REAL VerBump through a
+# thin `VerBump` function so the recording shows a clean `VerBump …` command
+# rather than the dev scaffolding. No -p and no -y, so VerBump asks before
 # pushing — we answer 'y' to push to the throwaway origin and finish on DONE.
 # Both temp dirs are removed off-camera at the end. The finished DONE frame is
 # also saved as a still (img/demo-final.png) via the Screenshot directive.
@@ -27,20 +27,20 @@ Set WindowBarSize 40
 Set TypingSpeed 45ms
 Set PlaybackSpeed 1.0
 
-# Scaffold the sandbox off-camera and expose a clean `ver-bump` command that
+# Scaffold the sandbox off-camera and expose a clean `VerBump` command that
 # runs the real script from inside the throwaway repo.
 Hide
 Type "clear" Enter
 Sleep 300ms
 Type `VB="$PWD/ver-bump.sh"` Enter
-Type `ver-bump() { "$VB" "$@"; }` Enter
+Type `VerBump() { "$VB" "$@"; }` Enter
 Type `set -- $(./dev/sandbox.sh --setup-only --remote); SBX="$1"; RMT="$2"` Enter
 Type `cd "$SBX"` Enter
 Type "clear" Enter
 Show
 
 # The demo: bump to 2.0.0, answer the push prompt, land on DONE.
-Type "ver-bump -v 2.0.0"
+Type "VerBump -v 2.0.0"
 Sleep 600ms
 Enter
 Sleep 4s

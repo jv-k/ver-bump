@@ -171,7 +171,7 @@ do-push() {
 #   - Requires -p / --push (otherwise the tag never reaches the remote and
 #     `gh release create` would point at a tag that doesn't exist there).
 #   - Requires `gh` on PATH. R-DEP-1/2 keep `gh` out of the default path,
-#     so this is the only place ver-bump cares about it.
+#     so this is the only place VerBump cares about it.
 check-release-deps() {
   [ "${DO_RELEASE:-false}" = true ] || return 0
 
@@ -184,7 +184,7 @@ check-release-deps() {
   if [ "${FLAG_PUSH:-false}" != true ]; then
     fail 2 \
       "--release requires -p / --push <remote> (the tag must be pushed before publishing)." \
-      "Add -p <remote>, e.g. ver-bump --release -p origin"
+      "Add -p <remote>, e.g. VerBump --release -p origin"
   fi
 
   if ! command -v gh >/dev/null 2>&1; then
@@ -375,7 +375,7 @@ do-pr() {
   log_success "Opened release PR: ${pr_msg}"
 }
 
-# do-undo [<version>] — locally undo the artefacts of a prior ver-bump run.
+# do-undo [<version>] — locally undo the artefacts of a prior VerBump run.
 # Branch-mode release: delete the release branch + tag. Tag-in-place release
 # (no branch, the 2.0 default): delete the tag and leave the bump commit in
 # place. Refuses if the working tree is dirty, if the tag/branch were pushed,
@@ -404,7 +404,7 @@ do-undo() {
     else
       fail 2 \
         "No version supplied and current branch '${cur:-<detached>}' isn't a '${REL_PREFIX}X.Y.Z' branch." \
-        "Pass the version explicitly: ver-bump --undo <version>"
+        "Pass the version explicitly: VerBump --undo <version>"
     fi
   fi
 

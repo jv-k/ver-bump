@@ -12,15 +12,15 @@ Today every version-writing path assumes JSON + `jq`: `--source` / `SOURCE_FILE`
 through `json_set_version` ([lib/json.sh](../../../lib/json.sh)). A Python,
 Go, Rust, or Helm repo has its version in `pyproject.toml`, a `*.go` const, a
 `Chart.yaml`, or a `VERSION`-adjacent file — none of which `jq` can touch — so
-those files fall out of sync with the tag ver-bump cuts.
+those files fall out of sync with the tag VerBump cuts.
 
 This feature adds a general **bump target**: a file plus a *locator* that tells
-ver-bump where the version lives inside it. There are two locator kinds, chosen
+VerBump where the version lives inside it. There are two locator kinds, chosen
 per file, and both are explicit (no silent guessing that could rewrite the
 wrong line):
 
 1. **Text pattern locator** — a search string containing the literal token
-   `{{version}}`. ver-bump builds the *search* by substituting
+   `{{version}}`. VerBump builds the *search* by substituting
    `{{version}}` → `V_PREV` and the *replacement* by substituting
    `{{version}}` → `V_NEW`, then rewrites only the matching line(s),
    byte-preserving the rest of the file. Pure `sed`/bash; **no new
@@ -48,7 +48,7 @@ Disambiguation is by the first character after `:` — a leading `@` selects the
 structured path locator; anything else is a text pattern and **must** contain
 `{{version}}`. A bare `<file>` with an unknown (non-JSON/TOML/YAML) extension
 is a usage error (exit `2`) that asks for an explicit `{{version}}` pattern —
-ver-bump never guesses a text pattern for an arbitrary file.
+VerBump never guesses a text pattern for an arbitrary file.
 
 ## Requirements (`R-TGT` bucket)
 
@@ -90,7 +90,7 @@ call sites), [lib/completions.sh](../../../lib/completions.sh),
 
 ## Notes
 
-- **Why explicit patterns over auto-detected version lines** — ver-bump is
+- **Why explicit patterns over auto-detected version lines** — VerBump is
   deliberately conservative about mutating files (see the surgical single-line
   JSON rewrite and its full-rewrite fallback warning, R-FMT). A regex that
   "finds the version-ish line" risks clobbering an unrelated `version` mention
@@ -101,7 +101,7 @@ call sites), [lib/completions.sh](../../../lib/completions.sh),
   format-neutral: it can't collide with shell (`$`), printf (`%`), Go/TOML
   string syntax, or YAML anchors in the surrounding literal.
 - The text-pattern path composes cleanly with `.ver-bumprc`: a polyglot repo
-  declares its targets once in `BUMP_FILES` and every `ver-bump` run keeps all
+  declares its targets once in `BUMP_FILES` and every `VerBump` run keeps all
   of them in lock-step with the tag.
 
 ## Modules

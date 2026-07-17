@@ -42,13 +42,13 @@ normalize-long-opts() {
         else
           _ver=$(grep -m1 '"version"' "$MODULE_DIR/package.json" | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
         fi
-        # Branded pill when colour is on; a plain, parseable "ver-bump X.Y.Z"
+        # Branded pill when colour is on; a plain, parseable "VerBump X.Y.Z"
         # (program name + version, no stray pill padding) when it isn't —
-        # so `ver-bump --version` piped into a script yields a clean token.
+        # so `VerBump --version` piped into a script yields a clean token.
         if [ "${USE_COLOR:-0}" = 1 ]; then
-          printf '%b ver-bump v%s %b\n' "${S_HDR_SUB-}" "${_ver}" "${S_HDR_END-}"
+          printf '%b VerBump v%s %b\n' "${S_HDR_SUB-}" "${_ver}" "${S_HDR_END-}"
         else
-          printf 'ver-bump %s\n' "${_ver}"
+          printf 'VerBump %s\n' "${_ver}"
         fi
         exit 0
       fi
@@ -178,7 +178,7 @@ normalize-long-opts() {
     fi
 
     # --branch — long-only boolean: opt into cutting a release-<v> branch (the
-    # pre-2.0 default). Without it (or --pr), ver-bump tags the current branch.
+    # pre-2.0 default). Without it (or --pr), VerBump tags the current branch.
     if [ "$arg" = "--branch" ]; then
       FLAG_BRANCH=true
       continue
@@ -279,7 +279,7 @@ normalize-long-opts() {
     # POST_TAG_CMD) for this run (R-HOOK-5) — git's --no-verify convention.
     # CLI-only like --allow-empty (reset in process-arguments): an rc or env
     # assignment must never silently disable hooks the team relies on. The
-    # one-shot env bypass is emptying the key itself (PRE_BUMP_CMD= ver-bump …).
+    # one-shot env bypass is emptying the key itself (PRE_BUMP_CMD= VerBump …).
     if [ "$arg" = "--no-hooks" ]; then
       FLAG_NOHOOKS=true
       continue
@@ -293,7 +293,7 @@ normalize-long-opts() {
     # R-SIGN-1). Sets the TAG_SIGN config key directly, so the CLI wins over
     # env / .ver-bumprc per R-CFG-3 (process-arguments runs last). Key and
     # signing program stay in git's own config (user.signingkey, gpg.format) —
-    # ver-bump adds no key management; git's own error is the error surface.
+    # VerBump adds no key management; git's own error is the error surface.
     if [ "$arg" = "--sign" ]; then
       TAG_SIGN=true
       continue
@@ -404,7 +404,7 @@ normalize-long-opts() {
       *)
         fail 2 \
           "Invalid option: --${name}" \
-          "Run 'ver-bump --help' to see the list of supported options."
+          "Run 'VerBump --help' to see the list of supported options."
       ;;
     esac
 
@@ -563,7 +563,7 @@ process-arguments() {
       \? )
         fail 2 \
           "Invalid option: -$OPTARG" \
-          "Run 'ver-bump --help' to see the list of supported options."
+          "Run 'VerBump --help' to see the list of supported options."
       ;;
       : )
         fail 2 \

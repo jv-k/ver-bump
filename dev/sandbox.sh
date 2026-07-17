@@ -3,10 +3,10 @@
 # dev/sandbox.sh — run ver-bump.sh against a throwaway git repo.
 #
 # Creates a temp dir with an initialised git repo, a minimal package.json,
-# and a couple of seed commits, then invokes ver-bump from inside it. The
+# and a couple of seed commits, then invokes VerBump from inside it. The
 # sandbox is wiped on exit unless --keep is passed.
 #
-# All unrecognised flags are forwarded to ver-bump. Environment overrides:
+# All unrecognised flags are forwarded to VerBump. Environment overrides:
 #   SANDBOX_VERSION  starting "version" in package.json (default: 0.1.0)
 #   SANDBOX_COMMITS  semicolon-separated extra commit subjects to seed, e.g.:
 #                      SANDBOX_COMMITS='feat: thing; fix: other' ./dev/sandbox.sh
@@ -17,7 +17,7 @@
 #   ./dev/sandbox.sh --dry-run --no-branch   # try long options
 #   ./dev/sandbox.sh --keep                  # don't wipe the sandbox on exit
 #   ./dev/sandbox.sh --remote -v 2.0.0 -p origin  # add a bare 'origin' so a real push succeeds
-#   ./dev/sandbox.sh --setup-only --remote   # scaffold + print the repo (and remote) paths; don't run ver-bump
+#   ./dev/sandbox.sh --setup-only --remote   # scaffold + print the repo (and remote) paths; don't run VerBump
 #
 # After a run with --keep you can `cd` into the printed path to poke around.
 
@@ -43,8 +43,8 @@ while (( $# )); do
     --remote) MK_REMOTE=1; shift ;;
     --setup-only) SETUP_ONLY=1; shift ;;
     -h|--help-sandbox)
-      # Pass -h / --help through to ver-bump; print our own help only for
-      # this long alias so we don't shadow ver-bump's usage output.
+      # Pass -h / --help through to VerBump; print our own help only for
+      # this long alias so we don't shadow VerBump's usage output.
       sed -n '3,20p' "${BASH_SOURCE[0]}"
       exit 0
     ;;
@@ -53,7 +53,7 @@ while (( $# )); do
 done
 
 # When --quiet, swallow the sandbox's own status chatter so recordings only
-# show ver-bump output. Errors still go through because set -eo pipefail will
+# show VerBump output. Errors still go through because set -eo pipefail will
 # abort the script and the trap prints the --keep path if applicable.
 say() {
   (( QUIET )) && return 0
@@ -61,7 +61,7 @@ say() {
 }
 
 SANDBOX_VERSION="${SANDBOX_VERSION:-0.1.0}"
-SANDBOX_DIR="$(mktemp -d -t ver-bump-sandbox.XXXXXX)"
+SANDBOX_DIR="$(mktemp -d -t VerBump-sandbox.XXXXXX)"
 REMOTE_DIR=""
 
 cleanup() {
@@ -80,26 +80,26 @@ trap cleanup EXIT INT TERM
 say "sandbox: $SANDBOX_DIR"
 cd "$SANDBOX_DIR"
 
-# Minimal package.json — the single mandatory input ver-bump cares about
+# Minimal package.json — the single mandatory input VerBump cares about
 cat > package.json <<EOF
 {
   "name": "sandbox-app",
   "version": "${SANDBOX_VERSION}",
-  "description": "Throwaway sandbox for exercising ver-bump."
+  "description": "Throwaway sandbox for exercising VerBump."
 }
 EOF
 
 # Isolated git repo. Force a deterministic identity and default branch so
 # this works in CI and on fresh machines without a global git config.
 git init --quiet --initial-branch=main 2>/dev/null || git init --quiet
-git config user.email "sandbox@ver-bump.local"
-git config user.name  "ver-bump sandbox"
+git config user.email "sandbox@VerBump.local"
+git config user.name  "VerBump sandbox"
 git config commit.gpgsign false
 
 # Optional bare 'origin' so a real `-p origin` push has somewhere to go — lets
 # the demo (and manual --keep runs) exercise the full push path end to end.
 if (( MK_REMOTE )); then
-  REMOTE_DIR="$(mktemp -d -t ver-bump-remote.XXXXXX)"
+  REMOTE_DIR="$(mktemp -d -t VerBump-remote.XXXXXX)"
   git init --quiet --bare "$REMOTE_DIR"
   git remote add origin "$REMOTE_DIR"
   say "sandbox: added bare origin at $REMOTE_DIR"
@@ -110,7 +110,7 @@ git commit --quiet -m "chore: initial commit"
 
 # Tag the initial commit with the starting version so the conventional-commit
 # bump suggestion has a "since <prev>" range to look at. Honours -t/--tag-prefix
-# if the caller passed one through; otherwise uses ver-bump's default "v".
+# if the caller passed one through; otherwise uses VerBump's default "v".
 sandbox_tag_prefix="v"
 for ((i=0; i<${#PASSTHROUGH[@]}; i++)); do
   case "${PASSTHROUGH[i]}" in
@@ -144,8 +144,8 @@ done
 say "sandbox: seeded $(git rev-list --count HEAD) commits on $(git rev-parse --abbrev-ref HEAD)"
 
 # Scaffold-and-hand-off: print the sandbox repo (and bare origin, if any) paths
-# on stdout so a caller can `cd` in and drive ver-bump directly — the demo tape
-# does this to record a clean `ver-bump …` invocation. We leave both dirs in
+# on stdout so a caller can `cd` in and drive VerBump directly — the demo tape
+# does this to record a clean `VerBump …` invocation. We leave both dirs in
 # place (the caller owns cleanup) and drop our own trap so nothing is removed
 # and no status line pollutes stdout.
 if (( SETUP_ONLY )); then
@@ -155,13 +155,13 @@ if (( SETUP_ONLY )); then
   exit 0
 fi
 
-say "sandbox: running ver-bump ${PASSTHROUGH[*]:-<no args>}"
+say "sandbox: running VerBump ${PASSTHROUGH[*]:-<no args>}"
 say "---"
 
 # In --quiet mode, wipe the terminal just before handing off so recordings
-# (vhs etc.) see only ver-bump's output — the shell-echoed invocation and
+# (vhs etc.) see only VerBump's output — the shell-echoed invocation and
 # any seed noise scrolls out of frame.
 (( QUIET )) && printf '\033[2J\033[H'
 
-# Run ver-bump. Any exit code from it propagates (set -e) — cleanup trap fires either way.
+# Run VerBump. Any exit code from it propagates (set -e) — cleanup trap fires either way.
 "$VER_BUMP" ${PASSTHROUGH[@]+"${PASSTHROUGH[@]}"}

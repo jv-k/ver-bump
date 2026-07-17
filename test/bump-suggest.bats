@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 # suggest-bump-level: conventional-commits bump-level inference.
-# Migrated verbatim from the monolithic ver-bump.bats; shared setup lives
+# Migrated verbatim from the monolithic VerBump.bats; shared setup lives
 # in test/test_helper.bash.
 
 load 'test_helper'

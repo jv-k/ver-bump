@@ -17,7 +17,7 @@ Backfilled requirements:
 ## Quiet mode (`-q` / `--quiet`) — machine-readable stdout
 
 The missing half of the machine contract R-EXIT started (issue #65):
-`NEW_VERSION=$(ver-bump --yes --quiet -p origin)` is the canonical CI
+`NEW_VERSION=$(VerBump --yes --quiet -p origin)` is the canonical CI
 capture pattern.
 
 | ID | Requirement | Status |

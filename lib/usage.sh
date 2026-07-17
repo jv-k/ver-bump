@@ -65,6 +65,11 @@ usage() {
     done
   fi
 
+  # Display brand shown in the banner, USAGE synopsis, and EXAMPLES. Fixed to
+  # "VerBump"; the npm package name (.name) stays lowercase "ver-bump" because
+  # npm forbids uppercase, so the two are intentionally decoupled here.
+  SCRIPT_NAME="VerBump"
+
   # Fluid layout: on a real terminal, wrap output to the actual width so long
   # lines don't overflow. TERM_COLS=0 disables wrapping — piped / redirected
   # output (tests, `| less`, files) keeps the historic single-line layout,
@@ -89,11 +94,11 @@ usage() {
     case "$TERM_COLS" in ''|*[!0-9]*) TERM_COLS=80 ;; esac
   fi
 
-  # figlet "future" (via pyfiglet) — one rainbow segment per letter, the dash
-  # riding the 4th segment, exactly like the old oh-my-zsh-style banner.
-  printf  "%s╻ ╻%s┏━╸%s┏━┓%s   %s┏┓ %s╻ ╻%s┏┳┓%s┏━┓%s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
-  printf  "%s┃┏┛%s┣╸ %s┣┳┛%s╺━╸%s┣┻┓%s┃ ┃%s┃┃┃%s┣━┛%s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
-  printf  "%s┗┛ %s┗━╸%s╹┗╸%s   %s┗━┛%s┗━┛%s╹ ╹%s╹  %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
+  # figlet "future" (via pyfiglet) — one rainbow segment per letter. Seven
+  # letters (VerBump), so the seven RAINBOW colours map 1:1 with no dash cell.
+  printf  "%s╻ ╻%s┏━╸%s┏━┓%s┏┓ %s╻ ╻%s┏┳┓%s┏━┓%s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
+  printf  "%s┃┏┛%s┣╸ %s┣┳┛%s┣┻┓%s┃ ┃%s┃┃┃%s┣━┛%s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
+  printf  "%s┗┛ %s┗━╸%s╹┗╸%s┗━┛%s┗━┛%s╹ ╹%s╹  %s\n" "${RAINBOW[@]}" "$RAINBOW_RST"
 
   # Branded header pill + author/homepage bullets + dim tagline. No blank line
   # after the pill — the author bullet sits directly beneath it.
@@ -306,9 +311,9 @@ usage() {
   print-opt-subitem "<file> — structured, top-level .version by file type (jq / tomlq / yq)"
   print-opt-subitem "<file>:@<path> — structured, explicit dotted path (e.g. pyproject.toml:@tool.poetry.version)"
   print-opt-subitem "'<file>:<pattern>' — text search/replace; the pattern must contain {{version}}"
-  print-opt-cont "e.g. ver-bump --bump 'main.go:Version = \"{{version}}\"' --bump Chart.yaml:@version"
+  print-opt-cont "e.g. VerBump --bump 'main.go:Version = \"{{version}}\"' --bump Chart.yaml:@version"
   print-opt-row "-f" "--file"          "<file.json>" "Also bump \"version\" in this JSON file. Repeatable:"
-  print-opt-cont "ver-bump -f src/plugin/package.json -f composer.json"
+  print-opt-cont "VerBump -f src/plugin/package.json -f composer.json"
 
   print-opt-group "Commit, tag & changelog"
   print-opt-row "-m" "--message"       "<message>"   "Custom annotated-tag release message."
@@ -321,7 +326,7 @@ usage() {
   print-opt-group "Push, branch & publish"
   print-opt-row "-p" "--push"          "<remote>"    "Push release branch + tag to <remote> at end of run."
   print-opt-row ""   "--pr"            ""            "Branch + push + open a release PR via 'gh' (GitHub-only; implies push to origin)."
-  print-opt-row ""   "--base"          "<branch>"    "Base branch for --pr (GitHub-only; default: the branch you ran ver-bump from)."
+  print-opt-row ""   "--base"          "<branch>"    "Base branch for --pr (GitHub-only; default: the branch you ran VerBump from)."
   print-opt-row ""   "--release"       ""            "Publish a GitHub release for the new tag (GitHub-only; requires -p, uses 'gh')."
   print-opt-row ""   "--branch"        ""            "Cut a release-x.x.x branch (pre-2.0 default); otherwise tag in place."
   print-opt-row "-B" "--branch-prefix" "<prefix>"    "Override branch prefix (default: release-)."
@@ -367,7 +372,7 @@ usage() {
 # show-help — the entry point for --help. Renders usage() through a pager when
 # the output is taller than the terminal (like `git help` / `man`), so a short
 # window doesn't scroll the top off-screen. Only pages on an interactive stdout
-# with a usable pager; piped / redirected output (`ver-bump --help | cat`, the
+# with a usable pager; piped / redirected output (`VerBump --help | cat`, the
 # tests) prints straight through, unchanged. Colour still works in the pager:
 # USE_COLOR was fixed at startup from the real stdout, and less gets -R.
 show-help() {

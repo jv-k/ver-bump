@@ -2,7 +2,12 @@
 
 **A pure-bash release tool for any Git repo.**
 
-Reads your [conventional commits](https://www.conventionalcommits.org/) to suggest a [SemVer](https://semver.org/) bump, then updates the changelog, tags, and pushes. Choose tag-in-place, a release branch, or a pull request. Its only runtime dependencies are `git` and `jq`.
+- **Suggests the right bump** — reads your [Conventional Commits](https://www.conventionalcommits.org/) to propose the next [SemVer](https://semver.org/), prereleases included
+- **Writes the changelog** — flat or grouped by commit type, with commit / PR / compare links
+- **Bumps any file** — `package.json`, `pyproject.toml`, `Chart.yaml`, a Go const, any `{{version}}` text pattern
+- **Three workflows** — tag in place, cut a release branch, or open a GitHub PR
+- **Safe by default** — preflight checks, `--dry-run` previews every side-effect, `--undo` rolls back
+- **Nothing to install but bash** — `git` and `jq` are the only runtime dependencies
 
 <div align="center">
 

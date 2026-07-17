@@ -1,3 +1,19 @@
+## 3.0.0 (2026-07-17)
+
+> **⚠ Breaking — the command is renamed `ver-bump` → `VerBump`.** The npm package name stays `ver-bump` (npm forbids uppercase); installing it now provides the `VerBump` command. Update any aliases, scripts, CI steps, and shell completions. An already-installed `ver-bump` symlink keeps working until removed. See [README § Command renamed to VerBump](README.md#command-renamed-to-verbump).
+
+- chore: updated package.json, updated CHANGELOG.md, bumped 2.0.2 -> 3.0.0
+- docs(readme): explain the ver-bump package / VerBump command split
+- fix(publish): keep npm-pack tarball glob lowercase after rename
+- refactor!: rename the command and brand to VerBump
+- docs(publish): record package-registry publishing as out of scope
+- docs(readme): repin images to main raw URLs
+- ci(screenshots): land re-rendered demo and help stills
+- docs(readme): swap bash and npm badges to shields.io
+- docs(readme): add a feature list at the top
+- docs(readme): fix stale claims, fold exit codes, document installer
+- docs: add contributing guide, PR template, and CLI issue templates
+
 ## 2.0.2 (2026-07-17)
 - chore: updated package.json, updated CHANGELOG.md, bumped 2.0.1 -> 2.0.2
 - docs(adr): ADR-21 — main is the canonical branch post-2.0

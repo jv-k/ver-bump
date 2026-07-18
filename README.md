@@ -44,7 +44,7 @@ git clone https://github.com/jv-k/VerBump.git ~/.local/share/verbump
 ln -s ~/.local/share/verbump/VerBump.sh ~/.local/bin/VerBump   # ensure ~/.local/bin is on $PATH
 ```
 
-See [Installation](#installation) for checksum verification, version pinning, prefix options, and the planned Homebrew path.
+See [Installation](#installation) for checksum verification, version pinning, prefix options, and the Homebrew path.
 
 ### Use it in your repo folder:
 
@@ -203,7 +203,11 @@ ln -s ~/.local/share/verbump/VerBump.sh ~/.local/bin/VerBump   # ensure ~/.local
 
 ### Homebrew
 
-> [Coming soon](https://github.com/jv-k/VerBump/issues/24)
+```sh
+brew install jv-k/tap/verbump
+```
+
+Installs from the [`jv-k/tap` tap](https://github.com/jv-k/homebrew-tap) with the `bash` and `jq` dependencies included. The command it installs is `VerBump`, and the tap's formula tracks the latest stable release automatically.
 
 ### Basher
 

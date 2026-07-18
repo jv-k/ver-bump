@@ -57,7 +57,7 @@ VerBump             # cut it: reads commits, suggests a bump, prompts before pus
 ## Demo
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/jv-k/VerBump/main/img/demo.gif" alt="Animated demo: VerBump reads commits, sets the version, updates package.json and CHANGELOG, commits, tags in place, prompts before pushing, then pushes the tag to origin.">
+  <img src="https://raw.githubusercontent.com/jv-k/VerBump/main/img/verbump-demo.gif" alt="Animated demo: VerBump reads commits, sets the version, updates package.json and CHANGELOG, commits, tags in place, prompts before pushing, then pushes the tag to origin.">
 </div>
 
 ## Table of Contents

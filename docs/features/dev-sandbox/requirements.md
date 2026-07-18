@@ -18,7 +18,7 @@ exits, so both processes are signalled explicitly).
 
 Also in `dev/` (unspecced tooling, no requirements): `screenshots.sh` drives
 the VHS tapes (`help`, `demo`) that render the README's `--help` still and the
-demo GIF (plus its final-frame still `img/demo-final.png`) — VHS runs a real
+demo GIF (plus its final-frame still `img/verbump-demo-final.png`) — VHS runs a real
 terminal emulator, so the inverted-video section pills and dim markers render
 faithfully; and `prepublish-version-guard.sh`.
 `sandbox.sh --remote` adds a throwaway bare `origin` so a real `-p origin`

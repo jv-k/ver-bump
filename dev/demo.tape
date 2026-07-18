@@ -7,9 +7,12 @@
 # rather than the dev scaffolding. No -p and no -y, so VerBump asks before
 # pushing — we answer 'y' to push to the throwaway origin and finish on DONE.
 # Both temp dirs are removed off-camera at the end. The finished DONE frame is
-# also saved as a still (img/demo-final.png) via the Screenshot directive.
+# also saved as a still (img/verbump-demo-final.png) via the Screenshot
+# directive. NOTE: img/demo.gif is NOT this tape's output — it is the frozen
+# legacy recording hotlinked by old ver-bump npm READMEs (1.1.8); never
+# overwrite it.
 
-Output img/demo.gif
+Output img/verbump-demo.gif
 
 Set Shell "zsh"
 Set FontFamily "JetBrains Mono"
@@ -51,7 +54,7 @@ Enter
 # the usage section, then save that frame as a standalone still. The trailing
 # Sleep keeps the clean DONE frame on screen while the Screenshot flushes.
 Sleep 8s
-Screenshot img/demo-final.png
+Screenshot img/verbump-demo-final.png
 Sleep 1s
 
 # Tear down the throwaway repos off-camera. Give Hide a beat to fully engage

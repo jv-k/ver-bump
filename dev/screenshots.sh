@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #
-# dev/screenshots.sh — regenerate img/screenshot.png and img/demo.gif via vhs.
+# dev/screenshots.sh — regenerate img/screenshot.png and img/verbump-demo.gif
+# via vhs. (img/demo.gif is the frozen legacy recording hotlinked by old
+# ver-bump npm READMEs — never regenerated or cleaned here.)
 #
 # Usage:
 #   ./dev/screenshots.sh           # both
@@ -37,11 +39,11 @@ case "$target" in
     vhs dev/help.tape
   ;;
   demo)
-    clean img/demo.gif img/demo-final.png
+    clean img/verbump-demo.gif img/verbump-demo-final.png
     vhs dev/demo.tape
   ;;
   all)
-    clean img/screenshot.png img/demo.gif img/demo-final.png img/tmp/help.gif
+    clean img/screenshot.png img/verbump-demo.gif img/verbump-demo-final.png img/tmp/help.gif
     vhs dev/help.tape
     vhs dev/demo.tape
   ;;

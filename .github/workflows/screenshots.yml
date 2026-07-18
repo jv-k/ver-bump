@@ -7,9 +7,12 @@ name: Screenshots
 # it flattens inverse-video and ignores SGR-faint, so it could not show the
 # restyled output correctly.)
 #
-#   img/screenshot.png   — vhs, `VerBump --help` (header logo + full flag set)
-#   img/demo.gif         — vhs, sandbox-driven real bump recording
-#   img/demo-final.png   — the demo's finished DONE frame, as a still
+#   img/screenshot.png          — vhs, `VerBump --help` (header logo + flags)
+#   img/verbump-demo.gif        — vhs, sandbox-driven real bump recording
+#   img/verbump-demo-final.png  — the demo's finished DONE frame, as a still
+#
+# img/demo.gif is NOT rendered here: it is the frozen legacy recording that
+# old ver-bump npm READMEs (1.1.8) hotlink via raw main URLs — never touch it.
 #
 # Triggers: run by hand (workflow_dispatch). Intentionally NOT on release —
 # the tracked img/* are maintained on develop and reach main via the release
@@ -57,16 +60,16 @@ jobs:
         with:
           path: dev/help.tape
 
-      - name: Render demo gif (also emits img/demo-final.png)
+      - name: Render demo gif (also emits img/verbump-demo-final.png)
         uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
         with:
           path: dev/demo.tape
 
-      - name: Optimize demo.gif (lossless — no colour/quality reduction)
+      - name: Optimize verbump-demo.gif (lossless — no colour/quality reduction)
         run: |
-          before=$(wc -c < img/demo.gif)
-          gifsicle -O3 img/demo.gif -o img/demo.gif
-          echo "demo.gif: ${before} -> $(wc -c < img/demo.gif) bytes"
+          before=$(wc -c < img/verbump-demo.gif)
+          gifsicle -O3 img/verbump-demo.gif -o img/verbump-demo.gif
+          echo "verbump-demo.gif: ${before} -> $(wc -c < img/verbump-demo.gif) bytes"
 
       - name: Upload rendered artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -74,8 +77,8 @@ jobs:
           name: screenshots
           path: |
             img/screenshot.png
-            img/demo.gif
-            img/demo-final.png
+            img/verbump-demo.gif
+            img/verbump-demo-final.png
           retention-days: 7
           if-no-files-found: error
 
@@ -104,7 +107,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
         with:
           branch: main
-          file_pattern: img/screenshot.png img/demo.gif img/demo-final.png
+          file_pattern: img/screenshot.png img/verbump-demo.gif img/verbump-demo-final.png
           commit_message: "docs(img): regenerate screenshots [skip ci]"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"

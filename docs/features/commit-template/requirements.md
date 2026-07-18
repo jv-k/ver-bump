@@ -7,8 +7,8 @@ Originated in issue #69 (2026-07-15 feature review, Tier 3 — polish).
 
 | ID | Requirement | Status |
 | --- | --- | --- |
-| R-TPL-1 | `COMMIT_MSG_TEMPLATE` config/env key (R-CFG-3 precedence: env > `.ver-bumprc` > default). Placeholders: `${version}`, `${prev_version}`, `${tag}`, `${files}` (the generated changed-file list that makes up the legacy message body, without its trailing `", "`). Unset/empty → the exact `COMMIT_MSG_PREFIX` + generated-list behaviour, byte-identical. | ✅ shipped — `render-commit-msg` |
-| R-TPL-2 | When set, the template owns the whole message and `COMMIT_MSG_PREFIX` is ignored (interaction documented in the README `.ver-bumprc` section). | ✅ shipped |
+| R-TPL-1 | `COMMIT_MSG_TEMPLATE` config/env key (R-CFG-3 precedence: env > `.verbumprc` > default). Placeholders: `${version}`, `${prev_version}`, `${tag}`, `${files}` (the generated changed-file list that makes up the legacy message body, without its trailing `", "`). Unset/empty → the exact `COMMIT_MSG_PREFIX` + generated-list behaviour, byte-identical. | ✅ shipped — `render-commit-msg` |
+| R-TPL-2 | When set, the template owns the whole message and `COMMIT_MSG_PREFIX` is ignored (interaction documented in the README `.verbumprc` section). | ✅ shipped |
 | R-TPL-3 | Substitution is literal string replacement (bash `${var//pat/rep}`) — no `eval`, no command substitution of template content; `$(...)`/backticks/unknown placeholders stay literal text. | ✅ shipped |
 | R-TPL-4 | Applies to the bump commit only; the annotated tag message keeps its own knob (`-m`/`--message`). | ✅ shipped |
 
@@ -30,7 +30,7 @@ it does for every commit.
 
 `${files}` is substituted last, so a bumped file whose name contains
 placeholder text cannot be substituted a second time. Because
-`.ver-bumprc` is shell-sourced, templates in the rc must be single-quoted
+`.verbumprc` is shell-sourced, templates in the rc must be single-quoted
 (`COMMIT_MSG_TEMPLATE='chore(release): v${version}'`) or the shell
 expands the placeholders to empty strings at source time.
 

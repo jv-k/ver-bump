@@ -1,6 +1,6 @@
 # Issue tracker: GitHub
 
-Issues and PRDs for this repo live as GitHub issues (`github.com/jv-k/ver-bump`).
+Issues and PRDs for this repo live as GitHub issues (`github.com/jv-k/VerBump`).
 Use the `gh` CLI for all operations.
 
 ## Conventions

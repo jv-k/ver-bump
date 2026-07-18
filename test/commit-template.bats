@@ -238,15 +238,15 @@ _live_repo() {
   assert_equal "$(sed -n 2p CHANGELOG.md)" "- chore(release): v1.1.0"
 }
 
-# R-CFG-3 precedence: env > .ver-bumprc > default ##############################
+# R-CFG-3 precedence: env > .verbumprc > default ##############################
 
-@test "precedence: env COMMIT_MSG_TEMPLATE beats .ver-bumprc (end-to-end dry-run)" {
+@test "precedence: env COMMIT_MSG_TEMPLATE beats .verbumprc (end-to-end dry-run)" {
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
   # Single quotes in the rc are load-bearing: it is shell-sourced, so a
   # double-quoted ${version} would expand (to empty) at source time.
-  printf "COMMIT_MSG_TEMPLATE='from-file \${version}'\n" > "$repo/.ver-bumprc"
+  printf "COMMIT_MSG_TEMPLATE='from-file \${version}'\n" > "$repo/.verbumprc"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
 
   COMMIT_MSG_TEMPLATE='from-env ${version}' \
@@ -258,11 +258,11 @@ _live_repo() {
   refute_output --partial "from-file"
 }
 
-@test "precedence: .ver-bumprc COMMIT_MSG_TEMPLATE beats the legacy default (end-to-end dry-run)" {
+@test "precedence: .verbumprc COMMIT_MSG_TEMPLATE beats the legacy default (end-to-end dry-run)" {
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
-  printf "COMMIT_MSG_TEMPLATE='from-file \${version}'\n" > "$repo/.ver-bumprc"
+  printf "COMMIT_MSG_TEMPLATE='from-file \${version}'\n" > "$repo/.verbumprc"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
 
   unset COMMIT_MSG_TEMPLATE

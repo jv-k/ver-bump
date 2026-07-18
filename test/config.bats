@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-# Config file loader (.ver-bumprc) — Task 1.1 of the v2.0 Foundation.
+# Config file loader (.verbumprc) — Task 1.1 of the v2.0 Foundation.
 # Covers walk-up discovery, safety (world-writable refusal), and the
 # precedence chain CLI > env > file > default. Shared setup lives in
 # test/test_helper.bash.
@@ -19,7 +19,7 @@ _clear_config_env() {
 
 # Absent file ##################################################################
 
-@test "load-config: absent .ver-bumprc is a silent no-op" {
+@test "load-config: absent .verbumprc is a silent no-op" {
   source ${profile_script}
   cd "$(scratch_repo)"
   _clear_config_env
@@ -31,14 +31,14 @@ _clear_config_env() {
 
 # Discovery ####################################################################
 
-@test "load-config: finds .ver-bumprc at repo root" {
+@test "load-config: finds .verbumprc at repo root" {
   source ${profile_script}
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
   _clear_config_env
 
-  printf 'TAG_PREFIX=x\n' > "$repo/.ver-bumprc"
+  printf 'TAG_PREFIX=x\n' > "$repo/.verbumprc"
 
   load-config
   assert_equal "$TAG_PREFIX" "x"
@@ -46,19 +46,19 @@ _clear_config_env() {
 
 # Unknown-key heuristic warning (ADR-05, R-CFG-7) ##############################
 
-@test "load-config: warns (non-fatal) on an unknown .ver-bumprc key" {
+@test "load-config: warns (non-fatal) on an unknown .verbumprc key" {
   source ${profile_script}
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
   _clear_config_env
 
-  printf 'TAG_PREFIX=ok\nTAG_PREFX=typo\n' > "$repo/.ver-bumprc"
+  printf 'TAG_PREFIX=ok\nTAG_PREFX=typo\n' > "$repo/.verbumprc"
 
   run load-config
   assert_success
   strip_ansi_output
-  assert_output --partial "Unknown .ver-bumprc key 'TAG_PREFX'"
+  assert_output --partial "Unknown .verbumprc key 'TAG_PREFX'"
   refute_output --partial "key 'TAG_PREFIX'"
 }
 
@@ -69,18 +69,18 @@ _clear_config_env() {
   cd "$repo"
   _clear_config_env
 
-  printf 'TAG_PREFIX=v\nREL_PREFIX=rel-\nFLAG_NOBRANCH=true\n' > "$repo/.ver-bumprc"
+  printf 'TAG_PREFIX=v\nREL_PREFIX=rel-\nFLAG_NOBRANCH=true\n' > "$repo/.verbumprc"
 
   run load-config
   assert_success
-  refute_output --partial "Unknown .ver-bumprc key"
+  refute_output --partial "Unknown .verbumprc key"
 }
 
-@test "load-config: walks up to find .ver-bumprc in an ancestor directory" {
+@test "load-config: walks up to find .verbumprc in an ancestor directory" {
   source ${profile_script}
   local repo sub
   repo="$(scratch_repo)"
-  printf 'TAG_PREFIX=ancestor-v\nREL_PREFIX=ancestor-rel-\n' > "$repo/.ver-bumprc"
+  printf 'TAG_PREFIX=ancestor-v\nREL_PREFIX=ancestor-rel-\n' > "$repo/.verbumprc"
 
   sub="$repo/nested/deeper"
   mkdir -p "$sub"
@@ -101,7 +101,7 @@ _clear_config_env() {
   cd "$repo"
 
   _clear_config_env
-  printf 'TAG_PREFIX=file-value\n' > "$repo/.ver-bumprc"
+  printf 'TAG_PREFIX=file-value\n' > "$repo/.verbumprc"
   export TAG_PREFIX="env-wins"
   CLEANUP_CMDS+=("unset TAG_PREFIX")
 
@@ -116,7 +116,7 @@ _clear_config_env() {
   cd "$repo"
   _clear_config_env
 
-  printf 'TAG_PREFIX=T-from-file\n' > "$repo/.ver-bumprc"
+  printf 'TAG_PREFIX=T-from-file\n' > "$repo/.verbumprc"
 
   load-config
   apply-config-defaults
@@ -139,11 +139,11 @@ _clear_config_env() {
   assert_equal "$FLAG_BRANCH" "false"
 }
 
-@test "ver-bump.sh: CLI -t beats .ver-bumprc TAG_PREFIX (end-to-end dry-run)" {
+@test "VerBump.sh: CLI -t beats .verbumprc TAG_PREFIX (end-to-end dry-run)" {
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
-  printf 'TAG_PREFIX=from-file\n' > "$repo/.ver-bumprc"
+  printf 'TAG_PREFIX=from-file\n' > "$repo/.verbumprc"
   # Need a package.json with a version so process-version is happy
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
 
@@ -162,14 +162,14 @@ _clear_config_env() {
 
 # Safety #######################################################################
 
-@test "load-config: refuses world-writable .ver-bumprc (exit code 3)" {
+@test "load-config: refuses world-writable .verbumprc (exit code 3)" {
   source ${profile_script}
   local repo rc
   repo="$(scratch_repo)"
   cd "$repo"
   _clear_config_env
 
-  rc="$repo/.ver-bumprc"
+  rc="$repo/.verbumprc"
   printf 'TAG_PREFIX=unsafe\n' > "$rc"
   # Force-set o+w; use 666 to bypass any umask stripping on macOS.
   chmod 666 "$rc"
@@ -184,14 +184,14 @@ _clear_config_env() {
   assert_output --partial "Hint:"
 }
 
-@test "load-config: refuses group-writable .ver-bumprc (exit code 3)" {
+@test "load-config: refuses group-writable .verbumprc (exit code 3)" {
   source ${profile_script}
   local repo rc
   repo="$(scratch_repo)"
   cd "$repo"
   _clear_config_env
 
-  rc="$repo/.ver-bumprc"
+  rc="$repo/.verbumprc"
   printf 'TAG_PREFIX=unsafe\n' > "$rc"
   chmod 664 "$rc"
   [ "$(stat -c '%a' "$rc" 2>/dev/null || stat -f '%Lp' "$rc" 2>/dev/null)" = "664" ]
@@ -204,7 +204,7 @@ _clear_config_env() {
   assert_output --partial "Hint:"
 }
 
-@test "load-config: refuses .ver-bumprc not owned by current user (exit code 3)" {
+@test "load-config: refuses .verbumprc not owned by current user (exit code 3)" {
   # Needs root to chown to another user; skip unless available.
   if [ "$(id -u)" != "0" ] && ! command -v sudo >/dev/null 2>&1; then
     skip "needs root or sudo to chown to a different user"
@@ -221,7 +221,7 @@ _clear_config_env() {
   cd "$repo"
   _clear_config_env
 
-  rc="$repo/.ver-bumprc"
+  rc="$repo/.verbumprc"
   printf 'TAG_PREFIX=unsafe\n' > "$rc"
   # shellcheck disable=SC2015
   if [ "$(id -u)" = "0" ]; then
@@ -246,7 +246,7 @@ _clear_config_env() {
   cd "$repo"
   _clear_config_env
 
-  cat > "$repo/.ver-bumprc" <<'EOF'
+  cat > "$repo/.verbumprc" <<'EOF'
 TAG_PREFIX=rel/
 REL_PREFIX=hotfix-
 PUSH_DEST=upstream

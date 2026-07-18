@@ -32,7 +32,7 @@ Set PlaybackSpeed 1.0
 Hide
 Type "clear" Enter
 Sleep 300ms
-Type `VB="$PWD/ver-bump.sh"` Enter
+Type `VB="$PWD/VerBump.sh"` Enter
 Type `VerBump() { "$VB" "$@"; }` Enter
 Type `set -- $(./dev/sandbox.sh --setup-only --remote); SBX="$1"; RMT="$2"` Enter
 Type `cd "$SBX"` Enter

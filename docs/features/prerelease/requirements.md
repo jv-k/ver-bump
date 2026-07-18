@@ -16,7 +16,7 @@ npm-style `pre*` subcommand flags (issue #64).
 | R-PRE-6 | Graduating out of a prerelease is unchanged: interactive prompt or `-v 2.0.0`. `--major`/`--minor`/`--patch` **without** `--preid` on a prerelease version bumps from the stable core (documented in `--help` and the README). | ✅ shipped (pre-existing `force-bump` behaviour) — `lib/usage.sh` |
 
 `PRE_ID` is CLI-only (reset in `process-arguments`, same rationale as
-`BUMP_LEVEL` — R-CFG-6): no env / `.ver-bumprc` contract.
+`BUMP_LEVEL` — R-CFG-6): no env / `.verbumprc` contract.
 
 Modules: `lib/args.sh` (parse + validate + `-v` conflict), `lib/version.sh`
 (`process-version` composition), `lib/validate.sh` (`is_prerelease_id`,

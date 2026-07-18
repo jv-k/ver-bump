@@ -289,11 +289,11 @@ _grouped_fixture() {
 
 # R-CHLOG-1: opt-in + R-CFG-3 precedence (end-to-end, mirrors config-env.bats)
 
-@test "precedence: env CHANGELOG_STYLE=grouped beats .ver-bumprc flat (end-to-end dry-run)" {
+@test "precedence: env CHANGELOG_STYLE=grouped beats .verbumprc flat (end-to-end dry-run)" {
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
-  printf 'CHANGELOG_STYLE=flat\n' > "$repo/.ver-bumprc"
+  printf 'CHANGELOG_STYLE=flat\n' > "$repo/.verbumprc"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
   git commit --allow-empty -qm "feat: shiny"
 
@@ -304,11 +304,11 @@ _grouped_fixture() {
   refute_output --partial "- feat: shiny"
 }
 
-@test "precedence: .ver-bumprc CHANGELOG_STYLE=grouped beats the flat default (end-to-end dry-run)" {
+@test "precedence: .verbumprc CHANGELOG_STYLE=grouped beats the flat default (end-to-end dry-run)" {
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
-  printf 'CHANGELOG_STYLE=grouped\n' > "$repo/.ver-bumprc"
+  printf 'CHANGELOG_STYLE=grouped\n' > "$repo/.verbumprc"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
   git commit --allow-empty -qm "feat: shiny"
 

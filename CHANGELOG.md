@@ -1,3 +1,10 @@
+## 4.0.0 (2026-07-18)
+
+> **⚠ Breaking — full rename, `ver-bump` → VerBump.** Nothing is called `ver-bump` anymore. The command/repo/brand are **`VerBump`**; the npm package and config file are lowercase **`verbump`**. Update: `npm i -g ver-bump` → **`npm i -g verbump`** (new package; old one deprecated), `.ver-bumprc` → **`.verbumprc`**, `VER_BUMP_*` env vars → **`VERBUMP_*`**, and repo URLs `jv-k/ver-bump` → **`jv-k/VerBump`** (old URLs redirect). `PRE_BUMP_CMD`/`POST_TAG_CMD` and the tag prefix are unchanged; an existing `ver-bump` install keeps working until removed. See [README § Migrating from ver-bump](README.md#migrating-from-ver-bump).
+
+- chore: updated package.json, updated CHANGELOG.md, bumped 3.0.0 -> 4.0.0
+- refactor!: rename everything ver-bump -> VerBump / verbump
+
 ## 3.0.0 (2026-07-17)
 
 > **⚠ Breaking — the command is renamed `ver-bump` → `VerBump`.** The npm package name stays `ver-bump` (npm forbids uppercase); installing it now provides the `VerBump` command. Update any aliases, scripts, CI steps, and shell completions. An already-installed `ver-bump` symlink keeps working until removed. See [README § Command renamed to VerBump](README.md#command-renamed-to-verbump).

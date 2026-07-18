@@ -68,7 +68,7 @@ check-release-branch() {
   if [ "$matched" != true ]; then
     fail 3 \
       "Branch '${branch}' is not a release branch (RELEASE_BRANCHES: ${RELEASE_BRANCHES})." \
-      "Checkout an allowed branch, adjust RELEASE_BRANCHES in .ver-bumprc, or clear the guard for one run: RELEASE_BRANCHES= VerBump …"
+      "Checkout an allowed branch, adjust RELEASE_BRANCHES in .verbumprc, or clear the guard for one run: RELEASE_BRANCHES= VerBump …"
   fi
 }
 

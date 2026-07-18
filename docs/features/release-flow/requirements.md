@@ -7,7 +7,7 @@ push, with three selectable workflows since PR #49 (ADR-12):
 
 | ID | Requirement | Status |
 | --- | --- | --- |
-| R-FLOW-1 | Default is **tag-in-place**: commit + annotated tag on the current branch; no branch is created. `--branch` (or `FLAG_BRANCH=true` in `.ver-bumprc`) cuts a `release-<version>` branch instead (prefix overridable via `-B`). `-b`/`--no-branch` is a deprecated no-op. | ✅ shipped (PR #49) — `test/git-ops.bats` |
+| R-FLOW-1 | Default is **tag-in-place**: commit + annotated tag on the current branch; no branch is created. `--branch` (or `FLAG_BRANCH=true` in `.verbumprc`) cuts a `release-<version>` branch instead (prefix overridable via `-B`). `-b`/`--no-branch` is a deprecated no-op. | ✅ shipped (PR #49) — `test/git-ops.bats` |
 | R-FLOW-2 | `--pr` implies `--branch` and a push to `origin` (override with `-p`), then opens a pull request via `gh` (`check-pr-deps` preflight — conditional dependency like `--release`). Base resolves `--base` › `PR_BASE` › invocation branch › remote HEAD. | ✅ shipped (PR #49) — `test/pr.bats` |
 | R-FLOW-3 | The bump commit includes every bumped file; `-n` disables commit *and* tag *and* push. | ✅ shipped |
 | R-FLOW-4 | An annotated tag `<prefix><version>` is created (`-t` overrides prefix; `-m` sets the message). | ✅ shipped |

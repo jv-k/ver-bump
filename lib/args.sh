@@ -190,7 +190,7 @@ normalize-long-opts() {
 
     # --allow-dirty — long-only boolean: skip the clean-working-tree preflight
     # (R-SAFE-2). Sets the ALLOW_DIRTY config key directly, so the CLI wins
-    # over env / .ver-bumprc per R-CFG-3 (process-arguments runs last).
+    # over env / .verbumprc per R-CFG-3 (process-arguments runs last).
     if [ "$arg" = "--allow-dirty" ]; then
       ALLOW_DIRTY=true
       continue
@@ -202,7 +202,7 @@ normalize-long-opts() {
 
     # --allow-empty — long-only boolean: force a release even when there are
     # no new commits since the previous tag (R-SAFE-16). CLI-only — no env /
-    # .ver-bumprc contract (see the reset in process-arguments): a deliberate
+    # .verbumprc contract (see the reset in process-arguments): a deliberate
     # empty release must be an explicit per-invocation choice, like --yes.
     if [ "$arg" = "--allow-empty" ]; then
       ALLOW_EMPTY=true
@@ -215,7 +215,7 @@ normalize-long-opts() {
 
     # --no-fetch — long-only boolean: skip the remote-sync preflight
     # (R-SAFE-8). Sets the NO_FETCH config key directly, so the CLI wins
-    # over env / .ver-bumprc per R-CFG-3 (process-arguments runs last).
+    # over env / .verbumprc per R-CFG-3 (process-arguments runs last).
     if [ "$arg" = "--no-fetch" ]; then
       NO_FETCH=true
       continue
@@ -228,7 +228,7 @@ normalize-long-opts() {
     # --source <file.json> / --source=<file.json> — the version source and
     # primary bump target (R-SRC-1). Long-only value flag captured here like
     # --base, so it needs no getopts slot. Sets the SOURCE_FILE config key
-    # directly, so the CLI wins over env / .ver-bumprc per R-CFG-3.
+    # directly, so the CLI wins over env / .verbumprc per R-CFG-3.
     if [ "$arg" = "--source" ] || [[ "$arg" == "--source="* ]]; then
       if [[ "$arg" == "--source="* ]]; then
         SOURCE_FILE="${arg#--source=}"
@@ -291,7 +291,7 @@ normalize-long-opts() {
 
     # --sign — long-only boolean: create a signed release tag (`git tag -s`,
     # R-SIGN-1). Sets the TAG_SIGN config key directly, so the CLI wins over
-    # env / .ver-bumprc per R-CFG-3 (process-arguments runs last). Key and
+    # env / .verbumprc per R-CFG-3 (process-arguments runs last). Key and
     # signing program stay in git's own config (user.signingkey, gpg.format) —
     # VerBump adds no key management; git's own error is the error surface.
     if [ "$arg" = "--sign" ]; then
@@ -439,8 +439,8 @@ process-arguments() {
   local OPTIONS OPTIND OPTARG
 
   # DO_RELEASE, BUMP_LEVEL, PRE_ID, ALLOW_EMPTY, FLAG_QUIET, and FLAG_NOHOOKS
-  # are CLI-only switches with no env / .ver-bumprc contract. Reset them
-  # before parsing so an inherited exported var — or a .ver-bumprc assignment
+  # are CLI-only switches with no env / .verbumprc contract. Reset them
+  # before parsing so an inherited exported var — or a .verbumprc assignment
   # (load-config sources the rc as raw shell) — can't silently force a bump,
   # start/advance a prerelease, publish a release, push an empty release,
   # hide the run's output, or disable the release hooks with no flag on the
@@ -584,13 +584,13 @@ process-arguments() {
   # --quiet and interactive prompts are incompatible by construction — a
   # hidden prompt is a hung pipeline (R-OUT-2). Fail fast at parse time
   # rather than mid-release. FLAG_CHANGELOG_PAUSE is checked here (not in
-  # the -l getopts case) so a .ver-bumprc-set pause is caught too — the rc
+  # the -l getopts case) so a .verbumprc-set pause is caught too — the rc
   # was already sourced by load-config before process-arguments ran.
   if [ "$FLAG_QUIET" = true ]; then
     if [ "${FLAG_CHANGELOG_PAUSE:-false}" = true ]; then
       fail 2 \
         "--quiet is incompatible with -l/--pause-changelog (an interactive pause would hang a captured pipeline)." \
-        "Drop -l/--pause-changelog (or unset FLAG_CHANGELOG_PAUSE in .ver-bumprc), or drop --quiet."
+        "Drop -l/--pause-changelog (or unset FLAG_CHANGELOG_PAUSE in .verbumprc), or drop --quiet."
     fi
     if [ "${FLAG_YES:-false}" != true ] && [ -z "${V_USR_SUPPLIED-}" ] && [ -z "${BUMP_LEVEL-}" ] && [ -z "${PRE_ID-}" ]; then
       fail 2 \

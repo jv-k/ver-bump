@@ -313,7 +313,7 @@ load 'test_helper'
 @test "completions: --completions bash emits a parseable script" {
   run ${profile_script} --completions bash
   assert_success
-  assert_output --partial "complete -F _ver_bump VerBump"
+  assert_output --partial "complete -F _verbump VerBump"
   # Script must be syntactically valid bash
   tmp=$(mktemp)
   echo "$output" > "$tmp"

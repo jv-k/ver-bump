@@ -2,10 +2,10 @@
 
 Preflight guards in `main()`'s Verify section that stop a release before any
 mutation when the repo state looks wrong. Safety-preflight set:
-[#57](https://github.com/jv-k/ver-bump/issues/57) (dirty tree) ·
-[#58](https://github.com/jv-k/ver-bump/issues/58) (remote sync) ·
-[#59](https://github.com/jv-k/ver-bump/issues/59) (branch guard) ·
-[#60](https://github.com/jv-k/ver-bump/issues/60) (no-op detection).
+[#57](https://github.com/jv-k/VerBump/issues/57) (dirty tree) ·
+[#58](https://github.com/jv-k/VerBump/issues/58) (remote sync) ·
+[#59](https://github.com/jv-k/VerBump/issues/59) (branch guard) ·
+[#60](https://github.com/jv-k/VerBump/issues/60) (no-op detection).
 
 All guard failures exit `3` (precondition) via `fail` — the frozen 2.x exit
 contract (R-EXIT-2) is untouched.
@@ -52,7 +52,7 @@ Modules: `lib/git-checks.sh` (`check-worktree-clean`,
 `check-release-branch`, `check-remote-sync`, `check-releasable-commits`),
 `lib/args.sh`, `lib/config.sh`.
 
-Verify-section ordering in `main()` (`ver-bump.sh`):
+Verify-section ordering in `main()` (`VerBump.sh`):
 `check-commits-exist` → `check-worktree-clean` → `check-release-branch` →
 `check-remote-sync` → `process-version` → `check-releasable-commits` →
 `check-branch-notexist` → `check-tag-exists` → `check-pr-deps`.

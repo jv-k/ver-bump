@@ -227,13 +227,13 @@ tagged_repo_no_source() {
 
 # ── R-SRC-5: SOURCE_FILE config/env key mirrors the flag ──────────────────
 
-@test "SOURCE_FILE via .ver-bumprc is honoured (R-SRC-5)" {
+@test "SOURCE_FILE via .verbumprc is honoured (R-SRC-5)" {
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
-  printf 'SOURCE_FILE=composer.json\n' > .ver-bumprc
+  printf 'SOURCE_FILE=composer.json\n' > .verbumprc
   printf '{ "version": "3.0.0" }\n' > composer.json
-  git add composer.json .ver-bumprc && git commit -qm "chore: seed"
+  git add composer.json .verbumprc && git commit -qm "chore: seed"
 
   unset SOURCE_FILE
   run ${profile_script} -d -c -p origin -v 3.0.1
@@ -243,11 +243,11 @@ tagged_repo_no_source() {
   assert_output --partial "would set .version = '3.0.1' in composer.json"
 }
 
-@test "env SOURCE_FILE beats .ver-bumprc (R-SRC-5 / R-CFG-3)" {
+@test "env SOURCE_FILE beats .verbumprc (R-SRC-5 / R-CFG-3)" {
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
-  printf 'SOURCE_FILE=fromfile.json\n' > .ver-bumprc
+  printf 'SOURCE_FILE=fromfile.json\n' > .verbumprc
   printf '{ "version": "1.0.0" }\n' > fromfile.json
   printf '{ "version": "2.0.0" }\n' > fromenv.json
   git add . && git commit -qm "chore: seed"

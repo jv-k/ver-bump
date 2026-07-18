@@ -3,14 +3,14 @@
 # install.sh — checksummed installer for VerBump (issue #66, R-DIST-1..5).
 #
 # Downloads a GitHub release tarball, verifies its published sha256, and
-# installs under ${VER_BUMP_PREFIX:-$HOME/.local}:
+# installs under ${VERBUMP_PREFIX:-$HOME/.local}:
 #
-#   <prefix>/share/ver-bump/   the release tree (ver-bump.sh + lib/ + …)
-#   <prefix>/bin/VerBump      symlink to share/ver-bump/ver-bump.sh
+#   <prefix>/share/verbump/   the release tree (VerBump.sh + lib/ + …)
+#   <prefix>/bin/VerBump      symlink to share/verbump/VerBump.sh
 #
 # Designed to be piped —
 #
-#   curl -fsSL https://raw.githubusercontent.com/jv-k/ver-bump/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/jv-k/VerBump/main/install.sh | bash
 #
 # so it is deliberately boring: no colour, no dependencies beyond bash + tar
 # + (curl|wget) + (sha256sum|shasum), and all real work happens inside main()
@@ -20,8 +20,8 @@
 # non-zero, keeps (or restores) any existing install, and cleans up temp
 # files. Exit codes mirror lib/errors.sh: 2 usage, 3 missing tools, 1 else.
 
-REPO_SLUG="jv-k/ver-bump"
-ASSET_NAME="ver-bump.tar.gz"
+REPO_SLUG="jv-k/VerBump"
+ASSET_NAME="verbump.tar.gz"
 
 # Set by parse-args / install-paths; documented here as the integration
 # surface between steps (the repo's globals-between-phases convention).
@@ -40,7 +40,7 @@ usage() {
 VerBump installer — download a release, verify its sha256, install it.
 
 Usage:
-  curl -fsSL https://raw.githubusercontent.com/jv-k/ver-bump/main/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/jv-k/VerBump/main/install.sh | bash
   bash install.sh [--version <x.y.z>] [--prefix <dir>]
 
 Options:
@@ -49,12 +49,12 @@ Options:
   -h, --help          Show this help.
 
 Environment:
-  VER_BUMP_INSTALL_VERSION   Same as --version (a flag wins over the env var).
-  VER_BUMP_PREFIX            Same as --prefix.
+  VERBUMP_INSTALL_VERSION   Same as --version (a flag wins over the env var).
+  VERBUMP_PREFIX            Same as --prefix.
 
 Layout:
-  <prefix>/share/ver-bump/   the release tree (ver-bump.sh + lib/)
-  <prefix>/bin/VerBump      symlink to share/ver-bump/ver-bump.sh
+  <prefix>/share/verbump/   the release tree (VerBump.sh + lib/)
+  <prefix>/bin/VerBump      symlink to share/verbump/VerBump.sh
 
 Re-running upgrades an existing install in place.
 EOF
@@ -99,8 +99,8 @@ check-install-deps() {
 # (CLI > env, matching the tool's config precedence). Accepts a leading "v"
 # on versions (tags are v-prefixed) but stores the bare x.y.z.
 parse-args() {
-  INSTALL_VERSION="${VER_BUMP_INSTALL_VERSION:-}"
-  INSTALL_PREFIX="${VER_BUMP_PREFIX:-$HOME/.local}"
+  INSTALL_VERSION="${VERBUMP_INSTALL_VERSION:-}"
+  INSTALL_PREFIX="${VERBUMP_PREFIX:-$HOME/.local}"
   while [ $# -gt 0 ]; do
     case "$1" in
       -h|--help)
@@ -137,12 +137,12 @@ parse-args() {
   INSTALL_VERSION="${INSTALL_VERSION#v}"
   if [ -n "$INSTALL_VERSION" ] && ! is_semver "$INSTALL_VERSION"; then
     bail 2 "not a valid SemVer version: ${INSTALL_VERSION}" \
-           "expected x.y.z, e.g. VER_BUMP_INSTALL_VERSION=2.0.0"
+           "expected x.y.z, e.g. VERBUMP_INSTALL_VERSION=2.0.0"
   fi
 }
 
 install-paths() {
-  SHARE_DIR="${INSTALL_PREFIX}/share/ver-bump"
+  SHARE_DIR="${INSTALL_PREFIX}/share/verbump"
   BIN_DIR="${INSTALL_PREFIX}/bin"
   BIN_LINK="${BIN_DIR}/VerBump"
 }
@@ -205,7 +205,7 @@ verify_checksum() {
 # layout so a wrong or truncated asset can never be swapped into place.
 unpack-tarball() {
   tar -xzf "$1" -C "$2" || return 1
-  [ -f "$2/ver-bump.sh" ] && [ -d "$2/lib" ]
+  [ -f "$2/VerBump.sh" ] && [ -d "$2/lib" ]
 }
 
 # read-tree-version <dir> — the "version" field of the unpacked
@@ -238,7 +238,7 @@ install-tree() {
   STAGED_DIR="${SHARE_DIR}.staged.$$"
   rm -rf "$STAGED_DIR" || return 1
   mv "$src" "$STAGED_DIR" || return 1
-  chmod +x "$STAGED_DIR/ver-bump.sh" || return 1
+  chmod +x "$STAGED_DIR/VerBump.sh" || return 1
 
   # 1. Move any previous install aside, kept for rollback.
   BACKUP_DIR=""
@@ -250,7 +250,7 @@ install-tree() {
 
   # 2.+3. Swap the new tree in and point the symlink at it.
   if ! mv "$STAGED_DIR" "$SHARE_DIR" || \
-     ! ln -sfn "$SHARE_DIR/ver-bump.sh" "$BIN_LINK"; then
+     ! ln -sfn "$SHARE_DIR/VerBump.sh" "$BIN_LINK"; then
     _restore-backup
     return 1
   fi
@@ -307,7 +307,7 @@ main() {
   install-paths
 
   trap cleanup EXIT
-  WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/ver-bump-install.XXXXXX") || \
+  WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/verbump-install.XXXXXX") || \
     bail 1 "could not create a temporary directory"
 
   printf 'Installing VerBump (%s) to %s ...\n' \
@@ -317,7 +317,7 @@ main() {
   url=$(asset-url "$ASSET_NAME")
   http_fetch "$url" "$WORK_DIR/$ASSET_NAME" || \
     bail 1 "download failed: $url" \
-           "releases before 2.0.0 have no install assets — pin one that does: VER_BUMP_INSTALL_VERSION=x.y.z"
+           "releases before 2.0.0 have no install assets — pin one that does: VERBUMP_INSTALL_VERSION=x.y.z"
   url=$(asset-url "$ASSET_NAME.sha256")
   http_fetch "$url" "$WORK_DIR/$ASSET_NAME.sha256" || \
     bail 1 "download failed: $url" \
@@ -329,23 +329,23 @@ main() {
 
   mkdir -p "$WORK_DIR/tree" || bail 1 "could not prepare the unpack directory"
   unpack-tarball "$WORK_DIR/$ASSET_NAME" "$WORK_DIR/tree" || \
-    bail 1 "unexpected tarball layout (no ver-bump.sh + lib/) — nothing was installed"
+    bail 1 "unexpected tarball layout (no VerBump.sh + lib/) — nothing was installed"
 
   local installed_version
   installed_version=$(read-tree-version "$WORK_DIR/tree")
   install-tree "$WORK_DIR/tree" || \
     bail 1 "could not install to ${SHARE_DIR}" \
-           "check permissions, or point VER_BUMP_PREFIX at a writable prefix"
+           "check permissions, or point VERBUMP_PREFIX at a writable prefix"
 
   printf 'Installed VerBump %s\n' "$installed_version"
-  printf '  %s -> %s\n' "$BIN_LINK" "$SHARE_DIR/ver-bump.sh"
+  printf '  %s -> %s\n' "$BIN_LINK" "$SHARE_DIR/VerBump.sh"
   _path-hint
   printf "Tip: run 'VerBump --install-completions' to set up shell completions.\n"
 }
 
 # Run main when executed or piped into bash; skip it when sourced (tests
 # source this file to drive the functions above directly). Unlike the
-# "$0" = "$BASH_SOURCE" guard in ver-bump.sh, this idiom also fires for
+# "$0" = "$BASH_SOURCE" guard in VerBump.sh, this idiom also fires for
 # `curl … | bash`, where BASH_SOURCE is empty.
 if ! (return 0 2>/dev/null); then
   main "$@"

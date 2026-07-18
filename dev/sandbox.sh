@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# dev/sandbox.sh — run ver-bump.sh against a throwaway git repo.
+# dev/sandbox.sh — run VerBump.sh against a throwaway git repo.
 #
 # Creates a temp dir with an initialised git repo, a minimal package.json,
 # and a couple of seed commits, then invokes VerBump from inside it. The
@@ -24,10 +24,10 @@
 set -eo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VER_BUMP="${REPO_ROOT}/ver-bump.sh"
+VERBUMP="${REPO_ROOT}/VerBump.sh"
 
-if [ ! -x "$VER_BUMP" ]; then
-  echo "sandbox: ver-bump.sh not found or not executable at $VER_BUMP" >&2
+if [ ! -x "$VERBUMP" ]; then
+  echo "sandbox: VerBump.sh not found or not executable at $VERBUMP" >&2
   exit 1
 fi
 
@@ -61,7 +61,7 @@ say() {
 }
 
 SANDBOX_VERSION="${SANDBOX_VERSION:-0.1.0}"
-SANDBOX_DIR="$(mktemp -d -t VerBump-sandbox.XXXXXX)"
+SANDBOX_DIR="$(mktemp -d -t verbump-sandbox.XXXXXX)"
 REMOTE_DIR=""
 
 cleanup() {
@@ -99,7 +99,7 @@ git config commit.gpgsign false
 # Optional bare 'origin' so a real `-p origin` push has somewhere to go — lets
 # the demo (and manual --keep runs) exercise the full push path end to end.
 if (( MK_REMOTE )); then
-  REMOTE_DIR="$(mktemp -d -t VerBump-remote.XXXXXX)"
+  REMOTE_DIR="$(mktemp -d -t verbump-remote.XXXXXX)"
   git init --quiet --bare "$REMOTE_DIR"
   git remote add origin "$REMOTE_DIR"
   say "sandbox: added bare origin at $REMOTE_DIR"
@@ -164,4 +164,4 @@ say "---"
 (( QUIET )) && printf '\033[2J\033[H'
 
 # Run VerBump. Any exit code from it propagates (set -e) — cleanup trap fires either way.
-"$VER_BUMP" ${PASSTHROUGH[@]+"${PASSTHROUGH[@]}"}
+"$VERBUMP" ${PASSTHROUGH[@]+"${PASSTHROUGH[@]}"}

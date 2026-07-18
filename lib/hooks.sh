@@ -12,7 +12,7 @@ true
 #                   Non-zero → exit 4; the commit + tag are kept (recover with
 #                   --undo).
 #
-# Both keys come from the environment or .ver-bumprc only (R-HOOK-3, same
+# Both keys come from the environment or .verbumprc only (R-HOOK-3, same
 # trust domain: the rc is already shell-sourced behind the R-CFG-4 permission
 # checks). There is no CLI flag to *set* a hook; `--no-hooks` (R-HOOK-5)
 # skips both for a single run. Empty/unset key = no hook.
@@ -20,9 +20,9 @@ true
 # _run-hook <name> <cmd> — shared runner for both hook points (R-HOOK-4/6).
 #   Logs the resolved command, then runs it via `bash -c` with the release
 #   context exported for the child only:
-#     VER_BUMP_VERSION       new version (V_NEW)
-#     VER_BUMP_PREV_VERSION  previous version (V_PREV)
-#     VER_BUMP_TAG           full tag name (TAG_PREFIX + V_NEW)
+#     VERBUMP_VERSION       new version (V_NEW)
+#     VERBUMP_PREV_VERSION  previous version (V_PREV)
+#     VERBUMP_TAG           full tag name (TAG_PREFIX + V_NEW)
 #   stdout/stderr are NOT captured — they stream through to the user, so
 #   test runners and build tools keep their progress output. Under --dry-run
 #   the command is printed with the [dry-run] prefix (stderr, R-DRY-2) and
@@ -37,9 +37,9 @@ _run-hook() {
   fi
 
   echo -e "\nRunning ${name} hook: ${S_VAL-}${cmd}${RESET-}"
-  VER_BUMP_VERSION="${V_NEW-}" \
-  VER_BUMP_PREV_VERSION="${V_PREV-}" \
-  VER_BUMP_TAG="${TAG_PREFIX-}${V_NEW-}" \
+  VERBUMP_VERSION="${V_NEW-}" \
+  VERBUMP_PREV_VERSION="${V_PREV-}" \
+  VERBUMP_TAG="${TAG_PREFIX-}${V_NEW-}" \
     bash -c "$cmd"
 }
 

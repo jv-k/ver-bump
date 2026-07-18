@@ -32,9 +32,9 @@ Set TypingSpeed 40ms
 
 Hide
 # Define `VerBump` so the screenshot shows the installed-command form,
-# not the in-repo `./ver-bump.sh` path. Clear AFTER defining it so the
+# not the in-repo `./VerBump.sh` path. Clear AFTER defining it so the
 # function line doesn't linger on screen when we Show.
-Type 'VerBump() { ./ver-bump.sh "$@"; }' Enter
+Type 'VerBump() { ./VerBump.sh "$@"; }' Enter
 Type "clear" Enter
 Show
 

@@ -2,7 +2,7 @@
 
 # --release flag: publish a GitHub release for the newly-created tag via the
 # `gh` CLI. Notes default to `gh release create --generate-notes`; setting
-# $VER_BUMP_RELEASE_NOTES_CMD captures that command's stdout via --notes.
+# $VERBUMP_RELEASE_NOTES_CMD captures that command's stdout via --notes.
 # Conditional dependency — `gh` is only required when --release is passed (a
 # custom notes command may add more); the default VerBump path stays
 # bash + git + jq only.
@@ -61,7 +61,7 @@ SH
   cd "$repo"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
 
-  VER_BUMP_RELEASE_NOTES_CMD='printf %s STUB-NOTES' \
+  VERBUMP_RELEASE_NOTES_CMD='printf %s STUB-NOTES' \
     run ${profile_script} --release -d -b -c -p origin -v 1.2.3
   assert_success
   strip_ansi_output
@@ -76,7 +76,7 @@ SH
   cd "$repo"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
 
-  VER_BUMP_RELEASE_NOTES_CMD='' \
+  VERBUMP_RELEASE_NOTES_CMD='' \
     run ${profile_script} --release -d -b -c -p origin -v 1.2.3
   assert_success
   strip_ansi_output
@@ -93,20 +93,20 @@ SH
   git add package.json && git commit -qm "seed"
 
   before=$(git status --porcelain)
-  VER_BUMP_RELEASE_NOTES_CMD='echo NOTES' \
+  VERBUMP_RELEASE_NOTES_CMD='echo NOTES' \
     run ${profile_script} --release -d -b -c -p origin -v 1.2.3
   assert_success
   after=$(git status --porcelain)
   assert_equal "$before" "$after"
 }
 
-@test "release: VER_BUMP_RELEASE_NOTES_CMD override surfaces custom output" {
+@test "release: VERBUMP_RELEASE_NOTES_CMD override surfaces custom output" {
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
 
-  VER_BUMP_RELEASE_NOTES_CMD='echo CUSTOM-NOTES-MARKER' \
+  VERBUMP_RELEASE_NOTES_CMD='echo CUSTOM-NOTES-MARKER' \
     run ${profile_script} --release -d -b -c -p origin -v 1.2.3
   assert_success
   strip_ansi_output
@@ -119,7 +119,7 @@ SH
   cd "$repo"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
 
-  VER_BUMP_RELEASE_NOTES_CMD='false' \
+  VERBUMP_RELEASE_NOTES_CMD='false' \
     run ${profile_script} --release -d -b -c -p origin -v 1.2.3
   assert_failure 1
   strip_ansi_output
@@ -229,7 +229,7 @@ SH
   chmod +x "${shim}/gh"
 
   # 'origin' is not configured, so the push fails. Live run (no -d).
-  PATH="${shim}:$PATH" VER_BUMP_RELEASE_NOTES_CMD='echo NOTES' \
+  PATH="${shim}:$PATH" VERBUMP_RELEASE_NOTES_CMD='echo NOTES' \
     run ${profile_script} --release -p origin -b -c -v 1.2.5
   strip_ansi_output
   assert_output --partial "Push failed"
@@ -259,7 +259,7 @@ exit 0
 SH
   chmod +x "${shim}/gh"
 
-  PATH="${shim}:$PATH" VER_BUMP_RELEASE_NOTES_CMD='printf %s LIVE-NOTES' \
+  PATH="${shim}:$PATH" VERBUMP_RELEASE_NOTES_CMD='printf %s LIVE-NOTES' \
     run ${profile_script} --release -p "${remote}" -b -c -v 1.2.5
   strip_ansi_output
   assert_output --partial "GH-CALL: release create v1.2.5"
@@ -289,7 +289,7 @@ exit 0
 SH
   chmod +x "${shim}/gh"
 
-  PATH="${shim}:$PATH" VER_BUMP_RELEASE_NOTES_CMD='' \
+  PATH="${shim}:$PATH" VERBUMP_RELEASE_NOTES_CMD='' \
     run ${profile_script} --release -p "${remote}" -b -c -v 1.2.5
   strip_ansi_output
   assert_output --partial "GH-CALL: release create v1.2.5"
@@ -305,7 +305,7 @@ SH
   cd "$repo"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
 
-  VER_BUMP_RELEASE_NOTES_CMD='printf %s NOTES' \
+  VERBUMP_RELEASE_NOTES_CMD='printf %s NOTES' \
     run ${profile_script} --release -d -b -c -p origin -v 1.2.3-rc.1
   assert_success
   strip_ansi_output
@@ -319,7 +319,7 @@ SH
   cd "$repo"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
 
-  VER_BUMP_RELEASE_NOTES_CMD='printf %s NOTES' \
+  VERBUMP_RELEASE_NOTES_CMD='printf %s NOTES' \
     run ${profile_script} --release -d -b -c -p origin -v 1.2.3
   assert_success
   strip_ansi_output

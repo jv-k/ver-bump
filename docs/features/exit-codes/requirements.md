@@ -7,7 +7,7 @@ Stable machine contract (PRD G4) so CI wrappers can branch on failure class.
 | 0 | Success |
 | 1 | Generic / unexpected error |
 | 2 | Usage or argument-parse error |
-| 3 | Precondition failure (missing dep, no `package.json`, dirty tree, missing tag, SemVer parse, unsafe `.ver-bumprc`) |
+| 3 | Precondition failure (missing dep, no `package.json`, dirty tree, missing tag, SemVer parse, unsafe `.verbumprc`) |
 | 4 | Hook failure — **reserved** (future hook system) |
 | 5 | User abort (declined an interactive prompt) |
 

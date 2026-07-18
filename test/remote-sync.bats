@@ -72,7 +72,7 @@ synced_repo() {
   cd "$repo"
   printf '{ "version": "1.0.0" }\n' > package.json
   git add package.json && git commit -qm "chore: seed package.json"
-  git remote add origin /nonexistent/VerBump-remote.git
+  git remote add origin /nonexistent/verbump-remote.git
 
   run ${profile_script} -d -b -c -p origin -v 1.0.1
   assert_success
@@ -125,9 +125,9 @@ synced_repo() {
   assert_output --partial "Push failed"
 }
 
-@test "remote-sync: NO_FETCH=true in .ver-bumprc skips the preflight" {
+@test "remote-sync: NO_FETCH=true in .verbumprc skips the preflight" {
   synced_repo
-  printf 'NO_FETCH=true\n' > .ver-bumprc
+  printf 'NO_FETCH=true\n' > .verbumprc
   git tag v1.0.1
   git push -q origin v1.0.1
   git tag -d v1.0.1 >/dev/null

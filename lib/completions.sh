@@ -126,7 +126,7 @@ _emit-bash-completion() {
   cat <<'BASH_EOF'
 # VerBump bash completion — source this or drop it in your bash_completion.d
 # shellcheck disable=SC2207
-_ver_bump() {
+_verbump() {
     local cur prev opts
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
@@ -155,18 +155,18 @@ _ver_bump() {
           -v -m -f -p -t -B -d -n -b -c -l -y -q -h"
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 }
-complete -F _ver_bump VerBump
-complete -F _ver_bump ver-bump.sh
+complete -F _verbump VerBump
+complete -F _verbump VerBump.sh
 BASH_EOF
 }
 
 _emit-zsh-completion() {
   cat <<'ZSH_EOF'
-#compdef VerBump ver-bump.sh
+#compdef VerBump VerBump.sh
 # VerBump zsh completion — put this file as _VerBump in a dir on $fpath,
 # then `autoload -U compinit && compinit`.
 
-_ver_bump() {
+_verbump() {
   _arguments -s -S \
     '(-v --version)'{-v,--version}'[print tool version (no arg) or set manual SemVer]::version:' \
     '(-m --message)'{-m,--message}'[custom annotated-tag message]:message:' \
@@ -203,14 +203,14 @@ _ver_bump() {
     '--about[print branded version info and exit]'
 }
 
-_ver_bump "$@"
+_verbump "$@"
 ZSH_EOF
 }
 
 _emit-fish-completion() {
   cat <<'FISH_EOF'
 # VerBump fish completion — save to ~/.config/fish/completions/VerBump.fish
-for _cmd in VerBump ver-bump.sh
+for _cmd in VerBump VerBump.sh
     complete -c $_cmd -s v -l version        -d 'Print tool version (no arg) or set manual SemVer'
     complete -c $_cmd -s m -l message        -r -d 'Custom annotated-tag message'
     complete -c $_cmd -s f -l file           -r -a '(__fish_complete_suffix .json)' -d 'Bump version in extra JSON file'

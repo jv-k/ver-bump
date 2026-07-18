@@ -36,18 +36,18 @@ ui_repo() {
   git add package.json && git commit -qm "chore: seed package.json"
 }
 
-@test "UI: no S_NOTICE references in lib/*.sh (except styles.sh) or ver-bump.sh" {
+@test "UI: no S_NOTICE references in lib/*.sh (except styles.sh) or VerBump.sh" {
   # S_NOTICE was the whole-line green narrative token. The refactor stripped
   # it; ensure it doesn't creep back. styles.sh still defines S_NOTICE as a
   # deprecated alias to $GREEN — that's intentional and out of scope.
-  run bash -c "grep -rln --include='*.sh' 'S_NOTICE' '${repo_dir}/lib' '${repo_dir}/ver-bump.sh' | grep -v '/lib/styles.sh\$'"
+  run bash -c "grep -rln --include='*.sh' 'S_NOTICE' '${repo_dir}/lib' '${repo_dir}/VerBump.sh' | grep -v '/lib/styles.sh\$'"
   assert_failure
 }
 
 @test "UI: no raw GREEN references outside lib/styles.sh" {
   # GREEN is defined in styles.sh (fine) but must not be used directly in
   # narrative echoes anywhere else.
-  run bash -c "grep -rln --include='*.sh' 'GREEN' '${repo_dir}/lib' '${repo_dir}/ver-bump.sh' | grep -v '/lib/styles.sh\$'"
+  run bash -c "grep -rln --include='*.sh' 'GREEN' '${repo_dir}/lib' '${repo_dir}/VerBump.sh' | grep -v '/lib/styles.sh\$'"
   assert_failure
 }
 
@@ -61,7 +61,7 @@ ui_repo() {
   # meaning varies by grep (GNU vs BSD) — a guard built on it can silently
   # stop matching. -w matches WHITE/LIGHTGRAY only as complete identifiers,
   # so ${WHITE} is caught while a longer name like LIGHTWHITE is not.
-  run bash -c "grep -rlnwE --include='*.sh' 'WHITE|LIGHTGRAY' '${repo_dir}/lib' '${repo_dir}/ver-bump.sh' | grep -v '/lib/styles.sh\$'"
+  run bash -c "grep -rlnwE --include='*.sh' 'WHITE|LIGHTGRAY' '${repo_dir}/lib' '${repo_dir}/VerBump.sh' | grep -v '/lib/styles.sh\$'"
   assert_failure
 }
 

@@ -47,7 +47,7 @@ usage() {
 
   if command -v jq >/dev/null 2>&1; then
     SCRIPT_VER=$(  jq -r '.version  // ""'         "$MODULE_DIR/package.json" )
-    SCRIPT_NAME=$( jq -r '.name     // "ver-bump"' "$MODULE_DIR/package.json" )
+    SCRIPT_NAME=$( jq -r '.name     // "verbump"' "$MODULE_DIR/package.json" )
     SCRIPT_AUTH=$( jq -r '.author   // ""'         "$MODULE_DIR/package.json" )
     SCRIPT_HOME=$( jq -r '.homepage // ""'         "$MODULE_DIR/package.json" )
     local _desc; _desc=$( jq -r '.description // ""' "$MODULE_DIR/package.json" )
@@ -66,7 +66,7 @@ usage() {
   fi
 
   # Display brand shown in the banner, USAGE synopsis, and EXAMPLES. Fixed to
-  # "VerBump"; the npm package name (.name) stays lowercase "ver-bump" because
+  # "VerBump"; the npm package name (.name) stays lowercase "verbump" because
   # npm forbids uppercase, so the two are intentionally decoupled here.
   SCRIPT_NAME="VerBump"
 
@@ -397,7 +397,7 @@ show-help() {
 
   # Render once at the real width (our stdout becomes a pipe), then page only
   # when it's taller than the window.
-  local tmp; tmp=$(mktemp "${TMPDIR:-/tmp}/ver-bump-help.XXXXXX") || { usage; return; }
+  local tmp; tmp=$(mktemp "${TMPDIR:-/tmp}/verbump-help.XXXXXX") || { usage; return; }
   _VB_HELP_COLS="$cols" usage > "$tmp"
   if [ "$(grep -c '' "$tmp")" -gt "$rows" ]; then
     eval "$pager" < "$tmp"

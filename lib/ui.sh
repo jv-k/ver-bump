@@ -67,7 +67,7 @@ prompt_confirm()   { _render_pill "${S_HDR_PURPLE-}" "CONFIRM"; }
 # / homepage from package.json via jq, with a grep fallback.
 version_block() {
   # Display brand is "VerBump"; the npm package name (.name) stays lowercase
-  # "ver-bump" because npm forbids uppercase, so it is deliberately not read here.
+  # "verbump" because npm forbids uppercase, so it is deliberately not read here.
   local ver author home name="VerBump" desc
   if command -v jq >/dev/null 2>&1; then
     ver=$(   jq -r '.version     // ""' "$MODULE_DIR/package.json" )

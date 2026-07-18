@@ -1,3 +1,16 @@
+## 4.0.1 (2026-07-18)
+- chore: updated package.json, updated CHANGELOG.md, bumped 4.0.0 -> 4.0.1
+- docs(readme): use static npm badge until verbump is published
+- docs(readme): keep npm badge on the verbump package
+- docs(readme): point npm badge at ver-bump, swap CI badge to shields
+- chore(publish): chain brew:bump into the release script
+- chore(publish): add brew:bump script to dispatch tap formula bump
+- Merge pull request #103 from jv-k/docs/homebrew-install-path
+- Merge branch 'main' into docs/homebrew-install-path
+- docs(readme): point homebrew section at the jv-k/tap verbump formula
+- Merge remote-tracking branch 'origin/main' into docs/homebrew-install-path
+- docs(readme): add homebrew install path
+
 ## 4.0.0 (2026-07-18)
 
 > **⚠ Breaking — full rename, `ver-bump` → VerBump.** Nothing is called `ver-bump` anymore. The command/repo/brand are **`VerBump`**; the npm package and config file are lowercase **`verbump`**. Update: `npm i -g ver-bump` → **`npm i -g verbump`** (new package; old one deprecated), `.ver-bumprc` → **`.verbumprc`**, `VER_BUMP_*` env vars → **`VERBUMP_*`**, and repo URLs `jv-k/ver-bump` → **`jv-k/VerBump`** (old URLs redirect). `PRE_BUMP_CMD`/`POST_TAG_CMD` and the tag prefix are unchanged; an existing `ver-bump` install keeps working until removed. See [README § Migrating from ver-bump](README.md#migrating-from-ver-bump).

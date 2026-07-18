@@ -11,10 +11,10 @@
 
 <div align="center">
 
-[![bash 3.2+](https://img.shields.io/badge/bash-3.2%2B-1f425f?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/) [![CI](https://img.shields.io/github/actions/workflow/status/jv-k/VerBump/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/jv-k/VerBump/actions/workflows/ci.yml?query=branch%3Amain) [![CodeFactor](https://www.codefactor.io/repository/github/jv-k/VerBump/badge)](https://www.codefactor.io/repository/github/jv-k/VerBump) [![npm](https://img.shields.io/badge/npm-verbump-cb3837?logo=npm)](https://www.npmjs.com/package/verbump) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![bash 3.2+](https://img.shields.io/badge/bash-3.2%2B-1f425f?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/) [![CI](https://img.shields.io/github/actions/workflow/status/jv-k/VerBump/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/jv-k/VerBump/actions/workflows/ci.yml?query=branch%3Amain) [![CodeFactor](https://www.codefactor.io/repository/github/jv-k/VerBump/badge)](https://www.codefactor.io/repository/github/jv-k/VerBump) [![npm](https://img.shields.io/badge/npm-%40jv--k%2Fverbump-cb3837?logo=npm)](https://www.npmjs.com/package/@jv-k/verbump) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 <!-- once verbump is published to npm, restore the live version badge:
-[![npm version](https://img.shields.io/npm/v/verbump?logo=npm&color=cb3837)](https://www.npmjs.com/package/verbump) -->
+[![npm version](https://img.shields.io/npm/v/%40jv-k%2Fverbump?logo=npm&color=cb3837)](https://www.npmjs.com/package/@jv-k/verbump) -->
 
 <img src="https://raw.githubusercontent.com/jv-k/VerBump/main/img/screenshot.png" alt="VerBump --help output: the header logo and the full flag reference, covering version input, bump levels, prerelease, changelog, tag, push, and GitHub release options.">
 
@@ -31,13 +31,13 @@ curl -fsSL https://raw.githubusercontent.com/jv-k/VerBump/main/install.sh | bash
 ### Install from a registry (npm / pnpm):
 
 ```sh
-pnpm add -g verbump
+pnpm add -g @jv-k/verbump
 ```
 
 or
 
 ```sh
-npm install -g verbump
+npm install -g @jv-k/verbump
 ```
 
 ### Manual install (clone and symlink):
@@ -186,14 +186,14 @@ To pin a version or change the prefix, insert `VERBUMP_INSTALL_VERSION=<x.y.z>` 
 ### npm / pnpm
 
 ```sh
-pnpm add -g verbump
+pnpm add -g @jv-k/verbump
 ```
 
 ```sh
-npm install -g verbump
+npm install -g @jv-k/verbump
 ```
 
-> The npm package is **`verbump`** (lowercase — npm forbids uppercase); it installs the **`VerBump`** command. So: `npm i -g verbump`, then run `VerBump`.
+> The npm package is **`@jv-k/verbump`** (npm reserves the bare name `verbump` as too similar to the retired `ver-bump`); it installs the **`VerBump`** command. So: `npm i -g @jv-k/verbump`, then run `VerBump`.
 
 ### Manual install
 
@@ -234,12 +234,12 @@ The `--pr` base branch resolves in this order: `--base <branch>`, then `PR_BASE`
 
 ## Migrating from ver-bump
 
-The project was renamed from `ver-bump` to **VerBump** in 4.0. The command, repo, and brand are `VerBump`; the npm package and config file are lowercase `verbump`. What to update:
+The project was renamed from `ver-bump` to **VerBump** in 4.0. The command, repo, and brand are `VerBump`; the npm package is `@jv-k/verbump` and the config file is lowercase `.verbumprc`. What to update:
 
 | Was | Now |
 | --- | --- |
 | command `ver-bump` | `VerBump` |
-| `npm i -g ver-bump` | `npm i -g verbump` *(new package; old one deprecated)* |
+| `npm i -g ver-bump` | `npm i -g @jv-k/verbump` *(new package; old one ends at 1.1.8, deprecated)* |
 | `.ver-bumprc` | `.verbumprc` |
 | `VER_BUMP_*` env vars | `VERBUMP_*` |
 | `github.com/jv-k/ver-bump` | `github.com/jv-k/VerBump` *(old URLs redirect)* |

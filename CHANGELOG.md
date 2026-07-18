@@ -13,7 +13,7 @@
 
 ## 4.0.0 (2026-07-18)
 
-> **⚠ Breaking — full rename, `ver-bump` → VerBump.** Nothing is called `ver-bump` anymore. The command/repo/brand are **`VerBump`**; the npm package and config file are lowercase **`verbump`**. Update: `npm i -g ver-bump` → **`npm i -g verbump`** (new package; old one deprecated), `.ver-bumprc` → **`.verbumprc`**, `VER_BUMP_*` env vars → **`VERBUMP_*`**, and repo URLs `jv-k/ver-bump` → **`jv-k/VerBump`** (old URLs redirect). `PRE_BUMP_CMD`/`POST_TAG_CMD` and the tag prefix are unchanged; an existing `ver-bump` install keeps working until removed. See [README § Migrating from ver-bump](README.md#migrating-from-ver-bump).
+> **⚠ Breaking — full rename, `ver-bump` → VerBump.** Nothing is called `ver-bump` anymore. The command/repo/brand are **`VerBump`**; the npm package is **`@jv-k/verbump`** (npm reserves the bare name `verbump` as too similar to the retired `ver-bump`) and the config file is **`.verbumprc`**. Update: `npm i -g ver-bump` → **`npm i -g @jv-k/verbump`** (new package; old one ends at 1.1.8, deprecated), `.ver-bumprc` → **`.verbumprc`**, `VER_BUMP_*` env vars → **`VERBUMP_*`**, and repo URLs `jv-k/ver-bump` → **`jv-k/VerBump`** (old URLs redirect). `PRE_BUMP_CMD`/`POST_TAG_CMD` and the tag prefix are unchanged; an existing `ver-bump` install keeps working until removed. See [README § Migrating from ver-bump](README.md#migrating-from-ver-bump).
 
 - chore: updated package.json, updated CHANGELOG.md, bumped 3.0.0 -> 4.0.0
 - refactor!: rename everything ver-bump -> VerBump / verbump

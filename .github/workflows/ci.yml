@@ -115,14 +115,14 @@ jobs:
       - name: Pack and smoke-test the tarball
         run: |
           npm pack
-          size=$(wc -c < verbump-*.tgz)
+          size=$(wc -c < jv-k-verbump-*.tgz)
           echo "tarball bytes: $size"
           test "$size" -lt 524288 || { echo '::error::tarball >512KB — files allowlist regressed'; exit 1; }
 
       # Tokenless publish via OIDC Trusted Publishing. Requires a one-time setup
-      # on npmjs.com: VerBump > Settings > Trusted Publishers > add this repo's
-      # ci.yml workflow. Provenance is generated automatically under OIDC, so no
-      # --provenance flag and no NPM_TOKEN are needed.
+      # on npmjs.com: @jv-k/verbump > Settings > Trusted Publisher > add this
+      # repo's ci.yml workflow. Provenance is generated automatically under
+      # OIDC, so no --provenance flag and no NPM_TOKEN are needed.
       - name: Publish via OIDC (prereleases -> 'next', stable -> 'latest')
         run: |
           ver="$(node -p "require('./package.json').version")"

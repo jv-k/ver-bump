@@ -1,7 +1,7 @@
 # Code Style & Contribution Standards
 
 <!-- Canonical standards doc.
-     Derived from ver-bump.sh, lib/*, test/*, and git history. -->
+     Derived from VerBump.sh, lib/*, test/*, and git history. -->
 
 VerBump is a Bash release tool. Standards below reflect the conventions
 already in the tree — new code should match, not invent.
@@ -163,7 +163,7 @@ pipe them cleanly.
 ### Module boundaries
 
 ```text
-ver-bump.sh          entrypoint: globals, main() orchestration
+VerBump.sh          entrypoint: globals, main() orchestration
 lib/args.sh          long-opt normalization, getopts parsing, pre-scanned
                      modes (--about, --undo, --completions, --release, …)
 lib/version.sh       version read/suggest/prompt, prerelease iteration,
@@ -173,7 +173,7 @@ lib/changelog.sh     CHANGELOG.md generation + commit-message assembly
 lib/git-checks.sh    repo preconditions (commits exist, tree clean, …)
 lib/git-actions.sh   side-effecting git ops (branch, commit, tag, push,
                      GitHub release, undo) + the dryrun helper
-lib/config.sh        .ver-bumprc discovery, safety checks, precedence
+lib/config.sh        .verbumprc discovery, safety checks, precedence
 lib/json.sh          atomic jq_inplace JSON writes
 lib/errors.sh        fail + the exit-code contract
 lib/completions.sh   completion emit + --install-completions installer
@@ -185,7 +185,7 @@ lib/icons.sh         icon glyph vocabulary (I_OK, I_ERROR, …)
 
 Rules:
 
-- **[ver-bump.sh](../ver-bump.sh) orchestrates; it does not implement.** New
+- **[VerBump.sh](../VerBump.sh) orchestrates; it does not implement.** New
   behaviour goes into a `lib/*.sh` function; `main()` just calls it.
 - **One module, one reason to change.** Behaviour goes in the module that
   owns its domain (version logic in `version.sh`, git side-effects in
@@ -201,7 +201,7 @@ Rules:
 ### Data-flow conventions
 
 - Globals are the integration surface between phases. Document any new
-  global at the top of [ver-bump.sh](../ver-bump.sh) with a one-line comment.
+  global at the top of [VerBump.sh](../VerBump.sh) with a one-line comment.
 - Dry-run is a first-class mode: every side-effecting call goes through
   `dryrun <cmd>` (or an explicit `if [ "$FLAG_DRYRUN" = true ]` check).
   No exceptions — if a new step touches the filesystem, network, or git,
@@ -219,7 +219,7 @@ Rules:
   you introduce a new one, with an install hint. `gh` is a *conditional*
   dependency — only when `--release` is used (PRD R-REL-4).
 - Node dependencies are dev-only and must not be required to run
-  `ver-bump.sh` itself (the tool ships as a standalone script).
+  `VerBump.sh` itself (the tool ships as a standalone script).
 - **Package manager: pnpm.** `pnpm-lock.yaml` is canonical; treat
   `package-lock.json` as stale if it appears.
 
@@ -234,7 +234,7 @@ Rules:
 - Imperative mood, lowercase subject, no trailing period, ≤ 70 chars.
 - Examples from history:
   - `feat(completions): --install-completions with shell auto-detection`
-  - `fix(config): reject group-writable or attacker-owned .ver-bumprc`
+  - `fix(config): reject group-writable or attacker-owned .verbumprc`
   - `refactor(ui): strip narrative colour, reserve accents for values`
 
 ### Body

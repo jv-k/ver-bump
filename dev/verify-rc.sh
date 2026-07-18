@@ -8,13 +8,13 @@
 #   1. GitHub release exists, is a prerelease, has generated notes  (--release + gh --generate-notes, ADR-18)
 #   2. npm dist-tag `next` points at the rc + provenance metadata   (OIDC trusted publishing)
 #   3. Clean npm install runs with node STRIPPED from PATH          (default path = bash/git/jq only, ADR-15)
-#   4. An unknown .ver-bumprc key emits the warning                 (ADR-05 / R-CFG-7)
+#   4. An unknown .verbumprc key emits the warning                 (ADR-05 / R-CFG-7)
 # Exits non-zero if any check fails. Requires: gh (authed), npm, git, jq.
 set -uo pipefail
 
 VER="${1:?usage: verify-rc.sh <version>   e.g. 2.0.0-rc.1}"
 TAG="v${VER}"
-REPO="jv-k/ver-bump"
+REPO="jv-k/VerBump"
 BIN=""                       # set by check 3, reused by check 4
 pass=0; fail=0
 ok(){ printf '   \033[32m✓\033[0m %s\n' "$1"; pass=$((pass + 1)); }
@@ -54,18 +54,18 @@ else
   no "npm install VerBump@${VER} failed (not yet on npm?)"
 fi
 
-echo "▶ 4/4  behaviour: unknown .ver-bumprc key warns (ADR-05 / R-CFG-7)"
+echo "▶ 4/4  behaviour: unknown .verbumprc key warns (ADR-05 / R-CFG-7)"
 if [ -n "$BIN" ] && [ -x "$BIN" ]; then
   sb=$(mktemp -d)
   ( cd "$sb" && git init -q \
       && printf '{ "version": "1.0.0" }\n' > package.json \
       && git add -A && git commit -qm seed \
-      && printf 'TAG_PREFX=oops\n' > .ver-bumprc )
+      && printf 'TAG_PREFX=oops\n' > .verbumprc )
   # -n skips commit/tag/push (avoids the interactive push-offer prompt, which -y
   # does not auto-answer); </dev/null hard-guards against any read blocking. The
   # unknown-key warning fires at load-config, before any of that.
   out=$(cd "$sb" && "$BIN" --dry-run -v 1.0.1 --allow-dirty -y -n </dev/null 2>&1 || true)
-  if printf '%s\n' "$out" | grep -q "Unknown .ver-bumprc key 'TAG_PREFX'"; then
+  if printf '%s\n' "$out" | grep -q "Unknown .verbumprc key 'TAG_PREFX'"; then
     ok "unknown-key warning fired"
   else
     no "unknown-key warning NOT seen"
@@ -78,7 +78,7 @@ fi
 
 # Also worth a manual smoke of the PRIMARY install path (curl), which pulls the
 # release tarball + .sha256 uploaded by the publish-release-assets CI job:
-#   curl -fsSL "https://raw.githubusercontent.com/${REPO}/${TAG}/install.sh" | VER_BUMP_INSTALL_VERSION="${VER}" bash
+#   curl -fsSL "https://raw.githubusercontent.com/${REPO}/${TAG}/install.sh" | VERBUMP_INSTALL_VERSION="${VER}" bash
 
 echo
 echo "════ ${pass} passed, ${fail} failed ════"

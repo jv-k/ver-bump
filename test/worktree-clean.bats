@@ -63,9 +63,9 @@ clean_repo() {
   assert_success
 }
 
-@test "worktree-clean: ALLOW_DIRTY=true in .ver-bumprc bypasses the guard" {
+@test "worktree-clean: ALLOW_DIRTY=true in .verbumprc bypasses the guard" {
   clean_repo
-  printf 'ALLOW_DIRTY=true\n' > .ver-bumprc
+  printf 'ALLOW_DIRTY=true\n' > .verbumprc
   printf '{ "version": "1.0.0", "name": "wip" }\n' > package.json
 
   run ${profile_script} -d -b -c -p origin -v 1.0.1
@@ -74,7 +74,7 @@ clean_repo() {
 
 @test "worktree-clean: env ALLOW_DIRTY=false beats an rc true (R-CFG-3)" {
   clean_repo
-  printf 'ALLOW_DIRTY=true\n' > .ver-bumprc
+  printf 'ALLOW_DIRTY=true\n' > .verbumprc
   printf '{ "version": "1.0.0", "name": "wip" }\n' > package.json
 
   ALLOW_DIRTY=false run ${profile_script} -d -b -c -p origin -v 1.0.1

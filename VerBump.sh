@@ -7,7 +7,7 @@
 # Author:
 #   John Valai <git@jvk.to>
 # Homepage: 
-#   https://github.com/jv-k/ver-bump
+#   https://github.com/jv-k/VerBump
 #
 # Description:
 #   An opinionated release tool for Git projects with a `package.json` —
@@ -55,9 +55,9 @@ FLAG_QUIET=false # -q/--quiet: decoration to stderr, bare new version on stdout 
 # Config-keyed defaults use `:=` so exported env values survive. An
 # unconditional assignment (e.g. `TAG_PREFIX="v"`) would clobber
 # `export TAG_PREFIX=from-env` here — load-config's env-vs-file snapshot
-# would then see the default, and env would silently lose to .ver-bumprc.
+# would then see the default, and env would silently lose to .verbumprc.
 # apply-config-defaults (lib/config.sh) is the canonical source of defaults;
-# these `:=` lines just keep sourcing ver-bump.sh directly (from tests) sane.
+# these `:=` lines just keep sourcing VerBump.sh directly (from tests) sane.
 : "${REL_PREFIX:=release-}"
 : "${TAG_PREFIX:=v}"
 : "${COMMIT_MSG_PREFIX:=chore: }" # Commit msg prefix for the file changes this script makes
@@ -78,15 +78,15 @@ BUMP_TARGETS=()
 # ── Initiate Script ────────────────────────────────────────────────────
 
 main() {
-  # Load .ver-bumprc (if any) and apply defaults BEFORE parsing CLI args.
+  # Load .verbumprc (if any) and apply defaults BEFORE parsing CLI args.
   # Precedence: CLI (process-arguments below) > env (preserved in load-config)
-  #             > file (.ver-bumprc) > default (apply-config-defaults).
+  #             > file (.verbumprc) > default (apply-config-defaults).
   load-config
   apply-config-defaults
 
   # Process and prepare
   process-arguments "$@"
-  # SOURCE_FILE is final here (CLI --source > env > .ver-bumprc > default);
+  # SOURCE_FILE is final here (CLI --source > env > .verbumprc > default);
   # point the internal VER_FILE alias at it (R-SRC-1/5).
   VER_FILE="$SOURCE_FILE"
   check-dependencies

@@ -9,7 +9,7 @@ load 'test_helper'
   run ${profile_script} --about
   assert_success
   strip_ansi_output
-  assert_output --partial "ver-bump"
+  assert_output --partial "VerBump"
   assert_output --partial "Author:"
   assert_output --partial "Homepage:"
 }

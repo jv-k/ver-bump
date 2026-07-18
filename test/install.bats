@@ -32,16 +32,16 @@ setup() {
 teardown() {
   run_cleanup_cmds
   unset FAKE_HOME PREFIX FIXTURE_DIR SCRATCH_TMP
-  unset VER_BUMP_INSTALL_VERSION VER_BUMP_PREFIX
+  unset VERBUMP_INSTALL_VERSION VERBUMP_PREFIX
 }
 
 # Build a fake "release" in $FIXTURE_DIR from the real working tree — the
 # same file set the publish workflow tars up — so fixtures can't drift from
 # what CI ships. Requires install.sh to be sourced (uses sha256_of).
 make_release_fixture() {
-  (cd "$repo_dir" && tar -czf "$FIXTURE_DIR/ver-bump.tar.gz" ver-bump.sh lib LICENSE package.json)
-  printf '%s  ver-bump.tar.gz\n' "$(sha256_of "$FIXTURE_DIR/ver-bump.tar.gz")" \
-    > "$FIXTURE_DIR/ver-bump.tar.gz.sha256"
+  (cd "$repo_dir" && tar -czf "$FIXTURE_DIR/verbump.tar.gz" VerBump.sh lib LICENSE package.json)
+  printf '%s  verbump.tar.gz\n' "$(sha256_of "$FIXTURE_DIR/verbump.tar.gz")" \
+    > "$FIXTURE_DIR/verbump.tar.gz.sha256"
 }
 
 # ── executed / piped entrypoint ─────────────────────────────────────────
@@ -49,7 +49,7 @@ make_release_fixture() {
 @test "install: --help prints usage on stdout and exits 0" {
   run bash "$installer" --help
   assert_success
-  assert_output --partial "VER_BUMP_INSTALL_VERSION"
+  assert_output --partial "VERBUMP_INSTALL_VERSION"
   assert_output --partial "--prefix <dir>"
 }
 
@@ -62,7 +62,7 @@ make_release_fixture() {
 @test "install: main also runs when piped into bash (curl | bash path)" {
   # An invalid pinned version proves main ran (and bailed in parse-args,
   # before any network or filesystem work).
-  run bash -c "VER_BUMP_INSTALL_VERSION=banana bash < '$installer'"
+  run bash -c "VERBUMP_INSTALL_VERSION=banana bash < '$installer'"
   assert_failure 2
   assert_output --partial "not a valid SemVer version"
 }
@@ -76,10 +76,10 @@ make_release_fixture() {
   assert_equal "$INSTALL_PREFIX" "$HOME/.local"
 }
 
-@test "install: parse-args reads VER_BUMP_INSTALL_VERSION and VER_BUMP_PREFIX" {
+@test "install: parse-args reads VERBUMP_INSTALL_VERSION and VERBUMP_PREFIX" {
   source "$installer"
-  export VER_BUMP_INSTALL_VERSION="v2.0.0"   # leading v is accepted + stripped
-  export VER_BUMP_PREFIX="/opt/VerBump"
+  export VERBUMP_INSTALL_VERSION="v2.0.0"   # leading v is accepted + stripped
+  export VERBUMP_PREFIX="/opt/VerBump"
   parse-args
   assert_equal "$INSTALL_VERSION" "2.0.0"
   assert_equal "$INSTALL_PREFIX" "/opt/VerBump"
@@ -87,8 +87,8 @@ make_release_fixture() {
 
 @test "install: flags win over env (CLI > env precedence)" {
   source "$installer"
-  export VER_BUMP_INSTALL_VERSION="1.0.0"
-  export VER_BUMP_PREFIX="/from-env"
+  export VERBUMP_INSTALL_VERSION="1.0.0"
+  export VERBUMP_PREFIX="/from-env"
   parse-args --version 2.0.0 --prefix /from-cli
   assert_equal "$INSTALL_VERSION" "2.0.0"
   assert_equal "$INSTALL_PREFIX" "/from-cli"
@@ -122,7 +122,7 @@ make_release_fixture() {
   run parse-args --version banana
   assert_failure 2
   assert_output --partial "not a valid SemVer version: banana"
-  assert_output --partial "VER_BUMP_INSTALL_VERSION"
+  assert_output --partial "VERBUMP_INSTALL_VERSION"
 }
 
 # ── layout + asset URLs ─────────────────────────────────────────────────
@@ -131,7 +131,7 @@ make_release_fixture() {
   source "$installer"
   INSTALL_PREFIX="/x"
   install-paths
-  assert_equal "$SHARE_DIR" "/x/share/ver-bump"
+  assert_equal "$SHARE_DIR" "/x/share/verbump"
   assert_equal "$BIN_DIR" "/x/bin"
   assert_equal "$BIN_LINK" "/x/bin/VerBump"
 }
@@ -139,17 +139,17 @@ make_release_fixture() {
 @test "install: asset-url uses the latest-release alias when unpinned" {
   source "$installer"
   INSTALL_VERSION=""
-  run asset-url "ver-bump.tar.gz"
+  run asset-url "verbump.tar.gz"
   assert_success
-  assert_output "https://github.com/jv-k/ver-bump/releases/latest/download/ver-bump.tar.gz"
+  assert_output "https://github.com/jv-k/VerBump/releases/latest/download/verbump.tar.gz"
 }
 
 @test "install: asset-url uses the v-prefixed tag path when pinned" {
   source "$installer"
   INSTALL_VERSION="1.2.3"
-  run asset-url "ver-bump.tar.gz.sha256"
+  run asset-url "verbump.tar.gz.sha256"
   assert_success
-  assert_output "https://github.com/jv-k/ver-bump/releases/download/v1.2.3/ver-bump.tar.gz.sha256"
+  assert_output "https://github.com/jv-k/VerBump/releases/download/v1.2.3/verbump.tar.gz.sha256"
 }
 
 # ── dependency preflight ────────────────────────────────────────────────
@@ -171,15 +171,15 @@ make_release_fixture() {
 @test "install: verify_checksum accepts a matching digest" {
   source "$installer"
   make_release_fixture
-  run verify_checksum "$FIXTURE_DIR/ver-bump.tar.gz" "$FIXTURE_DIR/ver-bump.tar.gz.sha256"
+  run verify_checksum "$FIXTURE_DIR/verbump.tar.gz" "$FIXTURE_DIR/verbump.tar.gz.sha256"
   assert_success
 }
 
 @test "install: verify_checksum rejects a wrong digest" {
   source "$installer"
   make_release_fixture
-  printf '%064d  ver-bump.tar.gz\n' 0 > "$FIXTURE_DIR/ver-bump.tar.gz.sha256"
-  run verify_checksum "$FIXTURE_DIR/ver-bump.tar.gz" "$FIXTURE_DIR/ver-bump.tar.gz.sha256"
+  printf '%064d  verbump.tar.gz\n' 0 > "$FIXTURE_DIR/verbump.tar.gz.sha256"
+  run verify_checksum "$FIXTURE_DIR/verbump.tar.gz" "$FIXTURE_DIR/verbump.tar.gz.sha256"
   assert_failure
   assert_output --partial "checksum mismatch"
 }
@@ -187,8 +187,8 @@ make_release_fixture() {
 @test "install: verify_checksum rejects a malformed checksum file" {
   source "$installer"
   make_release_fixture
-  printf '<html>404 Not Found</html>\n' > "$FIXTURE_DIR/ver-bump.tar.gz.sha256"
-  run verify_checksum "$FIXTURE_DIR/ver-bump.tar.gz" "$FIXTURE_DIR/ver-bump.tar.gz.sha256"
+  printf '<html>404 Not Found</html>\n' > "$FIXTURE_DIR/verbump.tar.gz.sha256"
+  run verify_checksum "$FIXTURE_DIR/verbump.tar.gz" "$FIXTURE_DIR/verbump.tar.gz.sha256"
   assert_failure
   assert_output --partial "malformed"
 }
@@ -204,11 +204,11 @@ make_release_fixture() {
   run main --prefix "$PREFIX"
   assert_success
 
-  [ -f "$PREFIX/share/ver-bump/ver-bump.sh" ]
-  [ -x "$PREFIX/share/ver-bump/ver-bump.sh" ]
-  [ -d "$PREFIX/share/ver-bump/lib" ]
+  [ -f "$PREFIX/share/verbump/VerBump.sh" ]
+  [ -x "$PREFIX/share/verbump/VerBump.sh" ]
+  [ -d "$PREFIX/share/verbump/lib" ]
   [ -L "$PREFIX/bin/VerBump" ]
-  assert_equal "$(readlink "$PREFIX/bin/VerBump")" "$PREFIX/share/ver-bump/ver-bump.sh"
+  assert_equal "$(readlink "$PREFIX/bin/VerBump")" "$PREFIX/share/verbump/VerBump.sh"
 
   # R-DIST-3: prints the installed version + the completions suggestion.
   assert_output --partial "Installed VerBump $(jsonfile_get_ver "$repo_dir/package.json")"
@@ -217,7 +217,7 @@ make_release_fixture() {
   # No temp leftovers on success either — and no .staged/.bak next to the
   # install.
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
-  assert_equal "$(ls -A "$PREFIX/share")" "ver-bump"
+  assert_equal "$(ls -A "$PREFIX/share")" "verbump"
 }
 
 @test "install: e2e re-run upgrades in place (idempotent)" {
@@ -227,19 +227,19 @@ make_release_fixture() {
   export TMPDIR="$SCRATCH_TMP"
 
   # Seed a stale install: the swap must replace the whole tree, not merge.
-  mkdir -p "$PREFIX/share/ver-bump"
-  touch "$PREFIX/share/ver-bump/stale-file-from-old-version"
+  mkdir -p "$PREFIX/share/verbump"
+  touch "$PREFIX/share/verbump/stale-file-from-old-version"
 
   run main --prefix "$PREFIX"
   assert_success
   run main --prefix "$PREFIX"
   assert_success
 
-  [ ! -e "$PREFIX/share/ver-bump/stale-file-from-old-version" ]
+  [ ! -e "$PREFIX/share/verbump/stale-file-from-old-version" ]
   [ -L "$PREFIX/bin/VerBump" ]
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
   # The upgrade's backup of the old tree must not linger after success.
-  assert_equal "$(ls -A "$PREFIX/share")" "ver-bump"
+  assert_equal "$(ls -A "$PREFIX/share")" "verbump"
 }
 
 @test "install: e2e failed swap restores the previous install" {
@@ -249,8 +249,8 @@ make_release_fixture() {
   export TMPDIR="$SCRATCH_TMP"
 
   # Existing install that must survive the failure.
-  mkdir -p "$PREFIX/share/ver-bump"
-  printf 'old\n' > "$PREFIX/share/ver-bump/sentinel-old-install"
+  mkdir -p "$PREFIX/share/verbump"
+  printf 'old\n' > "$PREFIX/share/verbump/sentinel-old-install"
 
   # Fail only the swap: mv of the .staged tree into place. Staging (dest is
   # .staged) and the rollback mv (source is .bak) still use the real mv.
@@ -266,10 +266,10 @@ make_release_fixture() {
   assert_output --partial "previous installation restored"
 
   # R-DIST-5: the old install is back, byte for byte where it was.
-  [ -f "$PREFIX/share/ver-bump/sentinel-old-install" ]
-  [ ! -f "$PREFIX/share/ver-bump/ver-bump.sh" ]
+  [ -f "$PREFIX/share/verbump/sentinel-old-install" ]
+  [ ! -f "$PREFIX/share/verbump/VerBump.sh" ]
   # No .bak/.staged leftovers, no temp leftovers.
-  assert_equal "$(ls -A "$PREFIX/share")" "ver-bump"
+  assert_equal "$(ls -A "$PREFIX/share")" "verbump"
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
 }
 
@@ -279,8 +279,8 @@ make_release_fixture() {
   http_fetch() { cp "$FIXTURE_DIR/${1##*/}" "$2"; }
   export TMPDIR="$SCRATCH_TMP"
 
-  mkdir -p "$PREFIX/share/ver-bump"
-  printf 'old\n' > "$PREFIX/share/ver-bump/sentinel-old-install"
+  mkdir -p "$PREFIX/share/verbump"
+  printf 'old\n' > "$PREFIX/share/verbump/sentinel-old-install"
 
   # The swap succeeds but the symlink step fails: the new tree must be
   # backed out and the previous install put back.
@@ -290,10 +290,10 @@ make_release_fixture() {
   assert_failure 1
   assert_output --partial "previous installation restored"
 
-  [ -f "$PREFIX/share/ver-bump/sentinel-old-install" ]
-  [ ! -f "$PREFIX/share/ver-bump/ver-bump.sh" ]
+  [ -f "$PREFIX/share/verbump/sentinel-old-install" ]
+  [ ! -f "$PREFIX/share/verbump/VerBump.sh" ]
   [ ! -e "$PREFIX/bin/VerBump" ]
-  assert_equal "$(ls -A "$PREFIX/share")" "ver-bump"
+  assert_equal "$(ls -A "$PREFIX/share")" "verbump"
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
 }
 
@@ -309,7 +309,7 @@ make_release_fixture() {
   assert_failure 1
 
   # No previous install to restore — the half-swapped tree must be gone.
-  [ ! -e "$PREFIX/share/ver-bump" ]
+  [ ! -e "$PREFIX/share/verbump" ]
   [ ! -e "$PREFIX/bin/VerBump" ]
   [ -z "$(ls -A "$PREFIX/share")" ]
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
@@ -318,7 +318,7 @@ make_release_fixture() {
 @test "install: e2e corrupted checksum exits 1, installs nothing, cleans up" {
   source "$installer"
   make_release_fixture
-  printf '%064d  ver-bump.tar.gz\n' 0 > "$FIXTURE_DIR/ver-bump.tar.gz.sha256"
+  printf '%064d  verbump.tar.gz\n' 0 > "$FIXTURE_DIR/verbump.tar.gz.sha256"
   http_fetch() { cp "$FIXTURE_DIR/${1##*/}" "$2"; }
   export TMPDIR="$SCRATCH_TMP"
 
@@ -327,7 +327,7 @@ make_release_fixture() {
   assert_output --partial "sha256 verification failed"
 
   # R-DIST-5: nothing installed, no partial files anywhere.
-  [ ! -e "$PREFIX/share/ver-bump" ]
+  [ ! -e "$PREFIX/share/verbump" ]
   [ ! -e "$PREFIX/bin/VerBump" ]
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
 }
@@ -340,9 +340,9 @@ make_release_fixture() {
   run main --prefix "$PREFIX"
   assert_failure 1
   assert_output --partial "download failed"
-  assert_output --partial "VER_BUMP_INSTALL_VERSION"
+  assert_output --partial "VERBUMP_INSTALL_VERSION"
 
-  [ ! -e "$PREFIX/share/ver-bump" ]
+  [ ! -e "$PREFIX/share/verbump" ]
   [ ! -e "$PREFIX/bin/VerBump" ]
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
 }

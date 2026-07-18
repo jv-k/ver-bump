@@ -25,7 +25,7 @@ setup() {
   eval "bats_fail() $(declare -f fail | sed '1d')"
 
   repo_dir=$PWD
-  profile_script="$repo_dir/ver-bump.sh"
+  profile_script="$repo_dir/VerBump.sh"
 
   F_TEMPS=()
   TEST_F_VER=

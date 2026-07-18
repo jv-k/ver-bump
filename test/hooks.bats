@@ -4,7 +4,7 @@
 # preflights and before any mutation; POST_TAG_CMD runs after the tag and
 # before push / --pr / --release. Non-zero exits 4 — the first real user of
 # the code reserved since the 2.0 exit contract (PRD §5.6). Keys come from
-# env or .ver-bumprc only; --no-hooks skips both for a run.
+# env or .verbumprc only; --no-hooks skips both for a run.
 
 load 'test_helper'
 
@@ -102,18 +102,18 @@ hooks_repo() {
 
 # ── R-HOOK-3: env / rc sourcing + precedence ─────────────────────────────
 
-@test "hooks: PRE_BUMP_CMD from .ver-bumprc is honoured (R-HOOK-3)" {
+@test "hooks: PRE_BUMP_CMD from .verbumprc is honoured (R-HOOK-3)" {
   hooks_repo
-  printf 'PRE_BUMP_CMD="touch rc-hook-ran"\n' > .ver-bumprc
+  printf 'PRE_BUMP_CMD="touch rc-hook-ran"\n' > .verbumprc
 
   run ${profile_script} -v 1.0.1 -y -n -c
   assert_success
   [ -f rc-hook-ran ]
 }
 
-@test "hooks: env PRE_BUMP_CMD beats .ver-bumprc (R-HOOK-3 / R-CFG-3)" {
+@test "hooks: env PRE_BUMP_CMD beats .verbumprc (R-HOOK-3 / R-CFG-3)" {
   hooks_repo
-  printf 'PRE_BUMP_CMD="touch from-file"\n' > .ver-bumprc
+  printf 'PRE_BUMP_CMD="touch from-file"\n' > .verbumprc
 
   PRE_BUMP_CMD="touch from-env" run ${profile_script} -v 1.0.1 -y -n -c
   assert_success
@@ -123,16 +123,16 @@ hooks_repo() {
 
 @test "hooks: empty env PRE_BUMP_CMD disables an rc-defined hook (R-HOOK-3)" {
   hooks_repo
-  printf 'PRE_BUMP_CMD="touch from-file"\n' > .ver-bumprc
+  printf 'PRE_BUMP_CMD="touch from-file"\n' > .verbumprc
 
   PRE_BUMP_CMD="" run ${profile_script} -v 1.0.1 -y -n -c
   assert_success
   [ ! -f from-file ]
 }
 
-@test "hooks: env POST_TAG_CMD beats .ver-bumprc (R-HOOK-3 / R-CFG-3)" {
+@test "hooks: env POST_TAG_CMD beats .verbumprc (R-HOOK-3 / R-CFG-3)" {
   hooks_repo
-  printf 'POST_TAG_CMD="touch from-file; exit 1"\n' > .ver-bumprc
+  printf 'POST_TAG_CMD="touch from-file; exit 1"\n' > .verbumprc
 
   POST_TAG_CMD="touch from-env; exit 1" run ${profile_script} -v 1.0.1 -y
   assert_failure 4
@@ -199,9 +199,9 @@ hooks_repo() {
   assert_failure 4
 }
 
-@test "hooks: .ver-bumprc FLAG_NOHOOKS cannot skip hooks (CLI-only reset)" {
+@test "hooks: .verbumprc FLAG_NOHOOKS cannot skip hooks (CLI-only reset)" {
   hooks_repo
-  printf 'FLAG_NOHOOKS=true\nPRE_BUMP_CMD="exit 1"\n' > .ver-bumprc
+  printf 'FLAG_NOHOOKS=true\nPRE_BUMP_CMD="exit 1"\n' > .verbumprc
 
   run ${profile_script} -v 1.0.1 -y
   assert_failure 4
@@ -209,22 +209,22 @@ hooks_repo() {
 
 # ── R-HOOK-6: exported environment ───────────────────────────────────────
 
-@test "hooks: PRE_BUMP_CMD sees VER_BUMP_VERSION / _PREV_VERSION / _TAG (R-HOOK-6)" {
+@test "hooks: PRE_BUMP_CMD sees VERBUMP_VERSION / _PREV_VERSION / _TAG (R-HOOK-6)" {
   hooks_repo
 
-  PRE_BUMP_CMD='printf "%s|%s|%s" "$VER_BUMP_VERSION" "$VER_BUMP_PREV_VERSION" "$VER_BUMP_TAG" > hook-env' \
+  PRE_BUMP_CMD='printf "%s|%s|%s" "$VERBUMP_VERSION" "$VERBUMP_PREV_VERSION" "$VERBUMP_TAG" > hook-env' \
     run ${profile_script} -v 1.0.1 -y -n -c
   assert_success
   run cat hook-env
   assert_output "1.0.1|1.0.0|v1.0.1"
 }
 
-@test "hooks: single-quoted rc hook defers VER_BUMP_* expansion to run time (R-HOOK-6)" {
+@test "hooks: single-quoted rc hook defers VERBUMP_* expansion to run time (R-HOOK-6)" {
   hooks_repo
   # Single quotes in the rc are load-bearing: the rc is shell-sourced, so a
-  # double-quoted string would expand $VER_BUMP_* at load time (still empty).
-  cat > .ver-bumprc <<'RC'
-PRE_BUMP_CMD='printf "%s" "$VER_BUMP_TAG" > hook-env'
+  # double-quoted string would expand $VERBUMP_* at load time (still empty).
+  cat > .verbumprc <<'RC'
+PRE_BUMP_CMD='printf "%s" "$VERBUMP_TAG" > hook-env'
 RC
 
   run ${profile_script} -v 1.0.1 -y -n -c
@@ -237,26 +237,26 @@ RC
   hooks_repo
 
   # Hook writes its env then fails, so the run exits 4 before the push prompt.
-  POST_TAG_CMD='printf "%s|%s" "$VER_BUMP_VERSION" "$VER_BUMP_TAG" > hook-env; exit 1' \
+  POST_TAG_CMD='printf "%s|%s" "$VERBUMP_VERSION" "$VERBUMP_TAG" > hook-env; exit 1' \
     run ${profile_script} -v 1.0.1 -y -t rel/
   assert_failure 4
   run cat hook-env
   assert_output "1.0.1|rel/1.0.1"
 }
 
-@test "hooks: VER_BUMP_* vars are exported to the hook only, not leaked" {
+@test "hooks: VERBUMP_* vars are exported to the hook only, not leaked" {
   hooks_repo
 
   # After a successful hooked run, the parent environment written by the
-  # release itself (git config, files) must not contain VER_BUMP_VERSION —
+  # release itself (git config, files) must not contain VERBUMP_VERSION —
   # verify via a second hook that runs in the same VerBump process ordering.
-  PRE_BUMP_CMD='env | grep -c "^VER_BUMP_" > hook-env' \
+  PRE_BUMP_CMD='env | grep -c "^VERBUMP_" > hook-env' \
     run ${profile_script} -v 1.0.1 -y -n -c
   assert_success
   run cat hook-env
   assert_output "3"
   # And the bats process env is untouched.
-  [ -z "${VER_BUMP_VERSION-}" ]
+  [ -z "${VERBUMP_VERSION-}" ]
 }
 
 # ── Regression pin: hooks absent = zero behaviour change ─────────────────

@@ -1,6 +1,6 @@
 # VerBump — project instructions
 
-`VerBump` is a single-file Bash release tool (`ver-bump.sh` + `lib/*.sh`),
+`VerBump` is a single-file Bash release tool (`VerBump.sh` + `lib/*.sh`),
 tested with bats and linted with shellcheck. **The canonical coding standards
 live in [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md)** — read it before writing
 code, commits, PRs, or issues. This file is the short entry point; that doc is
@@ -12,7 +12,7 @@ tool's private/user-level memory).
 - **Bash 3.2+** (macOS default) — no associative arrays, no bash-4-isms.
 - **git** and **jq** are the only runtime dependencies; `gh` is conditional
   (`--release` / `--pr`). Node deps are dev-only and must never be required to
-  run `ver-bump.sh`.
+  run `VerBump.sh`.
 - **pnpm**, not npm. `pnpm-lock.yaml` is canonical; a `package-lock.json` in
   the tree is a bump *target*, not this project's own lockfile. Key scripts:
   `pnpm lint` (shellcheck `-x`, must be zero warnings) and `pnpm tests:run`
@@ -38,7 +38,7 @@ Full rules in [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md) (§Pull requests,
 ### Issue tracker
 
 Issues and PRDs are tracked as **GitHub issues** via the `gh` CLI
-(`github.com/jv-k/ver-bump`). See
+(`github.com/jv-k/VerBump`). See
 [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md).
 
 ### Triage labels

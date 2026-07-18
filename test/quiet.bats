@@ -110,8 +110,8 @@ released_repo() {
 
 @test "quiet: rc-set FLAG_CHANGELOG_PAUSE is caught too (R-OUT-2)" {
   releasable_repo
-  printf 'FLAG_CHANGELOG_PAUSE=true\n' > .ver-bumprc
-  chmod 644 .ver-bumprc
+  printf 'FLAG_CHANGELOG_PAUSE=true\n' > .verbumprc
+  chmod 644 .verbumprc
 
   run ${profile_script} --quiet --yes
   assert_failure 2
@@ -225,10 +225,10 @@ released_repo() {
   assert_output "0"
 }
 
-@test "quiet: FLAG_QUIET is CLI-only — a .ver-bumprc key cannot hide output" {
+@test "quiet: FLAG_QUIET is CLI-only — a .verbumprc key cannot hide output" {
   releasable_repo
-  printf 'FLAG_QUIET=true\n' > .ver-bumprc
-  chmod 644 .ver-bumprc
+  printf 'FLAG_QUIET=true\n' > .verbumprc
+  chmod 644 .verbumprc
 
   run bash -c '"$1" -d -c -p origin -v 1.2.4 >"$2/out" 2>/dev/null </dev/null' _ \
     "${profile_script}" "$BATS_TEST_TMPDIR"

@@ -1,19 +1,19 @@
 {
-  "name": "ver-bump",
+  "name": "verbump",
   "version": "3.0.0",
   "description": "Release tool for any Git repo: reads your Conventional Commits to suggest a SemVer bump, then updates the changelog, tags, and pushes. Optional release-branch and PR workflows — no Node toolchain, just git + jq.",
   "author": "John Valai <git@jvk.to>",
-  "homepage": "https://github.com/jv-k/ver-bump",
+  "homepage": "https://github.com/jv-k/VerBump",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jv-k/ver-bump.git"
+    "url": "https://github.com/jv-k/VerBump.git"
   },
   "license": "MIT",
   "bin": {
-    "VerBump": "./ver-bump.sh"
+    "VerBump": "./VerBump.sh"
   },
   "files": [
-    "ver-bump.sh",
+    "VerBump.sh",
     "lib/",
     "README.md",
     "LICENSE",
@@ -28,10 +28,10 @@
   "scripts": {
     "dev": "./dev/sandbox.sh",
     "dev:dry": "./dev/sandbox.sh --dry-run",
-    "release": "./ver-bump.sh --release -p origin",
+    "release": "./VerBump.sh --release -p origin",
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/*.bats",
-    "lint": "shellcheck -x -e SC1017 ./ver-bump.sh ./install.sh ./lib/*.sh",
+    "lint": "shellcheck -x -e SC1017 ./VerBump.sh ./install.sh ./lib/*.sh",
     "screenshots": "./dev/screenshots.sh all",
     "screenshots:help": "./dev/screenshots.sh help",
     "screenshots:demo": "./dev/screenshots.sh demo",
@@ -42,7 +42,7 @@
     "versioning",
     "code versioning",
     "bumpversion",
-    "ver-bump",
+    "verbump",
     "bumping",
     "versioning-workflow"
   ],

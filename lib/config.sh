@@ -3,12 +3,12 @@
 # shellcheck disable=SC1090,SC2288
 true
 
-# .ver-bumprc loader. Shell-sourced config file discovered by walking up
+# .verbumprc loader. Shell-sourced config file discovered by walking up
 # from $PWD toward /. CLI flags always win over env vars, which win over
 # the file, which wins over the hard-coded defaults applied below.
 #
-# Precedence is enforced by call ordering in ver-bump.sh::main:
-#   1. load-config           — sources .ver-bumprc (env wins over file)
+# Precedence is enforced by call ordering in VerBump.sh::main:
+#   1. load-config           — sources .verbumprc (env wins over file)
 #   2. apply-config-defaults — sets defaults for any still-unset keys
 #   3. process-arguments     — CLI flags overwrite anything above
 #
@@ -44,15 +44,15 @@ _CONFIG_KEYS=(TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX \
               ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES TAG_SIGN SOURCE_FILE \
               BUMP_FILES PRE_BUMP_CMD POST_TAG_CMD)
 
-# Walk up from $PWD. Echoes the first .ver-bumprc found; returns 1 if none.
+# Walk up from $PWD. Echoes the first .verbumprc found; returns 1 if none.
 # Never touches stdout on the "not found" path — load-config treats that
 # as a silent no-op.
 _find-rc-upward() {
   local dir
   dir="$(pwd -P)"
   while :; do
-    if [ -f "$dir/.ver-bumprc" ]; then
-      printf '%s' "$dir/.ver-bumprc"
+    if [ -f "$dir/.verbumprc" ]; then
+      printf '%s' "$dir/.verbumprc"
       return 0
     fi
     [ "$dir" = "/" ] && return 1
@@ -70,7 +70,7 @@ _assert-rc-safe() {
   # numeric and portable across BSD + GNU find.
   if ! find "$rc" -uid "$(id -u)" -type f 2>/dev/null | grep -q .; then
     fail 3 \
-      ".ver-bumprc at $rc is not owned by the current user — refusing to load." \
+      ".verbumprc at $rc is not owned by the current user — refusing to load." \
       "Take ownership: chown $(id -un) $rc"
   fi
 
@@ -95,7 +95,7 @@ _assert-rc-safe() {
       scope="group-writable"
     fi
     fail 3 \
-      ".ver-bumprc at $rc is $scope — refusing to load." \
+      ".verbumprc at $rc is $scope — refusing to load." \
       "Restrict permissions: chmod 644 $rc"
   fi
 }
@@ -123,12 +123,12 @@ _warn-unknown-rc-keys() {
     for k in "${_CONFIG_KEYS[@]}"; do
       [ "$key" = "$k" ] && { known=1; break; }
     done
-    [ "$known" -eq 0 ] && log_warn "Unknown .ver-bumprc key '$key' — not a supported setting; it will have no effect." >&2
+    [ "$known" -eq 0 ] && log_warn "Unknown .verbumprc key '$key' — not a supported setting; it will have no effect." >&2
   done < "$rc"
   return 0  # non-fatal helper: never let the last key-check's status escape (set -e)
 }
 
-# Discover and source .ver-bumprc, preserving env-set values.
+# Discover and source .verbumprc, preserving env-set values.
 # Absent file = silent no-op. World-writable file = exit 3.
 # Writes nothing to stdout (must stay clean; other codepaths emit
 # completions / help scripts on stdout).

@@ -77,10 +77,10 @@ guard_repo() {
   assert_output --partial "is not a release branch"
 }
 
-@test "branch-guard: RELEASE_BRANCHES from .ver-bumprc guards the run" {
+@test "branch-guard: RELEASE_BRANCHES from .verbumprc guards the run" {
   guard_repo
   git checkout -qb feature-x
-  printf 'RELEASE_BRANCHES="main develop"\n' > .ver-bumprc
+  printf 'RELEASE_BRANCHES="main develop"\n' > .verbumprc
 
   unset RELEASE_BRANCHES
   run ${profile_script} -d -b -c -p origin -v 1.0.1
@@ -92,7 +92,7 @@ guard_repo() {
 @test "branch-guard: empty env override beats the rc value (one-shot bypass)" {
   guard_repo
   git checkout -qb feature-x
-  printf 'RELEASE_BRANCHES="main develop"\n' > .ver-bumprc
+  printf 'RELEASE_BRANCHES="main develop"\n' > .verbumprc
 
   RELEASE_BRANCHES="" run ${profile_script} -d -b -c -p origin -v 1.0.1
   assert_success

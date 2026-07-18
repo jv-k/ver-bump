@@ -119,7 +119,7 @@ resolve-bump-targets() {
   local line trimmed
   if [ -n "${BUMP_FILES:-}" ]; then
     while IFS= read -r line; do
-      # Trim surrounding whitespace so indented .ver-bumprc lists parse.
+      # Trim surrounding whitespace so indented .verbumprc lists parse.
       trimmed="${line#"${line%%[![:space:]]*}"}"
       trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
       [ -z "$trimmed" ] && continue

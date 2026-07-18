@@ -158,11 +158,11 @@ EOF
 
 # ── R-SIGN-1 precedence (R-CFG-3), end-to-end via the dry-run preview ────
 
-@test "TAG_SIGN=true in .ver-bumprc → signed tag (end-to-end)" {
+@test "TAG_SIGN=true in .verbumprc → signed tag (end-to-end)" {
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
-  printf 'TAG_SIGN=true\n' > "$repo/.ver-bumprc"
+  printf 'TAG_SIGN=true\n' > "$repo/.verbumprc"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
 
   unset TAG_SIGN
@@ -172,11 +172,11 @@ EOF
   assert_output --partial "git tag -s v1.0.1"
 }
 
-@test "env TAG_SIGN=false beats .ver-bumprc TAG_SIGN=true (end-to-end)" {
+@test "env TAG_SIGN=false beats .verbumprc TAG_SIGN=true (end-to-end)" {
   local repo
   repo="$(scratch_repo)"
   cd "$repo"
-  printf 'TAG_SIGN=true\n' > "$repo/.ver-bumprc"
+  printf 'TAG_SIGN=true\n' > "$repo/.verbumprc"
   printf '{ "version": "1.0.0" }\n' > "$repo/package.json"
 
   TAG_SIGN=false run ${profile_script} -d -c -p origin -v 1.0.1

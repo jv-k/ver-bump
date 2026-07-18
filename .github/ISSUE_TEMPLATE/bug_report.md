@@ -32,5 +32,5 @@ VerBump ...
 ## Minimal reproducer (optional)
 
 <!-- Closes issues faster than any amount of prose: a scratch repo + the
-     exact command — seed commits, starting tag, .ver-bumprc if relevant,
+     exact command — seed commits, starting tag, .verbumprc if relevant,
      then the VerBump invocation. -->

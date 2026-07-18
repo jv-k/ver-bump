@@ -2,7 +2,7 @@
 
 The skills speak in terms of five canonical triage roles. This file maps those roles to the actual label strings used in this repo's issue tracker.
 
-All five labels already exist in `github.com/jv-k/ver-bump` with strings identical to the canonical roles, so the mapping is 1:1 — `/triage` applies existing labels, it does not create duplicates.
+All five labels already exist in `github.com/jv-k/VerBump` with strings identical to the canonical roles, so the mapping is 1:1 — `/triage` applies existing labels, it does not create duplicates.
 
 | Label in mattpocock/skills | Label in our tracker | Meaning                                  |
 | -------------------------- | -------------------- | ---------------------------------------- |

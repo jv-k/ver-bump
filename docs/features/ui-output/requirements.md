@@ -30,17 +30,17 @@ capture pattern.
 Implementation is stream discipline, not a renderer: `process-arguments`
 (`lib/args.sh`) pre-scans argv for `-q`/`--quiet`, saves the real stdout on
 FD 3 and redirects FD 1 to stderr (`exec 3>&1 1>&2`) before any option echo
-runs; `main()` (`ver-bump.sh`) prints the bare version to FD 3 as its last
+runs; `main()` (`VerBump.sh`) prints the bare version to FD 3 as its last
 step. One redirect beats guarding every `log_*`/`echo` call site — nothing
 can leak into the captured pipeline, and warnings/prompts stay visible on
 stderr. `--undo` handles quiet in its own pre-scan (no version to report,
 so quiet stdout stays completely empty). `FLAG_QUIET` is CLI-only — reset
 in `process-arguments` like `BUMP_LEVEL`/`ALLOW_EMPTY`, never a
-`.ver-bumprc` key: hidden-output mode must be an explicit per-invocation
+`.verbumprc` key: hidden-output mode must be an explicit per-invocation
 choice (same rationale as `FLAG_YES`, R-YES-3).
 
 Modules: `lib/ui.sh`, `lib/styles.sh`, `lib/icons.sh`, `lib/usage.sh`;
-quiet mode: `lib/args.sh`, `ver-bump.sh`.
+quiet mode: `lib/args.sh`, `VerBump.sh`.
 Tests: `test/ui.bats`, `test/color.bats`, `test/about.bats`,
 `test/quiet.bats`.
 

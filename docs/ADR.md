@@ -81,7 +81,7 @@ modes.
 
 ---
 
-## ADR-05 — `.ver-bumprc` is shell-sourced, permission-guarded, lowest-precedence
+## ADR-05 — `.verbumprc` is shell-sourced, permission-guarded, lowest-precedence
 
 **Status:** Accepted (2.0) · PRD §5.10, R-CFG
 
@@ -90,7 +90,7 @@ PRD non-goal, then pulled into 2.0. Sourcing shell is simple and dependency
 free but executes attacker-controlled code if the file can be tampered
 with; discovery walks *up* from `$PWD`, so ownership matters.
 
-**Decision:** `.ver-bumprc` is discovered walking up to `/`, shell-sourced
+**Decision:** `.verbumprc` is discovered walking up to `/`, shell-sourced
 (not parsed), refused (exit `3`) when group/world-writable or not owned by
 the invoking user. Precedence is invariant: CLI > env > file > default,
 enforced by call order (`load-config` → `apply-config-defaults` →
@@ -120,11 +120,11 @@ change touched one grab-bag file, and review diffs were unreadable.
 **Decision:** Split into focused modules with one reason to change each:
 `args`, `version`, `validate`, `changelog`, `git-checks`, `git-actions`,
 `config`, `json`, `errors`, `completions`, `usage`, `ui`, `styles`,
-`icons`, `hooks`, `textbump`. `ver-bump.sh` keeps globals + `main()`
+`icons`, `hooks`, `textbump`. `VerBump.sh` keeps globals + `main()`
 orchestration and implements nothing.
 
 **Consequences:** Globals are the integration surface between modules
-(documented at the top of `ver-bump.sh`); shellcheck lints files in
+(documented at the top of `VerBump.sh`); shellcheck lints files in
 isolation, so cross-module flag reads carry a file-scope `SC2034` waiver.
 
 ---
@@ -211,7 +211,7 @@ default-path dependencies, and `gh` + a notes generator are heavyweight.
 
 **Decision:** `--release` (long-only, CLI-only — not settable via env or
 rc) publishes via `gh release create` after the push; requires `-p`;
-release notes come from `VER_BUMP_RELEASE_NOTES_CMD` (default
+release notes come from `VERBUMP_RELEASE_NOTES_CMD` (default
 `npx jv-k/releasetool`; the default was later changed to `gh --generate-notes`
 in ADR-18). `gh`/`node` are preflighted only when `--release`
 is used; prereleases publish as GitHub prereleases.
@@ -239,13 +239,13 @@ default), and **release PR** (`--pr` — implies `--branch` and a push to
 `check-pr-deps` preflight, conditional dependency). `FLAG_NOBRANCH` is
 inverted to positive `FLAG_BRANCH`; `-b`/`--no-branch` stays as a
 deprecated no-op for script back-compat. The `--pr` base resolves
-`--base` › `PR_BASE` (env/`.ver-bumprc`) › invocation branch › remote
+`--base` › `PR_BASE` (env/`.verbumprc`) › invocation branch › remote
 HEAD. `--undo` learns tag-in-place releases (deletes the tag, keeps the
 bump commit).
 
 **Consequences:** **Breaking** — bare `VerBump` no longer cuts a branch
 (PRD B-5); teams keep the old default via `--branch` or `FLAG_BRANCH=true`
-in `.ver-bumprc`. `.ver-bumprc` gains `FLAG_BRANCH` + `PR_BASE`;
+in `.verbumprc`. `.verbumprc` gains `FLAG_BRANCH` + `PR_BASE`;
 `FLAG_NOBRANCH` remains recognised for compatibility.
 
 ---
@@ -371,7 +371,7 @@ not a now step).
 **Status:** Accepted (2.0) · grill 2026-07-16 · refines ADR-11, PRD §5.8 (R-REL-2/4/5)
 
 **Context:** `--release` already requires `gh`. But
-`VER_BUMP_RELEASE_NOTES_CMD` defaulted to `npx jv-k/releasetool`, so the
+`VERBUMP_RELEASE_NOTES_CMD` defaulted to `npx jv-k/releasetool`, so the
 out-of-the-box `--release` path pulled in node + network + trust in a
 maintainer-personal package — the one place the no-Node-lock-in tool reached
 for Node **by default**. `gh release create --generate-notes` produces notes
@@ -379,7 +379,7 @@ from commits/PRs since the last tag with no dependency beyond the
 already-required `gh`. 2.0 has not GA'd (no `v2.0.0` tag), so changing the
 default costs no migration.
 
-**Decision:** When `VER_BUMP_RELEASE_NOTES_CMD` is unset/empty (the new
+**Decision:** When `VERBUMP_RELEASE_NOTES_CMD` is unset/empty (the new
 default), `do-github-release` runs `gh release create <tag> --generate-notes`
 — `gh`-only, no node. When it is set, the existing capture-stdout path (run
 the command, pass its stdout via `--notes`, abort before `gh` on a non-zero
@@ -450,7 +450,7 @@ practice, so the gate protecting it must be explicit and checkable.
    on a clean `bash`/`git`/`jq`-only machine via the rc tarball, with a live
    bump run in the sandbox.
 5. **Behavioural changes verified end-to-end** — `--release` default produces a
-   release via `gh --generate-notes`; a typo'd `.ver-bumprc` key warns.
+   release via `gh --generate-notes`; a typo'd `.verbumprc` key warns.
 
 A short **soak** (rc sits a few days / ≥ 1 external install before GA) is
 encouraged but not a hard gate — maintainer discretion.

@@ -7,7 +7,7 @@ wins.
 
 ## Found a bug? Want a feature?
 
-Open an [issue](https://github.com/jv-k/ver-bump/issues/new/choose).
+Open an [issue](https://github.com/jv-k/VerBump/issues/new/choose).
 
 ## Working on the code
 

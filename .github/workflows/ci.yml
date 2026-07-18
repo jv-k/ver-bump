@@ -39,8 +39,8 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y shellcheck
 
-      - name: Test ./ver-bump.sh, ./install.sh and ./lib/*.sh
-        run: shellcheck -x -e SC1017 ./ver-bump.sh ./install.sh ./lib/*.sh
+      - name: Test ./VerBump.sh, ./install.sh and ./lib/*.sh
+        run: shellcheck -x -e SC1017 ./VerBump.sh ./install.sh ./lib/*.sh
 
   tests:
     name: Run test suite on ${{ matrix.os }}
@@ -115,12 +115,12 @@ jobs:
       - name: Pack and smoke-test the tarball
         run: |
           npm pack
-          size=$(wc -c < ver-bump-*.tgz)
+          size=$(wc -c < verbump-*.tgz)
           echo "tarball bytes: $size"
           test "$size" -lt 524288 || { echo '::error::tarball >512KB — files allowlist regressed'; exit 1; }
 
       # Tokenless publish via OIDC Trusted Publishing. Requires a one-time setup
-      # on npmjs.com: ver-bump > Settings > Trusted Publishers > add this repo's
+      # on npmjs.com: VerBump > Settings > Trusted Publishers > add this repo's
       # ci.yml workflow. Provenance is generated automatically under OIDC, so no
       # --provenance flag and no NPM_TOKEN are needed.
       - name: Publish via OIDC (prereleases -> 'next', stable -> 'latest')
@@ -149,24 +149,24 @@ jobs:
       # name + version from it (version_block in lib/ui.sh).
       - name: Build runtime tarball + sha256
         run: |
-          tar -czf ver-bump.tar.gz ver-bump.sh lib LICENSE package.json
-          sha256sum ver-bump.tar.gz > ver-bump.tar.gz.sha256
+          tar -czf verbump.tar.gz VerBump.sh lib LICENSE package.json
+          sha256sum verbump.tar.gz > verbump.tar.gz.sha256
 
       # Unversioned asset names keep install.sh's URLs stable:
-      #   latest: releases/latest/download/ver-bump.tar.gz
-      #   pinned: releases/download/v<x.y.z>/ver-bump.tar.gz
+      #   latest: releases/latest/download/verbump.tar.gz
+      #   pinned: releases/download/v<x.y.z>/verbump.tar.gz
       # --clobber makes a re-run of this job idempotent.
       - name: Upload assets to the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "$GITHUB_REF_NAME" ver-bump.tar.gz ver-bump.tar.gz.sha256 --clobber
+        run: gh release upload "$GITHUB_REF_NAME" verbump.tar.gz verbump.tar.gz.sha256 --clobber
 
       # Cheap end-to-end proof that the published assets actually install
       # (R-DIST-1/3/5 against the real release). Gates nothing else.
       - name: Smoke-test install.sh against the uploaded assets
         run: |
-          export VER_BUMP_INSTALL_VERSION="${GITHUB_REF_NAME#v}"
-          export VER_BUMP_PREFIX="$RUNNER_TEMP/smoke-prefix"
+          export VERBUMP_INSTALL_VERSION="${GITHUB_REF_NAME#v}"
+          export VERBUMP_PREFIX="$RUNNER_TEMP/smoke-prefix"
           # Assets can take a moment to become downloadable after upload.
           installed=false
           for attempt in 1 2 3; do
@@ -178,4 +178,4 @@ jobs:
             sleep 10
           done
           [ "$installed" = true ]
-          "$VER_BUMP_PREFIX/bin/VerBump" --about
+          "$VERBUMP_PREFIX/bin/VerBump" --about

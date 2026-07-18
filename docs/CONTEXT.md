@@ -9,7 +9,7 @@ implementation detail (see `docs/ADR.md`).
 
 **Plain-bash release tool** (the canonical self-description):
 What `VerBump` is: a plain-bash release tool for Git repositories with no Node
-runtime, `git` and `jq` its only default-path dependencies. `ver-bump.sh` is the
+runtime, `git` and `jq` its only default-path dependencies. `VerBump.sh` is the
 entry point to read; the `lib/*.sh` split is an implementation detail, so the
 tool is not described by a file count.
 _Avoid_: one file, single-file, one-file script

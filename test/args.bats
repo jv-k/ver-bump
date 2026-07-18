@@ -314,6 +314,7 @@ load 'test_helper'
   run ${profile_script} --completions bash
   assert_success
   assert_output --partial "complete -F _verbump VerBump"
+  assert_output --partial "complete -F _verbump verbump"
   # Script must be syntactically valid bash
   tmp=$(mktemp)
   echo "$output" > "$tmp"
@@ -324,13 +325,14 @@ load 'test_helper'
 @test "completions: --completions zsh emits a #compdef script" {
   run ${profile_script} --completions zsh
   assert_success
-  assert_output --partial "#compdef VerBump"
+  assert_output --partial "#compdef VerBump verbump VerBump.sh"
   assert_output --partial "_arguments"
 }
 
 @test "completions: --completions fish emits complete commands" {
   run ${profile_script} --completions fish
   assert_success
+  assert_output --partial "for _cmd in VerBump verbump VerBump.sh"
   assert_output --partial "complete -c"
   assert_output --partial "-l tag-prefix"
 }

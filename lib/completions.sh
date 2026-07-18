@@ -155,16 +155,21 @@ _verbump() {
           -v -m -f -p -t -B -d -n -b -c -l -y -q -h"
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 }
+# lowercase verbump too: case-insensitive filesystems (macOS default) run
+# VerBump when you type verbump, but completion matches the literal word.
 complete -F _verbump VerBump
+complete -F _verbump verbump
 complete -F _verbump VerBump.sh
 BASH_EOF
 }
 
 _emit-zsh-completion() {
   cat <<'ZSH_EOF'
-#compdef VerBump VerBump.sh
+#compdef VerBump verbump VerBump.sh
 # VerBump zsh completion — put this file as _VerBump in a dir on $fpath,
-# then `autoload -U compinit && compinit`.
+# then `autoload -U compinit && compinit`. (lowercase verbump is registered
+# too: case-insensitive filesystems run VerBump when you type verbump, but
+# completion matches the literal word.)
 
 _verbump() {
   _arguments -s -S \
@@ -210,7 +215,7 @@ ZSH_EOF
 _emit-fish-completion() {
   cat <<'FISH_EOF'
 # VerBump fish completion — save to ~/.config/fish/completions/VerBump.fish
-for _cmd in VerBump VerBump.sh
+for _cmd in VerBump verbump VerBump.sh
     complete -c $_cmd -s v -l version        -d 'Print tool version (no arg) or set manual SemVer'
     complete -c $_cmd -s m -l message        -r -d 'Custom annotated-tag message'
     complete -c $_cmd -s f -l file           -r -a '(__fish_complete_suffix .json)' -d 'Bump version in extra JSON file'

@@ -106,7 +106,10 @@ install-completions() {
     fi
     if [ "$on_fpath" = 1 ]; then
       log_info "Rebuild zsh's completion cache to pick it up:"
-      log_trace "rm -f ~/.zcompdump*; exec zsh"
+      # Printed literally — the user's zsh expands ZDOTDIR (not exported to
+      # us), and the (N) null-glob keeps a miss from erroring under NOMATCH.
+      # shellcheck disable=SC2016
+      log_trace 'rm -f ${ZDOTDIR:-$HOME}/.zcompdump*(N); exec zsh'
     else
       local dir_pretty
       if [[ "$dir" == "$HOME"* ]]; then
@@ -117,7 +120,10 @@ install-completions() {
       log_info "Add this to ~/.zshrc BEFORE any 'source \$ZSH/oh-my-zsh.sh' line:"
       log_trace "fpath=(${dir_pretty} \$fpath)"
       log_info "Then rebuild the completion cache:"
-      log_trace "rm -f ~/.zcompdump*; exec zsh"
+      # Printed literally — the user's zsh expands ZDOTDIR (not exported to
+      # us), and the (N) null-glob keeps a miss from erroring under NOMATCH.
+      # shellcheck disable=SC2016
+      log_trace 'rm -f ${ZDOTDIR:-$HOME}/.zcompdump*(N); exec zsh'
     fi
   fi
 }

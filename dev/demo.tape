@@ -39,8 +39,10 @@ Type `cd "$SBX"` Enter
 Type "clear" Enter
 Show
 
-# The demo: bump to 2.0.0, answer the push prompt, land on DONE.
-Type "VerBump -v 2.0.0"
+# The demo: cut the sandbox's first stable release (0.1.0 -> 1.0.0), answer
+# the push prompt, land on DONE. 1.0.0 is deliberate — an evergreen scenario
+# that can't go stale against the tool's own version.
+Type "VerBump -v 1.0.0"
 Sleep 600ms
 Enter
 Sleep 4s

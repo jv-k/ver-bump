@@ -6,11 +6,11 @@
   "homepage": "https://github.com/jv-k/VerBump",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jv-k/VerBump.git"
+    "url": "git+https://github.com/jv-k/VerBump.git"
   },
   "license": "MIT",
   "bin": {
-    "VerBump": "./VerBump.sh"
+    "VerBump": "VerBump.sh"
   },
   "files": [
     "VerBump.sh",

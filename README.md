@@ -11,7 +11,7 @@
 
 <div align="center">
 
-[![bash 3.2+](https://img.shields.io/badge/bash-3.2%2B-1f425f?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/) [![CI](https://img.shields.io/github/actions/workflow/status/jv-k/VerBump/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/jv-k/VerBump/actions/workflows/ci.yml?query=branch%3Amain) [![CodeFactor](https://www.codefactor.io/repository/github/jv-k/VerBump/badge)](https://www.codefactor.io/repository/github/jv-k/VerBump) [![npm version](https://img.shields.io/npm/v/ver-bump?logo=npm&color=cb3837)](https://www.npmjs.com/package/ver-bump) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![bash 3.2+](https://img.shields.io/badge/bash-3.2%2B-1f425f?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/) [![CI](https://img.shields.io/github/actions/workflow/status/jv-k/VerBump/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/jv-k/VerBump/actions/workflows/ci.yml?query=branch%3Amain) [![CodeFactor](https://www.codefactor.io/repository/github/jv-k/VerBump/badge)](https://www.codefactor.io/repository/github/jv-k/VerBump) [![npm version](https://img.shields.io/npm/v/verbump?logo=npm&color=cb3837)](https://www.npmjs.com/package/verbump) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 <img src="https://raw.githubusercontent.com/jv-k/VerBump/main/img/screenshot.png" alt="VerBump --help output: the header logo and the full flag reference, covering version input, bump levels, prerelease, changelog, tag, push, and GitHub release options.">
 

@@ -10,12 +10,10 @@ cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 help_lines() { CLICOLOR_FORCE=1 ./VerBump.sh --help | sed -n "$1"; }
 
 printf '\n'
-help_lines '1,3p' | sed 's/^/                     /'
+help_lines '1,3p' | sed 's/^/                   /'
 printf '\n'
-help_lines '5p'   | sed 's/^/                       /'
+help_lines '5p'   | sed 's/^/                      /'
 printf '\n'
-printf '                 \e[1mRelease tool for any Git repo.\e[0m\n'
+printf '               \e[1mRelease tool for any Git repo.\e[0m\n'
 printf '\n'
-printf '     \e[33mConventional Commits\e[0m → \e[32mSemVer\e[0m → \e[36mchangelog\e[0m → \e[35mtag\e[0m → \e[34mpush\e[0m\n'
-printf '\n'
-printf '         \e[2mbash 3.2+ · git + jq only · no Node toolchain\e[0m\n'
+printf '   \e[33mConventional Commits\e[0m → \e[32mSemVer\e[0m → \e[36mchangelog\e[0m → \e[35mtag\e[0m → \e[34mpush\e[0m\n'

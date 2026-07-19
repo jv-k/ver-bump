@@ -11,11 +11,15 @@ With curl (no Node required):
 curl -fsSL https://raw.githubusercontent.com/jv-k/VerBump/main/install.sh | bash
 ```
 
-From a registry (npm / pnpm):
+With pnpm:
 
 ```sh
 pnpm add -g @jv-k/verbump
-# or
+```
+
+With npm:
+
+```sh
 npm install -g @jv-k/verbump
 ```
 
@@ -44,7 +48,7 @@ place**: it commits the bump and tags your current branch, with no release
 branch. This bumps `package.json` to `1.0.1` and creates the tag `v1.0.1`:
 
 ```sh
-$ verbump
+verbump
 ```
 
 Output:

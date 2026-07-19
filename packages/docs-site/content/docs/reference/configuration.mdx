@@ -1,0 +1,60 @@
+---
+title: Configuration
+description: The .verbumprc file, every key, and its security model.
+---
+
+VerBump reads a `.verbumprc` file, walking up from your current directory
+toward `/`. The first file found is shell-sourced, so a team can commit its
+defaults at the repo root. Precedence, highest to lowest: **CLI flag** >
+**environment variable** > **`.verbumprc`** > **built-in default**.
+
+## All config keys
+
+Every key maps 1:1 to an existing global:
+
+| Key | Equivalent flag | Default |
+| --- | --- | --- |
+| `TAG_PREFIX` | `-t` / `--tag-prefix` | `v` |
+| `REL_PREFIX` | `-B` / `--branch-prefix` | `release-` |
+| `PUSH_DEST` | `-p` / `--push` | `origin` |
+| `SOURCE_FILE` | `--source` | `package.json` |
+| `BUMP_FILES` | `--bump` | *unset* (no extra targets) |
+| `COMMIT_MSG_PREFIX` | *(no flag)* | `"chore: "` |
+| `COMMIT_MSG_TEMPLATE` | *(no flag)* | *unset* (prefix + generated file list) |
+| `CHANGELOG_STYLE` | *(no flag)* | `flat` |
+| `FLAG_BRANCH` | `--branch` | *unset* (tag in place) |
+| `PR_BASE` | `--base` | *(auto-detect)* |
+| `FLAG_NOCHANGELOG` | `-c` / `--no-changelog` | *unset* |
+| `FLAG_CHANGELOG_PAUSE` | `-l` / `--pause-changelog` | *unset* |
+| `ALLOW_DIRTY` | `--allow-dirty` | *unset* (dirty tree refuses) |
+| `NO_FETCH` | `--no-fetch` | *unset* (fetch + behind-upstream check) |
+| `RELEASE_BRANCHES` | *(no flag)* | *unset* (release from any branch) |
+| `TAG_SIGN` | `--sign` | `false` (annotated, unsigned tag) |
+| `PRE_BUMP_CMD` | *(no flag, see [Release hooks](/docs/guides/hooks))* | *unset* (no hook) |
+| `POST_TAG_CMD` | *(no flag, see [Release hooks](/docs/guides/hooks))* | *unset* (no hook) |
+
+```sh
+# .verbumprc — committed at repo root
+TAG_PREFIX="release/"
+REL_PREFIX="hotfix-"
+PUSH_DEST="upstream"
+COMMIT_MSG_PREFIX="release: "
+FLAG_NOCHANGELOG=true
+RELEASE_BRANCHES="main develop release/*"
+```
+
+## Release branches
+
+`RELEASE_BRANCHES` is a space-separated list of glob patterns naming the
+branches a release may be cut from. When set, running VerBump from any other
+branch (or from a detached HEAD) exits with code 3. It is a guard, not a
+prompt, so `--yes` does not bypass it. Clear it for a single run with an empty
+environment override, since env beats the file: `RELEASE_BRANCHES= verbump …`
+
+## Security
+
+<Callout type="warn">
+  VerBump *sources* this file as shell, so do not commit one you wouldn't
+  execute. As a safeguard, it refuses to load a world-writable rc and exits
+  with code 3. Run `chmod 644 .verbumprc` to fix it.
+</Callout>

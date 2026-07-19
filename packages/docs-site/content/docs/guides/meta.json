@@ -1,0 +1,13 @@
+{
+  "title": "Guides",
+  "pages": [
+    "workflows",
+    "version-suggestion",
+    "bump-targets",
+    "changelog",
+    "hooks",
+    "dry-run-undo",
+    "completions",
+    "migrating"
+  ]
+}

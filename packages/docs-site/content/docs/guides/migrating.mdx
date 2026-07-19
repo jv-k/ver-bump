@@ -1,0 +1,28 @@
+---
+title: Migrating
+description: Coming from VerBump 1.x or the old ver-bump.
+---
+
+## From 1.x
+
+**The default changed.** VerBump 1.x always cut a `release-<version>` branch.
+2.0 **tags the current branch in place** by default. Pass `--branch` to keep
+the old behaviour. The old `-b` / `--no-branch` flag is now a no-op (kept so
+existing scripts don't break).
+
+## From ver-bump
+
+The project was renamed from `ver-bump` to **VerBump** in 4.0. The repo and
+brand are `VerBump` and the command is `verbump`; the npm package is
+`@jv-k/verbump` and the config file is lowercase `.verbumprc`. What to update:
+
+| Was | Now |
+| --- | --- |
+| command `ver-bump` | `verbump` |
+| `npm i -g ver-bump` | `npm i -g @jv-k/verbump` *(new package; old one ends at 1.1.8, deprecated)* |
+| `.ver-bumprc` | `.verbumprc` |
+| `VER_BUMP_*` env vars | `VERBUMP_*` |
+| `github.com/jv-k/ver-bump` | `github.com/jv-k/VerBump` *(old URLs redirect)* |
+
+`PRE_BUMP_CMD` / `POST_TAG_CMD` and the default tag prefix are unchanged. An
+existing `ver-bump` install keeps working until you remove it.

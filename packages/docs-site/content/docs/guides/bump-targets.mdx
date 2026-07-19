@@ -1,0 +1,58 @@
+---
+title: Bump targets
+description: Bumping non-Node projects and keeping extra files in sync.
+---
+
+No `package.json`? VerBump reads the current version from your latest matching
+git tag. Point `--source` at another manifest, or keep any JSON / TOML / YAML /
+text file in lock-step with the tag via `--bump`.
+
+## Non-Node repos
+
+Rust, Python, Go, anything SemVer works out of the box. If there is no version
+file, VerBump reads the current version from your latest matching git tag,
+runs the same Conventional-Commit suggestion machinery, and cuts a CHANGELOG
+and tag release (skipping the commit when there is nothing to commit). Keep a
+JSON manifest like `composer.json`? Point `--source` at it (or set
+`SOURCE_FILE` in `.verbumprc`) and it becomes both the version source and the
+file that gets bumped.
+
+## Bumping stack-specific files
+
+Keep the version in a `pyproject.toml`, a Go const, a Helm `Chart.yaml`, or
+any text file in lock-step with the tag via `--bump` (repeatable), or declare
+the targets once in `.verbumprc` as `BUMP_FILES`:
+
+```sh
+# Text pattern — no extra tool; rewrites only the matching line.
+# Works for a Go const, a Python __version__, a Makefile, a Dockerfile, …
+verbump --bump 'main.go:Version = "{{version}}"'
+verbump --bump 'src/mypkg/__init__.py:__version__ = "{{version}}"'
+
+# Structured dotted path — JSON via jq (built in), TOML/YAML via the
+# jq-based yq suite (tomlq / yq) when installed.
+verbump --bump pyproject.toml:@project.version --bump Chart.yaml:@version
+```
+
+Or declare them once (newline-separated) — every run keeps them in sync:
+
+```sh
+# .verbumprc
+BUMP_FILES="main.go:Version = \"{{version}}\"
+src/mypkg/__init__.py:__version__ = \"{{version}}\"
+pyproject.toml:@project.version
+Chart.yaml:@version"
+```
+
+<Callout>
+  Match your file's exact quoting and spacing, because the pattern is a
+  literal search. `__version__='1.2.3'` (single quotes, no spaces) needs
+  `--bump "…/__init__.py:__version__='{{version}}'"`.
+</Callout>
+
+A bare `--bump <file>` bumps the file's top-level `.version`
+(JSON/TOML/YAML). `@<path>` targets any dotted key, including a nested one
+that the JSON `.version` default can't reach. A `{{version}}` text pattern
+covers everything else with no dependency. Same-version and missing files are
+skipped with a notice, and every change is staged and listed in the bump
+commit.

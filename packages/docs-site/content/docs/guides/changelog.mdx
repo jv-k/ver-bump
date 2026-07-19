@@ -1,0 +1,44 @@
+---
+title: Changelog
+description: Flat and grouped CHANGELOG styles.
+---
+
+VerBump generates and updates `CHANGELOG.md` on every release. By default the
+new section is a flat list of commit subjects. Disable it for a run with
+`-c` / `--no-changelog`, or pause before the commit to hand-edit with
+`-l` / `--pause-changelog`.
+
+## Grouped changelog
+
+Set `CHANGELOG_STYLE=grouped`, in `.verbumprc` or as an environment variable
+(there is no CLI flag), to group commits by Conventional Commit type instead,
+with commit, PR and compare links when the remote is on GitHub:
+
+```markdown
+## [1.1.0](https://github.com/acme/widget/compare/v1.0.0...v1.1.0) (2026-07-15)
+
+### Breaking Changes
+
+- drop node 14 ([2296697](https://github.com/acme/widget/commit/2296697))
+
+### Features
+
+- **api:** add endpoint (#12) ([a746a76](https://github.com/acme/widget/commit/a746a76))
+
+### Fixes
+
+- **net:** retry on 503 ([7a1ecc3](https://github.com/acme/widget/commit/7a1ecc3))
+
+### Other
+
+- updated package.json, updated CHANGELOG.md, bumped 1.0.0 -> 1.1.0
+- plain non-conventional message ([e0d3107](https://github.com/acme/widget/commit/e0d3107))
+```
+
+Sections appear in that order and empty ones are omitted. Breaking changes are
+detected from a `<type>!:` subject or a `BREAKING CHANGE:` footer. Everything
+that isn't `feat`/`fix`/breaking (including commits that don't follow
+Conventional Commits at all) lands under **Other**, so nothing is ever
+dropped. Scopes render as a bold `**scope:**` prefix. With a non-GitHub remote
+(or no remote) the same grouping renders as plain text without links. Any
+other `CHANGELOG_STYLE` value falls back to `flat`.

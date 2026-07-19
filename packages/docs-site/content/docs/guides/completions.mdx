@@ -1,0 +1,31 @@
+---
+title: Shell completions
+description: Tab-completion for bash, zsh, and fish.
+---
+
+`verbump --completions <shell>` emits a bash, zsh, or fish completion script,
+or `verbump --install-completions` auto-detects your shell and installs it for
+you.
+
+## Manual install paths
+
+Drop the emitted script wherever your shell looks for completions:
+
+```sh
+# bash (with bash-completion installed, e.g. via Homebrew)
+verbump --completions bash > "$(brew --prefix)/etc/bash_completion.d/verbump"
+
+# zsh — any directory on $fpath works
+verbump --completions zsh  > "${fpath[1]}/_verbump"
+
+# fish
+verbump --completions fish > ~/.config/fish/completions/verbump.fish
+```
+
+Then restart the shell (or `compinit` / `source` the file). You get:
+
+- Tab-completion for every short and long flag
+- `.json` file suggestions after `-f` / `--file`
+- `bash | zsh | fish` suggestions after `--completions`
+- Suppressed completion after options taking free-form arguments (so the shell
+  doesn't guess wrong values for `-v`, `-m`, `-p`, `-t`, `-B`)

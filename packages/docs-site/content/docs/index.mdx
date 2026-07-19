@@ -1,13 +1,65 @@
 ---
-title: Hello World
-description: Your first document
+title: Introduction
+description: What VerBump is, why it exists, and how a release run works.
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+**VerBump is a plain-bash release tool for any Git repo.** It reads your
+[Conventional Commits](https://www.conventionalcommits.org/) to suggest the next
+[SemVer](https://semver.org/), then updates the changelog, bumps your version
+files, tags, and pushes — with `git` and `jq` as the only runtime dependencies.
 
-## What is Next?
+## Why VerBump?
+
+Cutting a release shouldn't require installing a bigger toolchain than the thing
+being released.
+
+Release tooling has drifted into two camps: fully automated CI machinery like
+[semantic-release](https://github.com/semantic-release/semantic-release) —
+powerful, but Node-only, deliberately prompt-free, and a deep dependency tree
+for what is ultimately a git tag — and single-purpose bumpers like
+[bump-my-version](https://github.com/callowayproject/bump-my-version) that
+rewrite a version string and stop. VerBump is the middle of that spectrum, for
+every repo and not just the Node ones: a tool that reads your Conventional
+Commits and *suggests* the right SemVer bump, then writes the changelog, tags,
+pushes, and opens the PR or GitHub release — with every side-effect previewable
+via `--dry-run`, reversible via `--undo`, and nothing to install beyond
+standard CLI tools.
+
+## How it works
+
+A single `verbump` run walks through five phases:
+
+| Phase | What happens |
+| --- | --- |
+| 1. **Verify** | Confirms commits exist, the working tree is clean, the remote is in sync, and the current branch is allowed to release. |
+| 2. **Choose a version** | Suggests the next SemVer from your Conventional Commits, or takes an explicit `-v <version>`, a forced `--major` / `--minor` / `--patch`, or a prerelease `--preid <id>`. |
+| 3. **Bump** | Writes the new version into `package.json` (and any `--bump` targets), then regenerates `CHANGELOG.md`. |
+| 4. **Commit & tag** | Commits the changes on the current branch and creates an annotated (or `--sign`ed) tag. |
+| 5. **Push & publish** | Optionally pushes the commit and tag. With `--pr` / `--release` it opens a pull request or a GitHub release. |
+
+Every side-effecting step honours `--dry-run`, and preconditions fail with a
+[documented exit code](/docs/reference/exit-codes) and an actionable hint.
+
+## Features
+
+| Feature | Description |
+| --- | --- |
+| **Zero real dependencies** | Pure bash. Only `git` and `jq` are needed to run it. |
+| **Multi-format file bumps** | Keeps `package.json`, `pyproject.toml`, a Go const, a Helm chart, or any text file in sync with the tag via `--bump`. |
+| **Smart bump suggestion** | Reads Conventional Commits since the last tag to propose **major** / **minor** / **patch**, and advances prerelease counters (`4.0.0-dev.6` → `4.0.0-dev.7`). |
+| **Automatic CHANGELOG** | Generates and updates `CHANGELOG.md`: a flat list, or Conventional-Commit-**grouped** sections with commit/PR/compare links. |
+| **Three release workflows** | Tag-in-place (default), release branch (`--branch`), or release PR (`--pr`). Pick per-run or set a default. |
+| **Safety preflights** | Refuses to release on a dirty tree, an out-of-sync remote, or a disallowed branch — each individually overridable. |
+| **Dry-run** | `--dry-run` prints every side-effect (file write, `git add`, commit, tag, push) without executing any of them. |
+| **Undo** | `--undo` rolls back a local release (tag + release branch) before anything is pushed. |
+| **GitHub releases & PRs** | `--release` publishes a GitHub release for the new tag; `--pr` opens a pull request. Both use the optional [`gh`](https://cli.github.com) CLI. |
+| **Release hooks** | `PRE_BUMP_CMD` / `POST_TAG_CMD` run your tests before the bump and build artifacts after the tag. |
+| **Signed tags** | Annotated tags by default; `--sign` produces GPG-signed tags using your git config. |
+| **Shell completions** | Built-in completion scripts for **bash**, **zsh**, and **fish**. |
+| **SemVer 2.0 validation** | Every version input is validated against the SemVer 2.0 spec, including `-prerelease` and `+build` metadata. Typos fail fast. |
 
 <Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
+  <Card title="Quickstart" href="/docs/quickstart" description="Install and cut your first release in two minutes." />
+  <Card title="Workflows" href="/docs/guides/workflows" description="Tag in place, release branch, or release PR." />
+  <Card title="CLI reference" href="/docs/reference/cli" description="Every flag, grouped like verbump --help." />
 </Cards>

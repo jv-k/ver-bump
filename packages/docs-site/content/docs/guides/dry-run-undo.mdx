@@ -1,0 +1,37 @@
+---
+title: Dry-run & undo
+description: Preview every side-effect, and roll a local release back.
+---
+
+## Dry-run
+
+Pass `-d` / `--dry-run` to preview a release end-to-end without touching
+anything: no files written, no `git add`, no commit, no tag, no push:
+
+```sh
+$ verbump --dry-run
+...
+[dry-run] would set .version = '1.0.1' in package.json
+[dry-run] git add package.json
+[dry-run] would replace CHANGELOG.md with: ...
+[dry-run] would run: git commit -m 'chore: updated package.json, ...'
+[dry-run] would run: git tag -a v1.0.1 -m 'Tag version 1.0.1.'
+```
+
+Combine with `--no-commit` / `--no-changelog` to narrow the preview down to
+just the steps you want to see.
+
+## Undo
+
+`--undo [<version>]` deletes an unpushed release's tag, plus its
+`release-X.Y.Z` branch when one was cut. It refuses if the release has been
+pushed or the tree is dirty.
+
+**What `--undo` does and doesn't undo.** With tag-in-place (the default),
+`--undo` deletes the tag but the bump commit stays on your branch — for a full
+rollback, follow it with `git reset --hard HEAD~1` (run `git log -1` first to
+confirm HEAD is the bump commit). With `--branch` / `--pr` the undo is
+complete, because the bump commit lives on the release branch it deletes. Once
+anything has been pushed — or a release branch has been merged — `--undo`
+refuses: delete the remote tag/branch and `git revert` the bump commit
+instead.

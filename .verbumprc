@@ -1,0 +1,8 @@
+# VerBump's own .verbumprc — dogfooding the config + hooks features.
+#
+# Gate every release path (release, bump-release, manual runs) on the local
+# lint + test suite. CI re-runs both on the release event, but only the npm
+# publish is CI-gated — the git tag, GitHub release, and brew bump would
+# otherwise ship before CI gets a look. A failing hook exits before any
+# mutation; skip for a single run with --no-hooks.
+PRE_BUMP_CMD="pnpm lint && pnpm tests:run"

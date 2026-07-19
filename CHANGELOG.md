@@ -1,3 +1,32 @@
+## 4.0.3 (2026-07-19)
+- chore: updated package.json, updated CHANGELOG.md, bumped 4.0.2 -> 4.0.3
+- ci: render release visuals on tag push, add social card (#111)
+- docs(docs): list demo final-frame still in screenshots.sh header
+- ci: render release visuals on tag push, add social card
+- docs(docs): note git hosting support, gitlab/bitbucket coming soon
+- docs(docs): slim quickstart install to curl + installation link
+- docs(docs): note deploy-skip behaviour in docs-site README
+- chore(ci): retire README TOC generator
+- chore(docs): update TOC
+- docs(docs): add fumadocs user docs site and slim README (ADR-22) (#109)
+- fix(tests): point help-flag parity at user-docs CLI reference
+- feat(docs): link feature cards, bash-highlighted install block
+- refactor(docs): text nav wordmark, labeled install command
+- feat(docs): brand tokens, card icons, logo cut-outs, copy button
+- feat(docs): add social preview to landing hero and OG metadata
+- chore(docs): deploy only on docs-site or workspace lockfile changes
+- docs(docs): slim README to hero page pointing at user docs site
+- chore(tests): replace bats submodules with plain ignored clones
+- feat(docs): brand site and decompose README into user docs pages
+- chore(docs): convert to pnpm workspace with fumadocs docs-site package
+- docs(docs): record ADR-22 and user/engineering docs vocabulary
+- feat(json): add --dry-run --json structured release preview (#108)
+- feat(json): add --dry-run --json structured release preview
+- ci: scope push trigger to main to stop duplicate PR runs
+- refactor(publish): rename VerBump.sh and command to lowercase verbump
+- feat(errors): render ERROR and HINT as inverted header pills
+- test(hooks): make the push-prompt EOF explicit in the no-hooks test
+
 ## 4.0.2 (2026-07-19)
 - chore: updated package.json, updated CHANGELOG.md, bumped 4.0.1 -> 4.0.2
 - test(hooks): sanitize inherited VERBUMP_* before the leak assertion

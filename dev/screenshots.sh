@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# dev/screenshots.sh — regenerate img/screenshot.png, img/verbump-demo.gif,
-# and img/social-preview.png via vhs. (img/demo.gif is the frozen legacy
+# dev/screenshots.sh — regenerate img/screenshot.png, img/verbump-demo.gif
+# (plus its final-frame still img/verbump-demo-final.png), and
+# img/social-preview.png via vhs. (img/demo.gif is the frozen legacy
 # recording hotlinked by old ver-bump npm READMEs — never regenerated or
 # cleaned here.)
 #

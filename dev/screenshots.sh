@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 #
-# dev/screenshots.sh — regenerate img/screenshot.png and img/verbump-demo.gif
-# via vhs. (img/demo.gif is the frozen legacy recording hotlinked by old
-# ver-bump npm READMEs — never regenerated or cleaned here.)
+# dev/screenshots.sh — regenerate img/screenshot.png, img/verbump-demo.gif,
+# and img/social-preview.png via vhs. (img/demo.gif is the frozen legacy
+# recording hotlinked by old ver-bump npm READMEs — never regenerated or
+# cleaned here.)
+#
+# The social card is also copied to packages/docs-site/public/ — the user
+# docs site serves its own copy, and this keeps the two in lock-step.
 #
 # Usage:
-#   ./dev/screenshots.sh           # both
+#   ./dev/screenshots.sh           # all three
 #   ./dev/screenshots.sh help      # just the --help PNG
 #   ./dev/screenshots.sh demo      # just the sandbox-bump GIF
+#   ./dev/screenshots.sh social    # just the 1280x640 social card
 #
 # Requires: vhs (https://github.com/charmbracelet/vhs).  Install: brew install vhs
 
@@ -32,6 +37,11 @@ clean() {
   for p in "$@"; do rm -rf -- "$p"; done
 }
 
+sync_social() {
+  cp -f img/social-preview.png packages/docs-site/public/social-preview.png
+  echo "screenshots: synced social card -> packages/docs-site/public/"
+}
+
 target="${1:-all}"
 case "$target" in
   help)
@@ -42,14 +52,22 @@ case "$target" in
     clean img/verbump-demo.gif img/verbump-demo-final.png
     vhs dev/demo.tape
   ;;
+  social)
+    clean img/social-preview.png img/tmp/social.gif
+    vhs dev/social.tape
+    sync_social
+  ;;
   all)
-    clean img/screenshot.png img/verbump-demo.gif img/verbump-demo-final.png img/tmp/help.gif
+    clean img/screenshot.png img/verbump-demo.gif img/verbump-demo-final.png \
+          img/social-preview.png img/tmp/help.gif img/tmp/social.gif
     vhs dev/help.tape
     vhs dev/demo.tape
+    vhs dev/social.tape
+    sync_social
   ;;
   *)
     echo "screenshots: unknown target '$target'" >&2
-    echo "  expected: help | demo | all" >&2
+    echo "  expected: help | demo | social | all" >&2
     exit 2
   ;;
 esac

@@ -155,7 +155,7 @@ _verbump() {
 
     opts="--version --message --file --source --bump --push --tag-prefix --branch-prefix \
           --dry-run --no-commit --no-branch --no-changelog --pause-changelog \
-          --yes --quiet --undo --branch --pr --base --major --minor --patch --preid --release \
+          --yes --quiet --json --undo --branch --pr --base --major --minor --patch --preid --release \
           --sign --allow-dirty --allow-empty --no-fetch --no-hooks \
           --help --completions --install-completions --about \
           -v -m -f -p -t -B -d -n -b -c -l -y -q -h"
@@ -196,6 +196,7 @@ _verbump() {
     '(-h --help)'{-h,--help}'[show help]' \
     '(-y --yes)'{-y,--yes}'[skip interactive confirmation prompts]' \
     '(-q --quiet)'{-q,--quiet}'[suppress decoration; print only the new version on stdout]' \
+    '--json[with --dry-run: print the release plan as JSON on stdout]' \
     '--undo[locally delete release branch + tag for <version>]::version:' \
     '--branch[cut a release-x.x.x branch (else tag in place)]' \
     '--pr[branch + push + open a release PR via gh]' \
@@ -239,6 +240,7 @@ for _cmd in verbump verbump.sh VerBump
     complete -c $_cmd -s h -l help           -d 'Show help'
     complete -c $_cmd -s y -l yes            -d 'Skip interactive confirmation prompts'
     complete -c $_cmd -s q -l quiet          -d 'Suppress decoration; print only the new version on stdout'
+    complete -c $_cmd      -l json           -d 'With --dry-run: print the release plan as JSON on stdout'
     complete -c $_cmd      -l undo           -d 'Locally delete release branch + tag for <version>'
     complete -c $_cmd      -l branch         -d 'Cut a release-x.x.x branch (else tag in place)'
     complete -c $_cmd      -l pr             -d 'Branch + push + open a release PR via gh'

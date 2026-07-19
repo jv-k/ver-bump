@@ -348,7 +348,7 @@ set-v-suggest() {
 # actually package.json — a --source composer.json run must not touch a
 # stray lock file.
 do-packagefile-bump() {
-  local NOTICE_MSG BUMP_LOCK=false
+  local NOTICE_MSG BUMP_LOCK=false LOCK_PREV
   NOTICE_MSG="<${S_VAL}${VER_FILE}${RESET}>"
 
   # Skip entirely if the source file is absent. In tag-derived mode
@@ -368,8 +368,18 @@ do-packagefile-bump() {
   [ "$VER_FILE" = "package.json" ] && [ -f package-lock.json ] && BUMP_LOCK=true
 
   if [ "$FLAG_DRYRUN" = true ]; then
+    record-effect action bump-json target "$VER_FILE" from "$V_PREV" to "$V_NEW" role source
     echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in ${VER_FILE}" >&2
-    [ "$BUMP_LOCK" = true ] && echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in package-lock.json" >&2
+    if [ "$BUMP_LOCK" = true ]; then
+      # The lock file can drift from package.json — the plan records the
+      # lock's actual current version (falling back to V_PREV when it can't
+      # be read). Guarded so non-json dry-runs skip the extra jq read.
+      if [ "${FLAG_JSON:-false}" = true ]; then
+        LOCK_PREV=$(jq -r '.version // empty' package-lock.json 2>/dev/null)
+        record-effect action bump-json target package-lock.json from "${LOCK_PREV:-$V_PREV}" to "$V_NEW" role lock
+      fi
+      echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in package-lock.json" >&2
+    fi
   else
     # Bump the source file via jq (no npm dependency), preserving the file's
     # own formatting where possible (R-FMT-1..3, lib/json.sh).
@@ -421,6 +431,7 @@ bump-json-files() {
       elif [ "$FILE_V_PREV" = "$V_NEW" ]; then
         log_warn "<${S_VAL}$FILE${RESET}> already contains version ${S_VAL}$FILE_V_PREV${RESET}."
       elif [ "$FLAG_DRYRUN" = true ]; then
+        record-effect action bump-json target "$FILE" from "$FILE_V_PREV" to "$V_NEW" role extra
         echo -e "${S_LIGHT}[dry-run]${RESET} would set .version = '${S_VAL}$V_NEW${RESET}' in ${S_VAL}$FILE${RESET} (was ${S_VAL}$FILE_V_PREV${RESET})" >&2
         GIT_MSG+="updated $FILE, "
       else
@@ -448,6 +459,7 @@ do-versionfile() {
   if [ -f VERSION ]; then
     GIT_MSG+="updated VERSION, "
     if [ "$FLAG_DRYRUN" = true ]; then
+      record-effect action write target VERSION to "$V_NEW"
       echo -e "${S_LIGHT}[dry-run]${RESET} would write '${S_VAL}$V_NEW${RESET}' to VERSION" >&2
     else
       echo "$V_NEW" > VERSION # Overwrite file

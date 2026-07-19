@@ -9,16 +9,7 @@
 
 load 'test_helper'
 
-# Scratch repo where package.json's version is already tagged at HEAD:
-# zero commits since the previous tag.
-released_repo() {
-  local repo
-  repo="$(scratch_repo)"
-  cd "$repo" || exit 1
-  printf '{ "version": "1.2.3" }\n' > package.json
-  git add package.json && git commit -qm "chore: bumped to 1.2.3"
-  git tag -a v1.2.3 -m "v1.2.3"
-}
+# released_repo (tagged 1.2.3, zero commits since) comes from test_helper.bash.
 
 @test "no-release: zero commits since tag -> exit 0, token, no mutation (R-SAFE-14/15)" {
   released_repo

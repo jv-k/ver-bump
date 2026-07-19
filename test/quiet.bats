@@ -11,28 +11,7 @@
 
 load 'test_helper'
 
-# Scratch repo whose package.json version is already tagged, plus one
-# feat: commit — a releasable state where the conventional-commits
-# suggestion is a minor bump (1.2.3 -> 1.3.0).
-releasable_repo() {
-  local repo
-  repo="$(scratch_repo)"
-  cd "$repo" || exit 1
-  printf '{ "version": "1.2.3" }\n' > package.json
-  git add package.json && git commit -qm "chore: bumped to 1.2.3"
-  git tag -a v1.2.3 -m "v1.2.3"
-  git commit -q --allow-empty -m "feat: something new"
-}
-
-# Same, but with zero commits since the tag — the no-op state (#60).
-released_repo() {
-  local repo
-  repo="$(scratch_repo)"
-  cd "$repo" || exit 1
-  printf '{ "version": "1.2.3" }\n' > package.json
-  git add package.json && git commit -qm "chore: bumped to 1.2.3"
-  git tag -a v1.2.3 -m "v1.2.3"
-}
+# releasable_repo / released_repo fixtures come from test_helper.bash.
 
 # ── R-OUT-1: success prints exactly the bare version on stdout ─────────────
 

@@ -20,6 +20,7 @@ do-branch() {
   echo -e "\nCreating release branch..."
 
   if [ "$FLAG_DRYRUN" = true ]; then
+    record-effect action branch ref "${REL_PREFIX}${V_NEW}"
     echo -e "${S_LIGHT}[dry-run]${RESET} would run: git branch ${S_VAL}${REL_PREFIX}${V_NEW}${RESET} && git checkout ${S_VAL}${REL_PREFIX}${V_NEW}${RESET}" >&2
     log_success "Switched to (dry-run) branch '${S_VAL}${REL_PREFIX}${V_NEW}${RESET}'"
     return
@@ -64,6 +65,9 @@ do-commit() {
   echo -e "\nCommitting..."
 
   if [ "$FLAG_DRYRUN" = true ]; then
+    # No `paths` field: the file effects recorded before this one already
+    # enumerate every path this commit would stage, in order (R-OUT-5).
+    record-effect action commit message "$FINAL_MSG"
     # %q shell-quotes the message so the preview stays copy-pasteable even
     # when a template carries quotes, backslashes, or $(...) text.
     printf '%b[dry-run]%b would run: git commit -m %b%q%b\n' \
@@ -98,6 +102,15 @@ do-tag() {
   [ "${TAG_SIGN:-false}" = true ] && tag_opt="-s"
 
   if [ "$FLAG_DRYRUN" = true ]; then
+    # `signed` is a real boolean (record-effect-raw); a -s tag is annotated
+    # too in git's model, so annotated stays true either way.
+    if [ "${FLAG_JSON:-false}" = true ]; then
+      record-effect-raw "$(jq -nc \
+        --arg ref "${TAG_PREFIX}${V_NEW}" \
+        --arg message "$tag_msg" \
+        --argjson signed "$([ "$tag_opt" = "-s" ] && echo true || echo false)" \
+        '{action:"tag", ref:$ref, annotated:true, signed:$signed, message:$message}')"
+    fi
     # printf, not echo -e: tag_msg is user-supplied (-m/REL_NOTE) and must
     # print verbatim — %s never interprets backslash escapes.
     printf "%b[dry-run]%b would run: git tag %s %b%s%b -m '%s'\n" \
@@ -142,6 +155,7 @@ do-push() {
       fi
 
       if [ "$FLAG_DRYRUN" = true ]; then
+        record-effect action push remote "${PUSH_DEST}" branch "${REMOTE_REF}" tag "${TAG_PREFIX}${V_NEW}"
         echo -e "${S_LIGHT}[dry-run]${RESET} would run: git push -u ${S_VAL}${PUSH_DEST}${RESET} ${S_VAL}${REMOTE_REF}${RESET} ${S_VAL}${TAG_PREFIX}${V_NEW}${RESET}" >&2
         log_success "(dry-run) push prepared"
         return
@@ -312,6 +326,15 @@ do-github-release() {
   fi
 
   if [ "${FLAG_DRYRUN:-false}" = true ]; then
+    # notes: "generated" (gh --generate-notes) vs "command" (a custom
+    # VERBUMP_RELEASE_NOTES_CMD ran). prerelease is a real boolean.
+    if [ "${FLAG_JSON:-false}" = true ]; then
+      record-effect-raw "$(jq -nc \
+        --arg tag "$tag" \
+        --arg notes "$([ -n "$notes_cmd" ] && echo command || echo generated)" \
+        --argjson prerelease "$([ -n "$pre_flag" ] && echo true || echo false)" \
+        '{action:"github-release", tag:$tag, notes:$notes, prerelease:$prerelease}')"
+    fi
     local notes_preview="--generate-notes"
     [ -n "$notes_cmd" ] && notes_preview="--notes '${notes}'"
     echo -e "${S_LIGHT}[dry-run]${RESET} would run: gh release create ${S_VAL}${tag}${RESET} ${pre_flag:+${pre_flag} }${notes_preview}" >&2
@@ -360,6 +383,7 @@ do-pr() {
   echo -e "\nOpening release PR..."
 
   if [ "${FLAG_DRYRUN:-false}" = true ]; then
+    record-effect action open-pr head "$head" base "$PR_BASE" title "$title"
     echo -e "${S_LIGHT}[dry-run]${RESET} would run: gh pr create --head ${S_VAL}${head}${RESET} --base ${S_VAL}${PR_BASE}${RESET} --title '${title}'" >&2
     log_success "(dry-run) release PR prepared: ${S_VAL}${head}${RESET} → ${S_VAL}${PR_BASE}${RESET}"
     return

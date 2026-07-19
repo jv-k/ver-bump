@@ -175,6 +175,7 @@ lib/git-actions.sh   side-effecting git ops (branch, commit, tag, push,
                      GitHub release, undo) + the dryrun helper
 lib/config.sh        .verbumprc discovery, safety checks, precedence
 lib/json.sh          atomic jq_inplace JSON writes
+lib/effects.sh       --dry-run --json effects accumulator + emitter (R-OUT-5)
 lib/errors.sh        fail + the exit-code contract
 lib/completions.sh   completion emit + --install-completions installer
 lib/usage.sh         --help output

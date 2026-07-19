@@ -27,6 +27,10 @@ capture pattern.
 | R-OUT-3 | Composes with `--dry-run`: stdout gets the would-be version; the `[dry-run]` side-effect lines target stderr (R-DRY-2), so the pipe stays clean. | ✅ shipped — `test/quiet.bats` |
 | R-OUT-4 | A quiet no-op (nothing to release, R-SAFE-14) prints **nothing** on stdout — the `no-release` token is rerouted with the rest of the decoration — and exits `0`, so `[ -z "$out" ]` is the CI branch test for "no release happened". | ✅ shipped — `test/quiet.bats` |
 
+The bucket continues in
+[dry-run-json](../dry-run-json/requirements.md): R-OUT-5..7 cover
+`--dry-run --json`, the structured release *plan* on the same FD-3 channel.
+
 Implementation is stream discipline, not a renderer: `process-arguments`
 (`lib/args.sh`) pre-scans argv for `-q`/`--quiet`, saves the real stdout on
 FD 3 and redirects FD 1 to stderr (`exec 3>&1 1>&2`) before any option echo

@@ -84,6 +84,26 @@ strip_ansi_output() {
   while IFS= read -r _line; do lines+=("$_line"); done <<< "$output"
 }
 
+# Scratch repo whose package.json version (1.2.3) is already tagged, plus
+# one releasable feat: commit — the conventional-commits suggestion is a
+# minor bump (1.2.3 -> 1.3.0). Shared by quiet.bats / dry-run-json.bats.
+releasable_repo() {
+  released_repo
+  git commit -q --allow-empty -m "feat: something new"
+}
+
+# Scratch repo where package.json's version (1.2.3) is already tagged at
+# HEAD: zero commits since the previous tag — the no-op state (#60).
+# Shared by no-release.bats / quiet.bats / dry-run-json.bats.
+released_repo() {
+  local repo
+  repo="$(scratch_repo)"
+  cd "$repo" || exit 1
+  printf '{ "version": "1.2.3" }\n' > package.json
+  git add package.json && git commit -qm "chore: bumped to 1.2.3"
+  git tag -a v1.2.3 -m "v1.2.3"
+}
+
 # Make a throwaway git repo under /tmp and echo its path. Adds cleanup.
 # Initial state: one empty commit on the default branch. No tags.
 scratch_repo() {

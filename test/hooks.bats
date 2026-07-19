@@ -247,6 +247,12 @@ RC
 @test "hooks: VERBUMP_* vars are exported to the hook only, not leaked" {
   hooks_repo
 
+  # Sanitize first: when this suite itself runs as a VerBump PRE_BUMP_CMD
+  # hook (dogfooding — see the repo's own .verbumprc), the OUTER VerBump
+  # legitimately exports VERBUMP_* to us. Clear them so the leak assertion
+  # below tests this run, not the inherited hook context.
+  unset VERBUMP_VERSION VERBUMP_PREV_VERSION VERBUMP_TAG
+
   # After a successful hooked run, the parent environment written by the
   # release itself (git config, files) must not contain VERBUMP_VERSION —
   # verify via a second hook that runs in the same VerBump process ordering.

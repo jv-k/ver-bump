@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 const features = [
   {
@@ -47,6 +48,14 @@ export default function HomePage() {
           Documentation
         </Link>
       </div>
+      <Image
+        src="/social-preview.png"
+        alt="VerBump: reads Conventional Commits, suggests the SemVer bump, writes the changelog, tags, and pushes."
+        width={1280}
+        height={640}
+        priority
+        className="w-full max-w-3xl h-auto rounded-xl border mb-12"
+      />
       <pre className="rounded-lg border bg-fd-secondary px-6 py-4 text-left text-sm mb-12 overflow-x-auto max-w-full">
         <code>
           curl -fsSL https://raw.githubusercontent.com/jv-k/VerBump/main/install.sh

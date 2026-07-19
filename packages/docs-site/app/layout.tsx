@@ -15,6 +15,13 @@ export const metadata: Metadata = {
   },
   description:
     'Release tool for any Git repo: reads your Conventional Commits to suggest a SemVer bump, then updates the changelog, tags, and pushes. No Node toolchain — just git + jq.',
+  openGraph: {
+    images: ['/social-preview.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/social-preview.png'],
+  },
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {

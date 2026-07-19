@@ -76,7 +76,8 @@ guide to installing, configuring, and releasing with VerBump:
 
 **Bash 3.2+**, a **Git repository**, and **`git`** + **`jq`** on your `PATH`.
 The [`gh`](https://cli.github.com) CLI is optional, used only by `--pr` and
-`--release`. Linux and macOS are tested in CI; see
+`--release`. GitHub is supported today; GitLab and Bitbucket support is
+coming soon. Linux and macOS are tested in CI; see
 [platform support](https://verbump.jvk.to/docs/requirements).
 
 ## Development

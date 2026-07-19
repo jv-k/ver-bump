@@ -17,3 +17,14 @@ VerBump is pure bash, so it runs wherever bash does:
 | **Linux, macOS** | Tested in CI. The full suite runs on both for every change. |
 | **WSL** | Expected to work. It is Linux underneath, with the same `bash`, `git`, and `jq`. |
 | **Git Bash / MSYS2** | Best effort, untested. Should work, though CRLF line endings are the usual suspect if it does not. |
+
+## Git hosting support
+
+VerBump currently supports **GitHub**. GitLab and Bitbucket support is
+**coming soon**.
+
+In the meantime, since the core workflow — bump, changelog, commit, tag,
+push — talks only to `git`, it mostly works against any remote today: on a
+GitLab or Bitbucket repo, changelog entries render as plain text (no commit or
+compare links), and the GitHub-specific `--pr` and `--release` flags must be
+omitted.

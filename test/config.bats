@@ -181,7 +181,7 @@ _clear_config_env() {
   run load-config
   assert_failure 3
   assert_output --partial "world-writable"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 @test "load-config: refuses group-writable .verbumprc (exit code 3)" {
@@ -201,7 +201,7 @@ _clear_config_env() {
   run load-config
   assert_failure 3
   assert_output --partial "group-writable"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 @test "load-config: refuses .verbumprc not owned by current user (exit code 3)" {
@@ -234,7 +234,7 @@ _clear_config_env() {
   run load-config
   assert_failure 3
   assert_output --partial "not owned by the current user"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 # Round-trip all keys ##########################################################

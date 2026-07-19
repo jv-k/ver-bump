@@ -26,7 +26,7 @@ clean_repo() {
   strip_ansi_output
   assert_output --partial "uncommitted changes to tracked files"
   assert_output --partial "package.json"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 
   # No mutation happened: content untouched, no tag, no extra commit.
   run jq -r '.version' package.json

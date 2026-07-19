@@ -149,11 +149,11 @@ _make_tag_in_place() {
   run ${profile_script} --undo --yes
   assert_failure 3
   # Exits via `fail 3` (contract precondition), not a raw exit after log_warn.
-  assert_output --partial "Error:"
+  assert_output --partial " ERROR "
   assert_output --partial "Refusing to undo"
   assert_output --partial "present on remote"
   assert_output --partial "git push origin :refs/tags/v1.2.0"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
   rm -rf "$remote"
 }
 

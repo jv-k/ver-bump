@@ -210,7 +210,7 @@ tagged_repo_no_source() {
   strip_ansi_output
   assert_output --partial "was not found"
   assert_output --partial "no 'v*' release tag"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
   assert_output --partial "-v <version>"
   assert_output --partial "create package.json"
 }
@@ -221,7 +221,7 @@ tagged_repo_no_source() {
   run ${profile_script} -d -c -p origin -v 0.1.0
   assert_success
   strip_ansi_output
-  refute_output --partial "Hint:"
+  refute_output --partial " HINT "
   assert_output --partial "would run: git tag -a v0.1.0"
 }
 

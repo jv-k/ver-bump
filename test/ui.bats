@@ -91,11 +91,11 @@ ui_repo() {
 @test "UI: fail() emphasises the message in bold, not fixed-white (1;37)" {
   run env CLICOLOR_FORCE=1 "${profile_script}" --release=yes
   assert_failure 2
-  # Assert the STYLING only, not the wording: the "Error:" label is followed
-  # immediately by S_NORM = bold (\e[1m), and the body is never wrapped in
-  # the old fixed bold-white (\e[1;37m). Unrelated copy changes to the
-  # message must not break this guard.
-  assert_output --partial $'Error:\033[1m'
+  # Assert the STYLING only, not the wording: the red inverted ERROR pill
+  # sits on its own line, then the body opens in S_NORM = bold (\e[1m) and
+  # is never wrapped in the old fixed bold-white (\e[1;37m). Unrelated copy
+  # changes to the message must not break this guard.
+  assert_output --partial $'\033[7;1;31m ERROR \033[0m\n\033[1m'
   refute_output --partial $'\033[1;37m'
 }
 

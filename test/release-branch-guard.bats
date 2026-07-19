@@ -54,7 +54,7 @@ guard_repo() {
   strip_ansi_output
   assert_output --partial "Branch 'feature-x' is not a release branch"
   assert_output --partial "main develop"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 @test "branch-guard: detached HEAD with guard active -> 3 (R-SAFE-12)" {

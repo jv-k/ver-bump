@@ -88,5 +88,6 @@ load 'test_helper'
   git tag -a v${V_NEW} -m "Test tag"
 
   run check-tag-exists
-  assert_output --partial "Error: A release with that tag"
+  assert_output --partial " ERROR "
+  assert_output --partial "A release with that tag"
 }

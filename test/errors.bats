@@ -19,9 +19,10 @@ load 'test_helper'
   source ${profile_script}
   run fail 3 "missing jq" "Install jq: brew install jq"
   assert_failure 3
-  assert_output --partial "Error:"
+  assert_output --partial " ERROR "
   assert_output --partial "missing jq"
-  assert_output --partial "Hint: Install jq: brew install jq"
+  assert_output --partial " HINT "
+  assert_output --partial "Install jq: brew install jq"
 }
 
 @test "fail: separates the hint from the error with a blank line" {
@@ -29,9 +30,10 @@ load 'test_helper'
   run fail 3 "missing jq" "Install jq: brew install jq"
   assert_failure 3
   strip_ansi_output
-  # A blank line precedes the dim hint so it reads apart from the error.
-  [[ "$output" == *$'\n\n  Hint:'* ]] \
-    || bats_fail "expected a blank line before the Hint, got: ${output}"
+  # A blank line precedes the HINT pill so it reads apart from the error,
+  # and the hint text follows flush on the next line (no indent).
+  [[ "$output" == *$'\n\n HINT \nInstall jq'* ]] \
+    || bats_fail "expected a blank line before the HINT pill, got: ${output}"
 }
 
 @test "fail: omits hint line when no hint provided" {
@@ -39,7 +41,7 @@ load 'test_helper'
   run fail 1 "generic failure"
   assert_failure 1
   assert_output --partial "generic failure"
-  refute_output --partial "Hint:"
+  refute_output --partial " HINT "
 }
 
 @test "fail: uses generic code 1 path" {
@@ -61,7 +63,7 @@ load 'test_helper'
   run process-arguments -Z
   assert_failure 2
   assert_output --partial "Invalid option:"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 @test "exit code: unknown long flag -> 2" {
@@ -69,7 +71,7 @@ load 'test_helper'
   run process-arguments --bogus
   assert_failure 2
   assert_output --partial "Invalid option: --bogus"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 @test "exit code: -v with invalid SemVer -> 2 (arg-parse)" {
@@ -79,7 +81,7 @@ load 'test_helper'
   run process-arguments -v banana
   assert_failure 2
   assert_output --partial "is not a valid SemVer"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 @test "exit code: long opt missing value -> 2" {
@@ -105,7 +107,7 @@ load 'test_helper'
   run process-version
   assert_failure 3
   assert_output --partial "was not found"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 @test "exit code: empty package.json -> 3" {
@@ -141,7 +143,7 @@ load 'test_helper'
   run check-commits-exist
   assert_failure 3
   assert_output --partial "doesn't have any commits"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 @test "exit code: tag already exists -> 3" {
@@ -164,7 +166,7 @@ load 'test_helper'
   run check-branch-notexist
   assert_failure 3
   assert_output --partial "already exists"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 @test "exit code: missing dependency -> 3" {
@@ -184,7 +186,7 @@ SH
   PATH="${shim}" run check-dependencies
   assert_failure 3
   assert_output --partial "Missing required tool"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 # Exit-code coverage: user abort path reserved -> 5 ###########################
@@ -207,7 +209,7 @@ SH
   run process-version <<< $'\e'
   assert_failure 5
   assert_output --partial "version prompt aborted"
-  assert_output --partial "Hint:"
+  assert_output --partial " HINT "
 }
 
 @test "exit code: do-push declining the prompt -> 5" {

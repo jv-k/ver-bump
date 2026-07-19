@@ -73,9 +73,10 @@ load 'test_helper'
 
   run fail 3 "precondition failed" "a helpful hint"
   assert_failure 3
-  assert_output --partial "Error:"
+  assert_output --partial " ERROR "
   assert_output --partial "precondition failed"
-  assert_output --partial "Hint: a helpful hint"
+  assert_output --partial " HINT "
+  assert_output --partial "a helpful hint"
 
   # bats_fail is unaffected by the run above — still bats-support's helper.
   run bats_fail "second forced failure in the same test"

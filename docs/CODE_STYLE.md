@@ -270,6 +270,12 @@ Refs #<issue>.
   `chore/*` to match the commit type.
 - Keep the PR scoped. If you touch unrelated UI while fixing a bug,
   split the refactor into its own PR.
+- **Git worktrees live inside the repo, under `.worktrees/`** (already
+  gitignored, so worktree contents never show up in the parent's status).
+  Name the sub-directory after the branch, e.g.
+  `git worktree add .worktrees/dry-run-json -b feat/dry-run-json`. Remove it
+  with `git worktree remove .worktrees/<name>` when the branch merges; don't
+  scatter worktrees across `$HOME` or sibling paths.
 
 ## GitHub issues
 

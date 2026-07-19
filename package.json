@@ -39,6 +39,7 @@
     "screenshots": "./dev/screenshots.sh all",
     "screenshots:help": "./dev/screenshots.sh help",
     "screenshots:demo": "./dev/screenshots.sh demo",
+    "screenshots:social": "./dev/screenshots.sh social",
     "prepublishOnly": "bash dev/prepublish-version-guard.sh"
   },
   "keywords": [

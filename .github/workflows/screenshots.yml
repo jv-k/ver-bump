@@ -10,17 +10,26 @@ name: Screenshots
 #   img/screenshot.png          — vhs, `verbump --help` (header logo + flags)
 #   img/verbump-demo.gif        — vhs, sandbox-driven real bump recording
 #   img/verbump-demo-final.png  — the demo's finished DONE frame, as a still
+#   img/social-preview.png      — vhs, the 1280x640 social card; the version
+#                                 pill comes live from `verbump --help`, so a
+#                                 release re-render keeps it current. Also
+#                                 synced to packages/docs-site/public/ so the
+#                                 user docs site redeploys with the fresh card.
 #
 # img/demo.gif is NOT rendered here: it is the frozen legacy recording that
 # old ver-bump npm READMEs (1.1.8) hotlink via raw main URLs — never touch it.
 #
-# Triggers: run by hand (workflow_dispatch). Intentionally NOT on release —
-# the tracked img/* are maintained on develop and reach main via the release
-# merge/reset (ADR-19), so auto-rendering on release was redundant and raced
-# the reset (it also rendered from main, which lags until then). Locally:
-# `pnpm screenshots` (or `:help` / `:demo`) — see dev/screenshots.sh.
+# Triggers: every release tag (v*), plus by hand (workflow_dispatch). The old
+# "not on release" rationale cited the ADR-19 develop→main reset, which
+# ADR-21 retired — main is the canonical branch now, so rendering from main
+# after a tag lands is race-free. The bot commit deliberately has no
+# [skip ci]: Vercel honours that marker too, and the docs-site sync must
+# trigger a site deploy. Locally: `pnpm screenshots` (or `:help` / `:demo` /
+# `:social`) — see dev/screenshots.sh.
 
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
 
 concurrency:
@@ -65,6 +74,11 @@ jobs:
         with:
           path: dev/demo.tape
 
+      - name: Render social-preview card
+        uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
+        with:
+          path: dev/social.tape
+
       - name: Optimize verbump-demo.gif (lossless — no colour/quality reduction)
         run: |
           before=$(wc -c < img/verbump-demo.gif)
@@ -79,6 +93,7 @@ jobs:
             img/screenshot.png
             img/verbump-demo.gif
             img/verbump-demo-final.png
+            img/social-preview.png
           retention-days: 7
           if-no-files-found: error
 
@@ -103,11 +118,16 @@ jobs:
           name: screenshots
           path: img
 
+      - name: Sync social card to the user docs site
+        run: cp -f img/social-preview.png packages/docs-site/public/social-preview.png
+
+      # No [skip ci] here: Vercel honours the marker, and this commit must
+      # deploy the docs site so the synced social card goes live.
       - name: Commit updated screenshots
         uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
         with:
           branch: main
-          file_pattern: img/screenshot.png img/verbump-demo.gif img/verbump-demo-final.png
-          commit_message: "docs(img): regenerate screenshots [skip ci]"
+          file_pattern: img/screenshot.png img/verbump-demo.gif img/verbump-demo-final.png img/social-preview.png packages/docs-site/public/social-preview.png
+          commit_message: "docs(img): regenerate release visuals"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"

@@ -1,0 +1,94 @@
+---
+title: Quickstart
+description: Install VerBump and cut your first release.
+---
+
+## Install
+
+With curl (no Node required):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/jv-k/VerBump/main/install.sh | bash
+```
+
+With pnpm:
+
+```sh
+pnpm add -g @jv-k/verbump
+```
+
+With npm:
+
+```sh
+npm install -g @jv-k/verbump
+```
+
+With Homebrew:
+
+```sh
+brew install jv-k/tap/verbump
+```
+
+See [Installation](/docs/installation) for checksum verification, version
+pinning, prefix options, and manual install.
+
+## Use it in your repo
+
+```sh
+cd your-repo
+verbump --dry-run   # preview a release end-to-end, changes nothing
+verbump             # cut it: reads commits, suggests a bump, prompts before pushing
+```
+
+## Your first release, step by step
+
+Assume a `package.json` at `version: "1.0.0"`, on the branch you want to
+release, with un-released commits already made. By default VerBump **tags in
+place**: it commits the bump and tags your current branch, with no release
+branch. This bumps `package.json` to `1.0.1` and creates the tag `v1.0.1`:
+
+```sh
+verbump
+```
+
+Output:
+
+```text
+VERIFY
+Current version read from <package.json>: 1.0.0
+
+Enter a new version number, <enter> for [1.0.1], or <esc> to quit: ⏎
+
+RELEASE
+✔ Bumped version in <package.json>.
+
+CHANGELOG
+No existing [CHANGELOG.md] found — creating one.
+✔ Created [CHANGELOG.md].
+
+Committing...
+✔ [main ace8b1e] chore: updated package.json, created CHANGELOG.md, bumped 1.0.0 -> 1.0.1
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+ create mode 100644 CHANGELOG.md
+✔ Tagged v1.0.1
+
+INPUT REQUEST
+Push branch + tags to <origin>? [N/y] y
+
+Pushing branch + tag to <origin>...
+✔ To github.com:acme/widget.git
+   9abef73..ace8b1e  main -> main
+ * [new tag]         v1.0.1 -> v1.0.1
+
+DONE
+✔ Bumped 1.0.0 -> 1.0.1
+```
+
+The commit and tag land on your current branch. If you declined the push
+prompt, push later on a re-run with `-p origin`, or manually with
+`git push --follow-tags`.
+
+Prefer a release branch and PR instead? `verbump --pr` cuts a `release-1.0.1`
+branch, pushes it, and opens a pull request via `gh` against your base branch.
+`verbump --branch` cuts the branch and stops there, leaving push and merge to
+you. See [Workflows](/docs/guides/workflows).

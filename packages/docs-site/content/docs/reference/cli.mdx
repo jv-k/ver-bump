@@ -1,0 +1,83 @@
+---
+title: CLI options
+description: Every flag, grouped like verbump --help.
+---
+
+```sh
+verbump [-v <version>] [options]
+```
+
+Every option has a short form and a GNU-style long form. Long forms accept
+`--name value` or `--name=value`. The groups below match `verbump --help`.
+
+## Choosing the new version
+
+| Flag | Description |
+| --- | --- |
+| `-v <version>`, `--version <version>` | Set an explicit SemVer as the new version (skips the suggestion and prompt). |
+| `-v`, `--version` *(no value)* | Print VerBump's own version and exit. |
+| `--major` | Force a major bump from the current version. |
+| `--minor` | Force a minor bump from the current version. |
+| `--patch` | Force a patch bump from the current version. |
+| `--preid <id>` | Start or advance a prerelease line (conflicts with `-v`). With a level: bump it, then enter `<id>.1` (`1.2.3 --major --preid rc` → `2.0.0-rc.1`). Alone on a prerelease: same id increments the counter, a different id resets to `.1`. |
+
+The three bump levels are mutually exclusive with each other and with `-v`.
+Without `--preid` they drop any existing prerelease/build metadata and bump
+the stable core (`1.2.3-dev.5 --patch` → `1.2.4`) — the full rules live in
+[Version suggestion](/docs/guides/version-suggestion).
+
+## Bumping files
+
+| Flag | Description |
+| --- | --- |
+| `--source <file.json>` | Version source and primary bump target (default: `package.json`). If the file is missing, the current version derives from the latest matching git tag. |
+| `--bump <spec>` | Also bump a JSON / TOML / YAML / text file. Repeatable. `<file>` (top-level `.version` by file type), `<file>:@<path>` (explicit dotted path, e.g. `pyproject.toml:@tool.poetry.version`), or `'<file>:<pattern>'` (text search/replace, where the pattern must contain `{{version}}`). |
+| `-f`, `--file <file.json>` | Also bump `"version"` in this JSON file. Repeatable. Superseded by `--bump`. |
+
+## Commit, tag & changelog
+
+| Flag | Description |
+| --- | --- |
+| `-m`, `--message <message>` | Custom annotated-tag release message. |
+| `-t`, `--tag-prefix <prefix>` | Override the tag prefix (default: `v`). |
+| `--sign` | Create a signed tag (`git tag -s`, using your git signing config). |
+| `-c`, `--no-changelog` | Disable updating `CHANGELOG.md`. |
+| `-l`, `--pause-changelog` | Pause before commit so `CHANGELOG.md` can be edited. |
+| `-n`, `--no-commit` | Disable commit (and tag and push) after bumping files. |
+
+## Push, branch & publish
+
+| Flag | Description |
+| --- | --- |
+| `-p`, `--push <remote>` | Push the commit and tag (and release branch, with `--branch` / `--pr`) to `<remote>` at the end of the run. |
+| `--pr` | Branch, push, and open a release PR via `gh` (GitHub-only, and implies push to origin). |
+| `--base <branch>` | Base branch for `--pr` (GitHub-only, default: the branch you ran VerBump from). |
+| `--release` | Publish a GitHub release for the new tag (GitHub-only, requires `-p`, uses `gh`). |
+| `--branch` | Cut a `release-<version>` branch instead of tagging the current branch in place. |
+| `-B`, `--branch-prefix <prefix>` | Override the branch prefix (default: `release-`). |
+| `-b`, `--no-branch` | Deprecated no-op. Tag-in-place is the default now. |
+
+## Skip preflight checks
+
+| Flag | Description |
+| --- | --- |
+| `--allow-dirty` | Skip the clean-working-tree check (untracked files never trigger it). |
+| `--allow-empty` | Release even with no new commits since the previous tag. |
+| `--no-fetch` | Skip the remote-sync preflight (no fetch / behind-upstream check). |
+| `--no-hooks` | Skip the `PRE_BUMP_CMD` / `POST_TAG_CMD` release hooks for this run. |
+
+## Undo, run mode & help
+
+| Flag | Description |
+| --- | --- |
+| `--undo [<version>]` | Delete an unpushed release's tag, plus its `release-X.Y.Z` branch when one was cut; with tag-in-place the bump commit stays on your branch. Refuses if pushed or dirty. |
+| `-d`, `--dry-run` | Print every side-effect without executing. |
+| `-y`, `--yes` | Skip interactive confirmation prompts. |
+| `-q`, `--quiet` | Suppress decoration and print only the new version on stdout (needs `-y`, `-v`, a bump level, or `--preid`). |
+| `--json` | With `--dry-run`: print the release plan as one JSON object on stdout (needs `-y`, `-v`, a bump level, or `--preid`). Preview-only — real runs keep their normal output. |
+| `-h`, `--help` | Show the help message (paged through `less`/`more` when the terminal is short). |
+| `--completions <shell>` | Emit a completion script for bash, zsh, or fish. |
+| `--install-completions[=<shell>]` | Install the completion script (auto-detects the shell). |
+
+See [Dry-run & undo](/docs/guides/dry-run-undo) for the exact semantics of
+`--undo`.

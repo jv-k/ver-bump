@@ -1,0 +1,55 @@
+---
+title: Release hooks
+description: Run your tests before the bump and build artifacts after the tag.
+---
+
+`PRE_BUMP_CMD` runs after the preflights pass and before any file is touched,
+and `POST_TAG_CMD` runs after the tag is created. A non-zero hook exit stops
+the release with code 4. Set either in `.verbumprc` or the environment (there
+is deliberately no CLI flag).
+
+| Key | Runs | On non-zero exit |
+| --- | --- | --- |
+| `PRE_BUMP_CMD` | after **all** Verify preflights pass, before any file is touched | exit `4`, nothing mutated |
+| `POST_TAG_CMD` | after the tag is created, before push / `--pr` / `--release` | exit `4`. The commit and tag are kept, recover with `--undo`. |
+
+```sh
+# .verbumprc
+PRE_BUMP_CMD="npm test"
+POST_TAG_CMD="npm run build:artifacts"
+```
+
+Hook stdout/stderr stream straight through to your terminal, and the resolved
+command is logged before it runs. Each hook sees the release context in its
+environment:
+
+| Variable | Value |
+| --- | --- |
+| `VERBUMP_VERSION` | the new version (e.g. `1.3.0`) |
+| `VERBUMP_PREV_VERSION` | the previous version (e.g. `1.2.3`) |
+| `VERBUMP_TAG` | the full tag name (e.g. `v1.3.0`) |
+
+## Quoting
+
+`.verbumprc` is shell-sourced, so **single-quote** hook strings that reference
+these variables. A double-quoted `"echo $VERBUMP_TAG"` expands at config-load
+time (while the variables are still empty), whereas `'echo $VERBUMP_TAG'`
+defers expansion until the hook runs:
+
+```sh
+POST_TAG_CMD='echo "released $VERBUMP_TAG" >> releases.log'
+```
+
+## Dry-run and skipping
+
+Under `--dry-run` the hook command is printed with the `[dry-run]` prefix and
+not executed. Pass `--no-hooks` to skip both hooks for a single run (git's
+`--no-verify` convention). To disable just one hook for a run, empty the key
+instead, since env beats the file: `PRE_BUMP_CMD= verbump …`
+
+<Callout>
+  **Migrating from 1.x:** VerBump 2.0 no longer shells out to `npm version`,
+  so npm's `preversion` / `version` / `postversion` lifecycle scripts stopped
+  firing as a side-effect. If you relied on `preversion` to run your tests,
+  one `.verbumprc` line restores it: `PRE_BUMP_CMD="npm test"`.
+</Callout>

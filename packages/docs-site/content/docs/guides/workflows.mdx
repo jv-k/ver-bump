@@ -1,0 +1,17 @@
+---
+title: Workflows
+description: Tag in place, cut a release branch, or open a GitHub PR.
+---
+
+VerBump supports three release workflows. Pick one per-run with a flag, or set
+a default in [`.verbumprc`](/docs/reference/configuration):
+
+| Workflow | Command | What it does |
+| --- | --- | --- |
+| **Tag-in-place** *(default)* | `verbump` | Bumps files, writes CHANGELOG, commits, and tags **the current branch**. No branch is created. |
+| **Release branch** | `verbump --branch` | Cuts a `release-<version>` branch (the [Git branch-based workflow](https://nvie.com/posts/a-successful-git-branching-model/)), commits and tags there, and leaves the merge back to you. |
+| **Release PR** | `verbump --pr` | Like `--branch`, then pushes and opens a pull request via the [`gh`](https://cli.github.com) CLI. Implies a push to `origin` (override with `-p <remote>`). |
+
+The `--pr` base branch resolves in this order: `--base <branch>`, then
+`PR_BASE` from `.verbumprc`, then the branch you ran VerBump from, then the
+remote's default branch.

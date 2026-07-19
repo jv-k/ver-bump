@@ -1,0 +1,38 @@
+---
+title: Commit message template
+description: Control the bump commit's message with COMMIT_MSG_TEMPLATE.
+---
+
+By default the bump commit's message is `COMMIT_MSG_PREFIX` plus a generated
+list of what changed:
+
+```text
+chore: updated package.json, updated CHANGELOG.md, bumped 1.1.7 -> 1.1.8
+```
+
+Set `COMMIT_MSG_TEMPLATE`, in `.verbumprc` or as an environment variable
+(there is no CLI flag), to replace the **whole** message with your own
+template. When it is set, `COMMIT_MSG_PREFIX` is **ignored**: the template
+owns the entire message, prefix included.
+
+```sh
+# .verbumprc — single quotes are required so your shell / the rc loader
+# doesn't expand the placeholders before VerBump sees them
+COMMIT_MSG_TEMPLATE='chore(release): v${version}'
+```
+
+## Placeholders
+
+| Placeholder | Replaced with | Example |
+| --- | --- | --- |
+| `${version}` | the new version | `1.1.8` |
+| `${prev_version}` | the previous version | `1.1.7` |
+| `${tag}` | the new tag (`TAG_PREFIX` + version) | `v1.1.8` |
+| `${files}` | the generated changed-file list | `updated package.json, updated CHANGELOG.md` |
+
+Substitution is a literal string replacement. The template is **never**
+evaluated as shell, so `$(...)`, backticks, and unknown `${...}` placeholders
+pass through as literal text. The CHANGELOG's entry for the bump commit uses
+the same rendered message (first line, in both `flat` and `grouped` styles),
+so the two never drift apart. The template applies to the bump commit only.
+The annotated tag's message keeps its own knob, `-m` / `--message`.

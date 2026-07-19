@@ -26,3 +26,15 @@ dependencies are preflighted only when it is invoked (e.g. `--release` needs
 `gh`; TOML/YAML bump targets need `tomlq`/`yq`). The counterpart to the default
 path.
 _Avoid_: plugin, extension, add-on
+
+**User docs**:
+The published documentation site for people who run `VerBump` — how to
+install, configure, and release with it. Canonical for usage; the README is a
+hero page that pitches and points here, never a second copy.
+_Avoid_: the docs (unqualified), website, public docs
+
+**Engineering docs**:
+The `docs/` tree — PRD, ADRs, code style, feature requirements, agent
+workflows. Canonical for how `VerBump` is built and decided; its audience is
+contributors and agents, and it is not published on the user docs site.
+_Avoid_: the docs (unqualified), internal docs, repo docs

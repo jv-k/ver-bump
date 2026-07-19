@@ -1,0 +1,59 @@
+---
+title: Version suggestion
+description: How VerBump picks the next version from your commits.
+---
+
+When `-v` / `--version` is omitted, VerBump suggests the next version: it
+advances a prerelease counter, or reads Conventional Commits since the last
+tag to pick **major** / **minor** / **patch**.
+
+## Prereleases
+
+If the current version has a `-<id>` segment, the trailing numeric counter is
+bumped (or `.1` is appended if there isn't one). Build metadata after `+` is
+preserved:
+
+| Current | Suggested |
+| --- | --- |
+| `4.0.0-dev.6` | `4.0.0-dev.7` |
+| `4.0.0-rc.9` | `4.0.0-rc.10` |
+| `1.0.0-alpha` | `1.0.0-alpha.1` |
+| `2.1.0-beta.3+sha.abc` | `2.1.0-beta.4+sha.abc` |
+
+## Stable versions
+
+VerBump inspects Conventional Commits since the previous tag:
+
+- `feat!:` / `<type>!:` / `BREAKING CHANGE:` in body → **major**
+- `feat:` → **minor**
+- anything else (or no previous tag) → **patch**
+
+You can always override the suggestion at the interactive prompt, or pass
+`-v <version>` to skip the prompt entirely. Values passed to `-v` are
+validated against SemVer 2.0, so typos like `verbump -v banana` fail fast.
+
+## Forced bumps
+
+For a non-interactive forced bump that doesn't require typing the full
+version, use `--major` / `--minor` / `--patch`. They bump the current
+version's matching component, drop any prerelease/build metadata
+(`1.2.3-dev.5 --patch` → `1.2.4`), and are mutually exclusive with each other
+and with `-v`. Combining more than one exits with code `2`.
+
+## Entering and advancing a prerelease line
+
+To **enter** or **advance** a prerelease line, add `--preid <id>`:
+
+| Command | Current | Result |
+| --- | --- | --- |
+| `--major --preid rc` | `1.2.3` | `2.0.0-rc.1` |
+| `--patch --preid beta` | `1.2.3` | `1.2.4-beta.1` |
+| `--preid dev` (alone) | `4.0.0-dev.6` | `4.0.0-dev.7` (same id → counter++) |
+| `--preid rc` (alone) | `2.0.0-alpha.3` | `2.0.0-rc.1` (different id → reset) |
+| `--preid rc` (alone) | `1.2.3` (stable) | exit `2`, ambiguous (combine with `--major`/`--minor`/`--patch`) |
+
+`--preid` is mutually exclusive with `-v`, and `<id>` is validated against the
+SemVer prerelease grammar before anything is mutated. To graduate a prerelease
+back to a stable release, `--major`/`--minor`/`--patch` without `--preid`
+bumps from the stable core as usual, or pass an explicit `-v <version>` or
+accept the interactive prompt.

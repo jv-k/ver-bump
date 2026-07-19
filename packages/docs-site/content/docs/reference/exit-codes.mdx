@@ -1,0 +1,16 @@
+---
+title: Exit codes
+description: The stable 0–5 exit-code contract.
+---
+
+Every run ends with a stable, documented exit code, so scripts and CI can
+branch on `$?`.
+
+| Code | Meaning |
+| ---: | --- |
+| `0` | Success. |
+| `1` | Generic runtime error (failed commit, jq write error, etc.). |
+| `2` | Usage / argument-parse error (unknown flag, missing value). |
+| `3` | Precondition failure (missing `git`/`jq`, dirty tree, disallowed branch, SemVer validation, insecure `.verbumprc`, branch/tag already exists). |
+| `4` | Hook failure: `PRE_BUMP_CMD` or `POST_TAG_CMD` exited non-zero (see [Release hooks](/docs/guides/hooks)). |
+| `5` | User abort (declined a prompt, e.g. push confirmation). |

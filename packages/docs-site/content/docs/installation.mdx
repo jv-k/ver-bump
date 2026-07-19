@@ -1,0 +1,60 @@
+---
+title: Installation
+description: Install script, npm/pnpm, Homebrew, and manual install.
+---
+
+## Install script
+
+Downloads the latest GitHub release, verifies its published sha256 checksum,
+and installs to `~/.local` (`share/verbump/` for the files, `bin/verbump` as
+the command). Re-running upgrades in place, and a failed install restores the
+previous one:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/jv-k/VerBump/main/install.sh | bash
+```
+
+To pin a version or change the prefix, insert
+`VERBUMP_INSTALL_VERSION=<x.y.z>` and/or `VERBUMP_PREFIX=<dir>` before the
+final `bash` — or download the script and run
+`bash install.sh --version <x.y.z> --prefix <dir>`.
+
+## npm / pnpm
+
+```sh
+pnpm add -g @jv-k/verbump
+```
+
+```sh
+npm install -g @jv-k/verbump
+```
+
+<Callout>
+  The npm package is **`@jv-k/verbump`** (npm reserves the bare name `verbump`
+  as too similar to the retired `ver-bump`); it installs the **`verbump`**
+  command. So: `npm i -g @jv-k/verbump`, then run `verbump`.
+</Callout>
+
+## Homebrew
+
+```sh
+brew install jv-k/tap/verbump
+```
+
+Installs from the [`jv-k/tap` tap](https://github.com/jv-k/homebrew-tap) with
+the `bash` and `jq` dependencies included. The command it installs is
+`verbump`, and the tap's formula tracks the latest stable release
+automatically.
+
+## Manual install
+
+Clone and symlink the script:
+
+```sh
+git clone https://github.com/jv-k/VerBump.git ~/.local/share/verbump
+ln -s ~/.local/share/verbump/verbump.sh ~/.local/bin/verbump   # ensure ~/.local/bin is on $PATH
+```
+
+## Basher
+
+[Coming soon](https://github.com/jv-k/VerBump/issues/39).

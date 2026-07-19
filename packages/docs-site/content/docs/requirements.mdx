@@ -1,0 +1,19 @@
+---
+title: Requirements
+description: What VerBump needs to run, and where it runs.
+---
+
+**Bash 3.2+**, a **Git repository**, and **`git`** + **`jq`** on your `PATH`.
+
+The [`gh`](https://cli.github.com) CLI is an optional dependency, used only by
+`--pr` and `--release`.
+
+## Platform support
+
+VerBump is pure bash, so it runs wherever bash does:
+
+| Platform | Status |
+| --- | --- |
+| **Linux, macOS** | Tested in CI. The full suite runs on both for every change. |
+| **WSL** | Expected to work. It is Linux underneath, with the same `bash`, `git`, and `jq`. |
+| **Git Bash / MSYS2** | Best effort, untested. Should work, though CRLF line endings are the usual suspect if it does not. |

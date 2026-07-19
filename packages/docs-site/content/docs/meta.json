@@ -1,0 +1,13 @@
+{
+  "pages": [
+    "---Getting Started---",
+    "index",
+    "quickstart",
+    "installation",
+    "requirements",
+    "---Guides---",
+    "...guides",
+    "---Reference---",
+    "...reference"
+  ]
+}

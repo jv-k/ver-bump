@@ -483,3 +483,35 @@ is the go-forward model.
 `develop` only ever fast-forwards to `main`; it never leads. ADR-17's
 force-push-window / branch-protection intent now applies to `main`. Future
 release ADRs and runbooks reference `main`, not `develop`.
+
+---
+
+## ADR-22 — Two-layer docs: in-repo Fumadocs workspace package is canonical user docs
+
+**Status:** Accepted · 2026-07-19 · Refs #106
+
+**Context:** Documentation lived in a 690-line README plus `docs/*.md`. The
+README mixed pitch, tutorial, and reference; the `docs/` tree (PRD, ADRs,
+CODE_STYLE, feature requirements) is written for contributors and agents, not
+users. A docs website was wanted with a Mintlify-grade reading experience.
+Alternatives considered: Mintlify SaaS (hosted, real thing, but a paid
+platform dependency), a separate docs repo (keeps this repo pure bash, but
+docs drift from the code they describe), GitHub Pages hosting (no per-PR
+preview deploys).
+
+**Decision:** Two documentation layers with distinct audiences (terms fixed in
+`docs/CONTEXT.md`): **user docs** — a Fumadocs (Next.js) site in a pnpm
+workspace package `packages/docs-site`, deployed on Vercel at
+`verbump.jvk.to`, canonical for how to *use* VerBump; and **engineering
+docs** — the existing `docs/` tree, unchanged and unpublished, canonical for
+how VerBump is *built*. The repo becomes a pnpm workspace, but the root
+package `@jv-k/verbump` is untouched and `docs-site` is `private: true`. The
+README is slimmed to a hero page that points at the site. User docs track
+latest only — no per-release snapshots.
+
+**Consequences:** A Node app lives in a plain-bash tool's repo — dev-only,
+consistent with ADR-14/ADR-15; the runtime contract (`bash` + `git` + `jq`)
+is unchanged and CI must never make the site build a prerequisite for
+`verbump.sh`. Feature PRs can update their user-docs page in the same diff.
+Deep README edits move to `packages/docs-site/content`; the README stops
+being the manual. Hosting depends on Vercel; the domain is a `jvk.to` CNAME.

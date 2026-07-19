@@ -44,7 +44,7 @@ normalize-long-opts() {
         fi
         # Branded pill when colour is on; a plain, parseable "VerBump X.Y.Z"
         # (program name + version, no stray pill padding) when it isn't —
-        # so `VerBump --version` piped into a script yields a clean token.
+        # so `verbump --version` piped into a script yields a clean token.
         if [ "${USE_COLOR:-0}" = 1 ]; then
           printf '%b VerBump v%s %b\n' "${S_HDR_SUB-}" "${_ver}" "${S_HDR_END-}"
         else
@@ -279,7 +279,7 @@ normalize-long-opts() {
     # POST_TAG_CMD) for this run (R-HOOK-5) — git's --no-verify convention.
     # CLI-only like --allow-empty (reset in process-arguments): an rc or env
     # assignment must never silently disable hooks the team relies on. The
-    # one-shot env bypass is emptying the key itself (PRE_BUMP_CMD= VerBump …).
+    # one-shot env bypass is emptying the key itself (PRE_BUMP_CMD= verbump …).
     if [ "$arg" = "--no-hooks" ]; then
       FLAG_NOHOOKS=true
       continue
@@ -404,7 +404,7 @@ normalize-long-opts() {
       *)
         fail 2 \
           "Invalid option: --${name}" \
-          "Run 'VerBump --help' to see the list of supported options."
+          "Run 'verbump --help' to see the list of supported options."
       ;;
     esac
 
@@ -563,7 +563,7 @@ process-arguments() {
       \? )
         fail 2 \
           "Invalid option: -$OPTARG" \
-          "Run 'VerBump --help' to see the list of supported options."
+          "Run 'verbump --help' to see the list of supported options."
       ;;
       : )
         fail 2 \

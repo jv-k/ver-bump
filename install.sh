@@ -5,8 +5,8 @@
 # Downloads a GitHub release tarball, verifies its published sha256, and
 # installs under ${VERBUMP_PREFIX:-$HOME/.local}:
 #
-#   <prefix>/share/verbump/   the release tree (VerBump.sh + lib/ + …)
-#   <prefix>/bin/VerBump      symlink to share/verbump/VerBump.sh
+#   <prefix>/share/verbump/   the release tree (verbump.sh + lib/ + …)
+#   <prefix>/bin/verbump      symlink to the release tree entry script
 #
 # Designed to be piped —
 #
@@ -31,6 +31,8 @@ SHARE_DIR=""
 BIN_DIR=""
 BIN_LINK=""
 WORK_DIR=""          # mktemp scratch dir, removed by the EXIT trap
+TREE_ENTRY=""        # entry script inside the unpacked tree — verbump.sh,
+                     # or VerBump.sh for releases up to 4.0.2 (pre-rename)
 STAGED_DIR=""        # in-flight ${SHARE_DIR}.staged.$$, removed by the trap
 BACKUP_DIR=""        # previous install moved aside during the swap; removed
                      # on success, restored (never deleted) on failure
@@ -53,8 +55,8 @@ Environment:
   VERBUMP_PREFIX            Same as --prefix.
 
 Layout:
-  <prefix>/share/verbump/   the release tree (VerBump.sh + lib/)
-  <prefix>/bin/VerBump      symlink to share/verbump/VerBump.sh
+  <prefix>/share/verbump/   the release tree (verbump.sh + lib/)
+  <prefix>/bin/verbump      symlink to the release tree entry script
 
 Re-running upgrades an existing install in place.
 EOF
@@ -144,7 +146,7 @@ parse-args() {
 install-paths() {
   SHARE_DIR="${INSTALL_PREFIX}/share/verbump"
   BIN_DIR="${INSTALL_PREFIX}/bin"
-  BIN_LINK="${BIN_DIR}/VerBump"
+  BIN_LINK="${BIN_DIR}/verbump"
 }
 
 # asset-url <file> — release-asset URL for <file>: GitHub's stable
@@ -203,9 +205,18 @@ verify_checksum() {
 
 # unpack-tarball <tarball> <dest-dir> — extract, then sanity-check the
 # layout so a wrong or truncated asset can never be swapped into place.
+# Sets TREE_ENTRY to the tree's entry script: verbump.sh, or VerBump.sh in
+# releases up to 4.0.2 (pre-rename), so pinned old versions stay installable.
 unpack-tarball() {
   tar -xzf "$1" -C "$2" || return 1
-  [ -f "$2/VerBump.sh" ] && [ -d "$2/lib" ]
+  if [ -f "$2/verbump.sh" ]; then
+    TREE_ENTRY="verbump.sh"
+  elif [ -f "$2/VerBump.sh" ]; then
+    TREE_ENTRY="VerBump.sh"
+  else
+    return 1
+  fi
+  [ -d "$2/lib" ]
 }
 
 # read-tree-version <dir> — the "version" field of the unpacked
@@ -238,7 +249,7 @@ install-tree() {
   STAGED_DIR="${SHARE_DIR}.staged.$$"
   rm -rf "$STAGED_DIR" || return 1
   mv "$src" "$STAGED_DIR" || return 1
-  chmod +x "$STAGED_DIR/VerBump.sh" || return 1
+  chmod +x "$STAGED_DIR/$TREE_ENTRY" || return 1
 
   # 1. Move any previous install aside, kept for rollback.
   BACKUP_DIR=""
@@ -250,11 +261,23 @@ install-tree() {
 
   # 2.+3. Swap the new tree in and point the symlink at it.
   if ! mv "$STAGED_DIR" "$SHARE_DIR" || \
-     ! ln -sfn "$SHARE_DIR/VerBump.sh" "$BIN_LINK"; then
+     ! ln -sfn "$SHARE_DIR/$TREE_ENTRY" "$BIN_LINK"; then
     _restore-backup
     return 1
   fi
   STAGED_DIR=""
+
+  # Legacy compat: pre-rename installs exposed the command as bin/VerBump.
+  # On a case-insensitive filesystem that IS bin/verbump (the readlink +
+  # re-link below is a same-target no-op); on a case-sensitive one it is a
+  # distinct link that would dangle once the tree ships verbump.sh, so
+  # repoint it at the new entry when it points into our share dir.
+  local legacy="${BIN_DIR}/VerBump"
+  if [ -L "$legacy" ]; then
+    case "$(readlink "$legacy")" in
+      "$SHARE_DIR"/*) ln -sfn "$SHARE_DIR/$TREE_ENTRY" "$legacy" ;;
+    esac
+  fi
 
   # 4. Only now is the previous install gone.
   if [ -n "$BACKUP_DIR" ]; then
@@ -329,7 +352,7 @@ main() {
 
   mkdir -p "$WORK_DIR/tree" || bail 1 "could not prepare the unpack directory"
   unpack-tarball "$WORK_DIR/$ASSET_NAME" "$WORK_DIR/tree" || \
-    bail 1 "unexpected tarball layout (no VerBump.sh + lib/) — nothing was installed"
+    bail 1 "unexpected tarball layout (no verbump.sh + lib/) — nothing was installed"
 
   local installed_version
   installed_version=$(read-tree-version "$WORK_DIR/tree")
@@ -338,14 +361,14 @@ main() {
            "check permissions, or point VERBUMP_PREFIX at a writable prefix"
 
   printf 'Installed VerBump %s\n' "$installed_version"
-  printf '  %s -> %s\n' "$BIN_LINK" "$SHARE_DIR/VerBump.sh"
+  printf '  %s -> %s\n' "$BIN_LINK" "$SHARE_DIR/$TREE_ENTRY"
   _path-hint
-  printf "Tip: run 'VerBump --install-completions' to set up shell completions.\n"
+  printf "Tip: run 'verbump --install-completions' to set up shell completions.\n"
 }
 
 # Run main when executed or piped into bash; skip it when sourced (tests
 # source this file to drive the functions above directly). Unlike the
-# "$0" = "$BASH_SOURCE" guard in VerBump.sh, this idiom also fires for
+# "$0" = "$BASH_SOURCE" guard in verbump.sh, this idiom also fires for
 # `curl … | bash`, where BASH_SOURCE is empty.
 if ! (return 0 2>/dev/null); then
   main "$@"

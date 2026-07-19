@@ -3,7 +3,7 @@
 #
 # dev/sandbox.sh --setup-only scaffolds a temp repo (with a bare 'origin' via
 # --remote) and prints its path; we cd in and drive the REAL VerBump through a
-# thin `VerBump` function so the recording shows a clean `VerBump …` command
+# thin `verbump` function so the recording shows a clean `verbump …` command
 # rather than the dev scaffolding. No -p and no -y, so VerBump asks before
 # pushing — we answer 'y' to push to the throwaway origin and finish on DONE.
 # Both temp dirs are removed off-camera at the end. The finished DONE frame is
@@ -30,20 +30,20 @@ Set WindowBarSize 40
 Set TypingSpeed 45ms
 Set PlaybackSpeed 1.0
 
-# Scaffold the sandbox off-camera and expose a clean `VerBump` command that
+# Scaffold the sandbox off-camera and expose a clean `verbump` command that
 # runs the real script from inside the throwaway repo.
 Hide
 Type "clear" Enter
 Sleep 300ms
-Type `VB="$PWD/VerBump.sh"` Enter
-Type `VerBump() { "$VB" "$@"; }` Enter
+Type `VB="$PWD/verbump.sh"` Enter
+Type `verbump() { "$VB" "$@"; }` Enter
 Type `set -- $(./dev/sandbox.sh --setup-only --remote); SBX="$1"; RMT="$2"` Enter
 Type `cd "$SBX"` Enter
 Type "clear" Enter
 Show
 
 # The demo: bump to 2.0.0, answer the push prompt, land on DONE.
-Type "VerBump -v 2.0.0"
+Type "verbump -v 2.0.0"
 Sleep 600ms
 Enter
 Sleep 4s

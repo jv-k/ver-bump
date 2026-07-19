@@ -4,19 +4,19 @@
 true
 
 # Emit a shell completion script to stdout. Supported: bash, zsh, fish.
-# Usage: VerBump --completions <shell>
+# Usage: verbump --completions <shell>
 emit-completions() {
   case "$1" in
     bash) _emit-bash-completion ;;
     zsh)  _emit-zsh-completion  ;;
     fish) _emit-fish-completion ;;
     ''|-h|--help)
-      echo "Usage: VerBump --completions <bash|zsh|fish>"
+      echo "Usage: verbump --completions <bash|zsh|fish>"
       echo
       echo "Install:"
-      echo "  bash: VerBump --completions bash > /usr/local/etc/bash_completion.d/VerBump"
-      echo "  zsh:  VerBump --completions zsh  > \"\${fpath[1]}/_VerBump\"  # then autoload"
-      echo "  fish: VerBump --completions fish > ~/.config/fish/completions/VerBump.fish"
+      echo "  bash: verbump --completions bash > /usr/local/etc/bash_completion.d/verbump"
+      echo "  zsh:  verbump --completions zsh  > \"\${fpath[1]}/_verbump\"  # then autoload"
+      echo "  fish: verbump --completions fish > ~/.config/fish/completions/verbump.fish"
       return 0
     ;;
     *)
@@ -54,7 +54,7 @@ install-completions() {
   case "$shell" in
     bash)
       dir="${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions"
-      dest="${dir}/VerBump"
+      dest="${dir}/verbump"
       content=$(_emit-bash-completion)
       ;;
     zsh)
@@ -62,12 +62,12 @@ install-completions() {
       # ($XDG_DATA_HOME/bash-completion/completions/) and with common
       # project-local conventions elsewhere.
       dir="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions"
-      dest="${dir}/_VerBump"
+      dest="${dir}/_verbump"
       content=$(_emit-zsh-completion)
       ;;
     fish)
       dir="${__fish_config_dir:-${XDG_CONFIG_HOME:-$HOME/.config}/fish}/completions"
-      dest="${dir}/VerBump.fish"
+      dest="${dir}/verbump.fish"
       content=$(_emit-fish-completion)
       ;;
     *)
@@ -161,21 +161,22 @@ _verbump() {
           -v -m -f -p -t -B -d -n -b -c -l -y -q -h"
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 }
-# lowercase verbump too: case-insensitive filesystems (macOS default) run
-# VerBump when you type verbump, but completion matches the literal word.
-complete -F _verbump VerBump
+# VerBump kept alongside verbump: pre-rename installs (npm bin, old brew
+# Cellar) exposed the capitalised command, and completion matches the
+# literal word typed.
 complete -F _verbump verbump
-complete -F _verbump VerBump.sh
+complete -F _verbump verbump.sh
+complete -F _verbump VerBump
 BASH_EOF
 }
 
 _emit-zsh-completion() {
   cat <<'ZSH_EOF'
-#compdef VerBump verbump VerBump.sh
-# VerBump zsh completion — put this file as _VerBump in a dir on $fpath,
-# then `autoload -U compinit && compinit`. (lowercase verbump is registered
-# too: case-insensitive filesystems run VerBump when you type verbump, but
-# completion matches the literal word.)
+#compdef verbump verbump.sh VerBump
+# VerBump zsh completion — put this file as _verbump in a dir on $fpath,
+# then `autoload -U compinit && compinit`. (capitalised VerBump is
+# registered too: pre-rename installs exposed that command name, and
+# completion matches the literal word typed.)
 
 _verbump() {
   _arguments -s -S \
@@ -220,8 +221,8 @@ ZSH_EOF
 
 _emit-fish-completion() {
   cat <<'FISH_EOF'
-# VerBump fish completion — save to ~/.config/fish/completions/VerBump.fish
-for _cmd in VerBump verbump VerBump.sh
+# VerBump fish completion — save to ~/.config/fish/completions/verbump.fish
+for _cmd in verbump verbump.sh VerBump
     complete -c $_cmd -s v -l version        -d 'Print tool version (no arg) or set manual SemVer'
     complete -c $_cmd -s m -l message        -r -d 'Custom annotated-tag message'
     complete -c $_cmd -s f -l file           -r -a '(__fish_complete_suffix .json)' -d 'Bump version in extra JSON file'

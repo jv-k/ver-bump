@@ -325,14 +325,14 @@ load 'test_helper'
 @test "completions: --completions zsh emits a #compdef script" {
   run ${profile_script} --completions zsh
   assert_success
-  assert_output --partial "#compdef VerBump verbump VerBump.sh"
+  assert_output --partial "#compdef verbump verbump.sh VerBump"
   assert_output --partial "_arguments"
 }
 
 @test "completions: --completions fish emits complete commands" {
   run ${profile_script} --completions fish
   assert_success
-  assert_output --partial "for _cmd in VerBump verbump VerBump.sh"
+  assert_output --partial "for _cmd in verbump verbump.sh VerBump"
   assert_output --partial "complete -c"
   assert_output --partial "-l tag-prefix"
 }
@@ -340,7 +340,7 @@ load 'test_helper'
 @test "completions: --completions=<shell> form works" {
   run ${profile_script} --completions=zsh
   assert_success
-  assert_output --partial "#compdef VerBump"
+  assert_output --partial "#compdef verbump"
 }
 
 @test "completions: unknown shell exits non-zero" {
@@ -352,7 +352,7 @@ load 'test_helper'
 @test "completions: no shell argument prints usage hint" {
   run ${profile_script} --completions
   assert_success
-  assert_output --partial "Usage: VerBump --completions"
+  assert_output --partial "Usage: verbump --completions"
 }
 
 @test "process-arguments: -m: fail when not supplying release note" {

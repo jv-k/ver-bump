@@ -65,10 +65,11 @@ usage() {
     done
   fi
 
-  # Display brand shown in the banner, USAGE synopsis, and EXAMPLES. Fixed to
-  # "VerBump"; the npm package name (.name) stays lowercase "verbump" because
-  # npm forbids uppercase, so the two are intentionally decoupled here.
+  # Display brand shown in the banner is "VerBump"; the command the user
+  # actually types (USAGE synopsis, EXAMPLES) is lowercase "verbump" —
+  # matching the installed bin name across brew, npm, and install.sh.
   SCRIPT_NAME="VerBump"
+  local SCRIPT_CMD="verbump"
 
   # Fluid layout: on a real terminal, wrap output to the actual width so long
   # lines don't overflow. TERM_COLS=0 disables wrapping — piped / redirected
@@ -119,7 +120,7 @@ usage() {
   # The version is an OPTION value (-v <version>), not a positional, so it is
   # shown as such; the rest of the flag list lives in OPTIONS below.
   printf '\n%b USAGE %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
-  printf '  %b%s%b [-v <version>] [options]\n' "${BOLD-}" "${SCRIPT_NAME}" "${RESET-}"
+  printf '  %b%s%b [-v <version>] [options]\n' "${BOLD-}" "${SCRIPT_CMD}" "${RESET-}"
 
   # Column width for label + 2-space gutter. Longest label is
   # "  --install-completions [=<shell>]" = 34 chars. OPT_COL 40 gives a
@@ -311,9 +312,9 @@ usage() {
   print-opt-subitem "<file> — structured, top-level .version by file type (jq / tomlq / yq)"
   print-opt-subitem "<file>:@<path> — structured, explicit dotted path (e.g. pyproject.toml:@tool.poetry.version)"
   print-opt-subitem "'<file>:<pattern>' — text search/replace; the pattern must contain {{version}}"
-  print-opt-cont "e.g. VerBump --bump 'main.go:Version = \"{{version}}\"' --bump Chart.yaml:@version"
+  print-opt-cont "e.g. verbump --bump 'main.go:Version = \"{{version}}\"' --bump Chart.yaml:@version"
   print-opt-row "-f" "--file"          "<file.json>" "Also bump \"version\" in this JSON file. Repeatable:"
-  print-opt-cont "VerBump -f src/plugin/package.json -f composer.json"
+  print-opt-cont "verbump -f src/plugin/package.json -f composer.json"
 
   print-opt-group "Commit, tag & changelog"
   print-opt-row "-m" "--message"       "<message>"   "Custom annotated-tag release message."
@@ -353,18 +354,18 @@ usage() {
 
   # EXAMPLES section pill
   printf '\n%b EXAMPLES %b\n' "${S_HDR_CYAN-}" "${S_HDR_END-}"
-  print-example-row "${SCRIPT_NAME}"                       "Interactive — reads commits, suggests bump, prompts."
-  print-example-row "${SCRIPT_NAME} -v 2.0.0"              "Non-interactive, explicit version."
-  print-example-row "${SCRIPT_NAME} --dry-run"             "Preview every side-effect without executing."
-  print-example-row "${SCRIPT_NAME} -p origin"             "Push the release branch + tag when done."
-  print-example-row "${SCRIPT_NAME} --pr"                  "Branch, push, and open a release PR (needs gh)."
-  print-example-row "${SCRIPT_NAME} -t release/"           "Use a custom tag prefix (e.g. release/1.2.3)."
-  print-example-row "${SCRIPT_NAME} -f composer.json"      "Also bump version in an extra JSON file."
-  print-example-row "${SCRIPT_NAME} --source composer.json" "Use composer.json as the version source (non-Node repo)."
-  print-example-row "${SCRIPT_NAME} --bump pyproject.toml:@project.version" "Also bump a Python project's version (needs tomlq)."
-  print-example-row "${SCRIPT_NAME} --bump 'pkg/__init__.py:__version__ = \"{{version}}\"'" "Also bump a Python __version__ via a text pattern (no extra tool)."
-  print-example-row "${SCRIPT_NAME} --bump 'main.go:Version = \"{{version}}\"'" "Also bump a Go const via a text pattern (no extra tool)."
-  print-example-row "${SCRIPT_NAME} --install-completions" "Install shell completions (auto-detects shell)."
+  print-example-row "${SCRIPT_CMD}"                       "Interactive — reads commits, suggests bump, prompts."
+  print-example-row "${SCRIPT_CMD} -v 2.0.0"              "Non-interactive, explicit version."
+  print-example-row "${SCRIPT_CMD} --dry-run"             "Preview every side-effect without executing."
+  print-example-row "${SCRIPT_CMD} -p origin"             "Push the release branch + tag when done."
+  print-example-row "${SCRIPT_CMD} --pr"                  "Branch, push, and open a release PR (needs gh)."
+  print-example-row "${SCRIPT_CMD} -t release/"           "Use a custom tag prefix (e.g. release/1.2.3)."
+  print-example-row "${SCRIPT_CMD} -f composer.json"      "Also bump version in an extra JSON file."
+  print-example-row "${SCRIPT_CMD} --source composer.json" "Use composer.json as the version source (non-Node repo)."
+  print-example-row "${SCRIPT_CMD} --bump pyproject.toml:@project.version" "Also bump a Python project's version (needs tomlq)."
+  print-example-row "${SCRIPT_CMD} --bump 'pkg/__init__.py:__version__ = \"{{version}}\"'" "Also bump a Python __version__ via a text pattern (no extra tool)."
+  print-example-row "${SCRIPT_CMD} --bump 'main.go:Version = \"{{version}}\"'" "Also bump a Go const via a text pattern (no extra tool)."
+  print-example-row "${SCRIPT_CMD} --install-completions" "Install shell completions (auto-detects shell)."
 
   printf '\n  %b(long forms accept --name value or --name=value)%b\n\n' "${S_DIM-}" "${RESET-}"
 }

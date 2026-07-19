@@ -1,7 +1,7 @@
 # Code Style & Contribution Standards
 
 <!-- Canonical standards doc.
-     Derived from VerBump.sh, lib/*, test/*, and git history. -->
+     Derived from verbump.sh, lib/*, test/*, and git history. -->
 
 VerBump is a Bash release tool. Standards below reflect the conventions
 already in the tree — new code should match, not invent.
@@ -163,7 +163,7 @@ pipe them cleanly.
 ### Module boundaries
 
 ```text
-VerBump.sh          entrypoint: globals, main() orchestration
+verbump.sh          entrypoint: globals, main() orchestration
 lib/args.sh          long-opt normalization, getopts parsing, pre-scanned
                      modes (--about, --undo, --completions, --release, …)
 lib/version.sh       version read/suggest/prompt, prerelease iteration,
@@ -185,7 +185,7 @@ lib/icons.sh         icon glyph vocabulary (I_OK, I_ERROR, …)
 
 Rules:
 
-- **[VerBump.sh](../VerBump.sh) orchestrates; it does not implement.** New
+- **[verbump.sh](../verbump.sh) orchestrates; it does not implement.** New
   behaviour goes into a `lib/*.sh` function; `main()` just calls it.
 - **One module, one reason to change.** Behaviour goes in the module that
   owns its domain (version logic in `version.sh`, git side-effects in
@@ -201,7 +201,7 @@ Rules:
 ### Data-flow conventions
 
 - Globals are the integration surface between phases. Document any new
-  global at the top of [VerBump.sh](../VerBump.sh) with a one-line comment.
+  global at the top of [verbump.sh](../verbump.sh) with a one-line comment.
 - Dry-run is a first-class mode: every side-effecting call goes through
   `dryrun <cmd>` (or an explicit `if [ "$FLAG_DRYRUN" = true ]` check).
   No exceptions — if a new step touches the filesystem, network, or git,
@@ -219,7 +219,7 @@ Rules:
   you introduce a new one, with an install hint. `gh` is a *conditional*
   dependency — only when `--release` is used (PRD R-REL-4).
 - Node dependencies are dev-only and must not be required to run
-  `VerBump.sh` itself (the tool ships as a standalone script).
+  `verbump.sh` itself (the tool ships as a standalone script).
 - **Package manager: pnpm.** `pnpm-lock.yaml` is canonical; treat
   `package-lock.json` as stale if it appears.
 
@@ -295,7 +295,7 @@ without a template should be rewritten to fit one before triage.
 ### Body expectations
 
 - **Bugs:** what you ran, what happened, what you expected, OS +
-  bash version, `VerBump --about` output. A minimal reproducer
+  bash version, `verbump --about` output. A minimal reproducer
   (a scratch repo + the exact command) closes issues faster than any
   amount of prose.
 - **Features:** lead with the user-facing problem, then the proposed

@@ -39,8 +39,8 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y shellcheck
 
-      - name: Test ./VerBump.sh, ./install.sh and ./lib/*.sh
-        run: shellcheck -x -e SC1017 ./VerBump.sh ./install.sh ./lib/*.sh
+      - name: Test ./verbump.sh, ./install.sh and ./lib/*.sh
+        run: shellcheck -x -e SC1017 ./verbump.sh ./install.sh ./lib/*.sh
 
   tests:
     name: Run test suite on ${{ matrix.os }}
@@ -149,7 +149,7 @@ jobs:
       # name + version from it (version_block in lib/ui.sh).
       - name: Build runtime tarball + sha256
         run: |
-          tar -czf verbump.tar.gz VerBump.sh lib LICENSE package.json
+          tar -czf verbump.tar.gz verbump.sh lib LICENSE package.json
           sha256sum verbump.tar.gz > verbump.tar.gz.sha256
 
       # Unversioned asset names keep install.sh's URLs stable:
@@ -178,4 +178,4 @@ jobs:
             sleep 10
           done
           [ "$installed" = true ]
-          "$VERBUMP_PREFIX/bin/VerBump" --about
+          "$VERBUMP_PREFIX/bin/verbump" --about

@@ -10,10 +10,10 @@
   },
   "license": "MIT",
   "bin": {
-    "VerBump": "VerBump.sh"
+    "verbump": "verbump.sh"
   },
   "files": [
-    "VerBump.sh",
+    "verbump.sh",
     "lib/",
     "README.md",
     "LICENSE",
@@ -28,12 +28,12 @@
   "scripts": {
     "dev": "./dev/sandbox.sh",
     "dev:dry": "./dev/sandbox.sh --dry-run",
-    "release": "./VerBump.sh --release -p origin && pnpm brew:bump",
-    "bump-release": "./VerBump.sh --patch -y --release -p origin && pnpm brew:bump",
+    "release": "./verbump.sh --release -p origin && pnpm brew:bump",
+    "bump-release": "./verbump.sh --patch -y --release -p origin && pnpm brew:bump",
     "brew:bump": "gh workflow run bump-formula.yml --repo jv-k/homebrew-tap",
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/*.bats",
-    "lint": "shellcheck -x -e SC1017 ./VerBump.sh ./install.sh ./lib/*.sh",
+    "lint": "shellcheck -x -e SC1017 ./verbump.sh ./install.sh ./lib/*.sh",
     "screenshots": "./dev/screenshots.sh all",
     "screenshots:help": "./dev/screenshots.sh help",
     "screenshots:demo": "./dev/screenshots.sh demo",

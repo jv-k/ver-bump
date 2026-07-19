@@ -139,7 +139,7 @@ _clear_config_env() {
   assert_equal "$FLAG_BRANCH" "false"
 }
 
-@test "VerBump.sh: CLI -t beats .verbumprc TAG_PREFIX (end-to-end dry-run)" {
+@test "verbump.sh: CLI -t beats .verbumprc TAG_PREFIX (end-to-end dry-run)" {
   local repo
   repo="$(scratch_repo)"
   cd "$repo"

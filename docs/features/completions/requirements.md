@@ -8,7 +8,7 @@ Tab completion for every flag, in bash/zsh/fish, plus a one-shot installer.
 | R-COMP-2 | Completions offer every short and long flag. | ✅ shipped |
 | R-COMP-3 | After `-f`/`--file`, restrict to `*.json`. | ✅ shipped |
 | R-COMP-4 | After `--completions`, offer `bash zsh fish`. | ✅ shipped |
-| R-COMP-5 | Registered for `VerBump`, lowercase `verbump` (case-insensitive filesystems run `VerBump` for it, but completion matches the literal word), and `VerBump.sh`. | ✅ shipped |
+| R-COMP-5 | Registered for `VerBump`, lowercase `verbump` (case-insensitive filesystems run `VerBump` for it, but completion matches the literal word), and `verbump.sh`. | ✅ shipped |
 | R-COMP-6 | `--install-completions [shell]` auto-detects from `$SHELL` (exit `2` if detection fails); installs to user scope — zsh: `~/.local/share/zsh/site-functions` with omz-aware hint (`61016d3`). | ✅ shipped — `test/install-completions.bats` (10); issue #42 |
 | R-COMP-7 | `--install-completions` honours `--dry-run` regardless of flag order; accepts both `=shell` and space-form (`c12147c`). | ✅ shipped |
 

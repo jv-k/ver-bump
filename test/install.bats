@@ -39,7 +39,7 @@ teardown() {
 # same file set the publish workflow tars up — so fixtures can't drift from
 # what CI ships. Requires install.sh to be sourced (uses sha256_of).
 make_release_fixture() {
-  (cd "$repo_dir" && tar -czf "$FIXTURE_DIR/verbump.tar.gz" VerBump.sh lib LICENSE package.json)
+  (cd "$repo_dir" && tar -czf "$FIXTURE_DIR/verbump.tar.gz" verbump.sh lib LICENSE package.json)
   printf '%s  verbump.tar.gz\n' "$(sha256_of "$FIXTURE_DIR/verbump.tar.gz")" \
     > "$FIXTURE_DIR/verbump.tar.gz.sha256"
 }
@@ -133,7 +133,7 @@ make_release_fixture() {
   install-paths
   assert_equal "$SHARE_DIR" "/x/share/verbump"
   assert_equal "$BIN_DIR" "/x/bin"
-  assert_equal "$BIN_LINK" "/x/bin/VerBump"
+  assert_equal "$BIN_LINK" "/x/bin/verbump"
 }
 
 @test "install: asset-url uses the latest-release alias when unpinned" {
@@ -204,15 +204,15 @@ make_release_fixture() {
   run main --prefix "$PREFIX"
   assert_success
 
-  [ -f "$PREFIX/share/verbump/VerBump.sh" ]
-  [ -x "$PREFIX/share/verbump/VerBump.sh" ]
+  [ -f "$PREFIX/share/verbump/verbump.sh" ]
+  [ -x "$PREFIX/share/verbump/verbump.sh" ]
   [ -d "$PREFIX/share/verbump/lib" ]
-  [ -L "$PREFIX/bin/VerBump" ]
-  assert_equal "$(readlink "$PREFIX/bin/VerBump")" "$PREFIX/share/verbump/VerBump.sh"
+  [ -L "$PREFIX/bin/verbump" ]
+  assert_equal "$(readlink "$PREFIX/bin/verbump")" "$PREFIX/share/verbump/verbump.sh"
 
   # R-DIST-3: prints the installed version + the completions suggestion.
   assert_output --partial "Installed VerBump $(jsonfile_get_ver "$repo_dir/package.json")"
-  assert_output --partial "VerBump --install-completions"
+  assert_output --partial "verbump --install-completions"
 
   # No temp leftovers on success either — and no .staged/.bak next to the
   # install.
@@ -236,7 +236,7 @@ make_release_fixture() {
   assert_success
 
   [ ! -e "$PREFIX/share/verbump/stale-file-from-old-version" ]
-  [ -L "$PREFIX/bin/VerBump" ]
+  [ -L "$PREFIX/bin/verbump" ]
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
   # The upgrade's backup of the old tree must not linger after success.
   assert_equal "$(ls -A "$PREFIX/share")" "verbump"
@@ -267,7 +267,7 @@ make_release_fixture() {
 
   # R-DIST-5: the old install is back, byte for byte where it was.
   [ -f "$PREFIX/share/verbump/sentinel-old-install" ]
-  [ ! -f "$PREFIX/share/verbump/VerBump.sh" ]
+  [ ! -f "$PREFIX/share/verbump/verbump.sh" ]
   # No .bak/.staged leftovers, no temp leftovers.
   assert_equal "$(ls -A "$PREFIX/share")" "verbump"
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
@@ -291,8 +291,8 @@ make_release_fixture() {
   assert_output --partial "previous installation restored"
 
   [ -f "$PREFIX/share/verbump/sentinel-old-install" ]
-  [ ! -f "$PREFIX/share/verbump/VerBump.sh" ]
-  [ ! -e "$PREFIX/bin/VerBump" ]
+  [ ! -f "$PREFIX/share/verbump/verbump.sh" ]
+  [ ! -e "$PREFIX/bin/verbump" ]
   assert_equal "$(ls -A "$PREFIX/share")" "verbump"
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
 }
@@ -310,7 +310,7 @@ make_release_fixture() {
 
   # No previous install to restore — the half-swapped tree must be gone.
   [ ! -e "$PREFIX/share/verbump" ]
-  [ ! -e "$PREFIX/bin/VerBump" ]
+  [ ! -e "$PREFIX/bin/verbump" ]
   [ -z "$(ls -A "$PREFIX/share")" ]
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
 }
@@ -328,7 +328,7 @@ make_release_fixture() {
 
   # R-DIST-5: nothing installed, no partial files anywhere.
   [ ! -e "$PREFIX/share/verbump" ]
-  [ ! -e "$PREFIX/bin/VerBump" ]
+  [ ! -e "$PREFIX/bin/verbump" ]
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
 }
 
@@ -343,6 +343,6 @@ make_release_fixture() {
   assert_output --partial "VERBUMP_INSTALL_VERSION"
 
   [ ! -e "$PREFIX/share/verbump" ]
-  [ ! -e "$PREFIX/bin/VerBump" ]
+  [ ! -e "$PREFIX/bin/verbump" ]
   [ -z "$(ls -A "$SCRATCH_TMP")" ]
 }

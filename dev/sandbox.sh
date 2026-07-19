@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# dev/sandbox.sh — run VerBump.sh against a throwaway git repo.
+# dev/sandbox.sh — run verbump.sh against a throwaway git repo.
 #
 # Creates a temp dir with an initialised git repo, a minimal package.json,
 # and a couple of seed commits, then invokes VerBump from inside it. The
@@ -24,10 +24,10 @@
 set -eo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERBUMP="${REPO_ROOT}/VerBump.sh"
+VERBUMP="${REPO_ROOT}/verbump.sh"
 
 if [ ! -x "$VERBUMP" ]; then
-  echo "sandbox: VerBump.sh not found or not executable at $VERBUMP" >&2
+  echo "sandbox: verbump.sh not found or not executable at $VERBUMP" >&2
   exit 1
 fi
 
@@ -145,7 +145,7 @@ say "sandbox: seeded $(git rev-list --count HEAD) commits on $(git rev-parse --a
 
 # Scaffold-and-hand-off: print the sandbox repo (and bare origin, if any) paths
 # on stdout so a caller can `cd` in and drive VerBump directly — the demo tape
-# does this to record a clean `VerBump …` invocation. We leave both dirs in
+# does this to record a clean `verbump …` invocation. We leave both dirs in
 # place (the caller owns cleanup) and drop our own trap so nothing is removed
 # and no status line pollutes stdout.
 if (( SETUP_ONLY )); then

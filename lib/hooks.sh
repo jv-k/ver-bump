@@ -76,5 +76,5 @@ run-post-tag-hook() {
   [ "$rc" -eq 0 ] && return 0
   fail 4 \
     "post-tag hook failed (exit ${rc}): ${POST_TAG_CMD}" \
-    "The release commit and tag ${TAG_PREFIX-}${V_NEW-} were kept (nothing was pushed). Recover with 'VerBump --undo ${V_NEW-}', or fix the hook and push manually."
+    "The release commit and tag ${TAG_PREFIX-}${V_NEW-} were kept (nothing was pushed). Recover with 'verbump --undo ${V_NEW-}', or fix the hook and push manually."
 }

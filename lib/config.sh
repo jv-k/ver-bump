@@ -7,7 +7,7 @@ true
 # from $PWD toward /. CLI flags always win over env vars, which win over
 # the file, which wins over the hard-coded defaults applied below.
 #
-# Precedence is enforced by call ordering in VerBump.sh::main:
+# Precedence is enforced by call ordering in verbump.sh::main:
 #   1. load-config           — sources .verbumprc (env wins over file)
 #   2. apply-config-defaults — sets defaults for any still-unset keys
 #   3. process-arguments     — CLI flags overwrite anything above

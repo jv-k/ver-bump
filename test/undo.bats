@@ -11,7 +11,7 @@ setup() {
   load './test_helper/bats-assert/load'
 
   repo_dir=$PWD
-  profile_script="$repo_dir/VerBump.sh"
+  profile_script="$repo_dir/verbump.sh"
 
   TMP=$(mktemp -d)
   cd "$TMP" || return 1

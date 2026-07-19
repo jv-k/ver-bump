@@ -55,7 +55,7 @@ VerBump never guesses a text pattern for an arbitrary file.
 All modules: [lib/textbump.sh](../../../lib/textbump.sh) (engine),
 [lib/args.sh](../../../lib/args.sh) (`--bump`),
 [lib/config.sh](../../../lib/config.sh) (`BUMP_FILES`),
-[VerBump.sh](../../../VerBump.sh) (`check-bump-deps` + `bump-target-files`
+[verbump.sh](../../../verbump.sh) (`check-bump-deps` + `bump-target-files`
 call sites), [lib/completions.sh](../../../lib/completions.sh),
 [lib/usage.sh](../../../lib/usage.sh). All tests:
 [test/bump-targets.bats](../../../test/bump-targets.bats).
@@ -65,7 +65,7 @@ call sites), [lib/completions.sh](../../../lib/completions.sh),
 | R-TGT-1 | `--bump <spec>` — long-only, repeatable, takes an arg — registers a bump target. `BUMP_FILES` config/env key mirrors it (newline-separated specs), with R-CFG-3 precedence (CLI `--bump` entries append to env/`.verbumprc` entries; nothing overrides, targets accumulate). | ✅ — `args.sh`, `config.sh`, `textbump.sh::resolve-bump-targets` |
 | R-TGT-2 | **Text pattern locator** (`<file>:<pattern>`, pattern contains `{{version}}`): search = pattern with `{{version}}` → `V_PREV`, replacement = pattern with `{{version}}` → `V_NEW`. Only matching line(s) are rewritten; every other byte (indent, quoting, CRLF, missing trailing newline) is preserved. No external dependency. Zero matching lines → a loud `log_error` naming the resolved search string; **non-fatal** (the release continues, parity with a failed JSON extra in `bump-json-files`). | ✅ — `textbump.sh::_bt-text-set`, `bump-target-files` |
 | R-TGT-3 | **Structured path locator** (`<file>:@<path>`, or a bare structured file defaulting to `.version`): JSON via `jq`, TOML via `tomlq`, YAML via `yq` — one `setpath()` filter serves all three (the jq-syntax kislyuk/yq suite). Generalises the JSON bump — any dotted path, not only top-level `.version`. When the path is exactly `.version` on a JSON file, reuse the surgical formatting-preserving rewrite (R-FMT-1); other paths / formats re-serialise structure-aware (formatting may normalise — documented, mirrors R-FMT-3). Simple dotted keys only (no `[`/`]`/`"`); exotic keys are rejected (exit `2`) pointing at the text pattern. | ✅ — `textbump.sh::_bt-struct-set`, `_bt-path-array` |
-| R-TGT-4 | **Conditional dependencies** — `jq` stays always-required. A TOML/YAML *structured* locator requires its helper (`tomlq`; `yq`) only when actually used; absent → exit `3` with an install hint **and** the escape route (use a `{{version}}` text pattern instead, which needs no helper). Preflighted by `check-bump-deps` in the Verify phase, before any mutation. | ✅ — `textbump.sh::check-bump-deps`, `VerBump.sh` |
+| R-TGT-4 | **Conditional dependencies** — `jq` stays always-required. A TOML/YAML *structured* locator requires its helper (`tomlq`; `yq`) only when actually used; absent → exit `3` with an install hint **and** the escape route (use a `{{version}}` text pattern instead, which needs no helper). Preflighted by `check-bump-deps` in the Verify phase, before any mutation. | ✅ — `textbump.sh::check-bump-deps`, `verbump.sh` |
 | R-TGT-5 | **Postcondition** — a text write only renames its temp after an in-tmp `grep` confirms the replacement; a structured write is re-read through the locator and asserted to equal `V_NEW`. On any failure the file is left untouched and a loud `log_error` fires (**non-fatal**, mirrors R-FMT-2's "discard the tmp, don't commit a bad write"). | ✅ — `textbump.sh::_bt-text-set`, `bump-target-files` |
 | R-TGT-6 | **Same-version no-op** — if a target already carries `V_NEW`, warn and skip it (no write, no `git add`); parity with `bump-json-files` / `do-packagefile-bump`. | ✅ — `textbump.sh::bump-target-files` |
 | R-TGT-7 | **Dry-run** — each target emits a `[dry-run]` preview line to **stderr** (`would replace … → …` / `would set @path = 'V_NEW'`), no file touched, no staging (R-DRY-1/2 parity). | ✅ — `textbump.sh::bump-target-files` |
@@ -111,7 +111,7 @@ call sites), [lib/completions.sh](../../../lib/completions.sh),
   postcondition probe.
 - Touched: [lib/args.sh](../../../lib/args.sh) (`--bump` capture),
   [lib/config.sh](../../../lib/config.sh) (`BUMP_FILES` key),
-  [VerBump.sh](../../../VerBump.sh) (`check-bump-deps` in Verify,
+  [verbump.sh](../../../verbump.sh) (`check-bump-deps` in Verify,
   `bump-target-files` in Release alongside `bump-json-files`),
   [lib/completions.sh](../../../lib/completions.sh),
   [lib/usage.sh](../../../lib/usage.sh), [README.md](../../../README.md).

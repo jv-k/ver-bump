@@ -12,7 +12,7 @@ setup() {
   load './test_helper/bats-assert/load'
 
   repo_dir=$PWD
-  profile_script="$repo_dir/VerBump.sh"
+  profile_script="$repo_dir/verbump.sh"
 
   FAKE_HOME=$(mktemp -d)
   export HOME="$FAKE_HOME"
@@ -32,7 +32,7 @@ teardown() {
 @test "install-completions: --install-completions=bash writes to XDG bash-completion path" {
   run ${profile_script} --install-completions=bash
   assert_success
-  local dest="${HOME}/.local/share/bash-completion/completions/VerBump"
+  local dest="${HOME}/.local/share/bash-completion/completions/verbump"
   [ -f "$dest" ]
   # Emitted script must be syntactically valid bash.
   run bash -n "$dest"
@@ -42,7 +42,7 @@ teardown() {
 @test "install-completions: --install-completions=zsh writes to XDG zsh site-functions path" {
   run ${profile_script} --install-completions=zsh
   assert_success
-  [ -f "${HOME}/.local/share/zsh/site-functions/_VerBump" ]
+  [ -f "${HOME}/.local/share/zsh/site-functions/_verbump" ]
   # Non-TTY bats runs won't have the target dir on fpath, so the installer
   # prints the .zshrc reminder.
   assert_output --partial "fpath=(~/.local/share/zsh/site-functions"
@@ -51,7 +51,7 @@ teardown() {
 @test "install-completions: --install-completions=fish writes to XDG fish completions path" {
   run ${profile_script} --install-completions=fish
   assert_success
-  [ -f "${HOME}/.config/fish/completions/VerBump.fish" ]
+  [ -f "${HOME}/.config/fish/completions/verbump.fish" ]
 }
 
 @test "install-completions: unknown shell exits 2" {
@@ -71,15 +71,15 @@ teardown() {
   assert_success
   assert_output --partial "[dry-run]"
   assert_output --partial "would write"
-  [ ! -f "${HOME}/.local/share/bash-completion/completions/VerBump" ]
+  [ ! -f "${HOME}/.local/share/bash-completion/completions/verbump" ]
 }
 
 @test "install-completions: overwrites an existing file without prompting" {
   mkdir -p "${HOME}/.local/share/zsh/site-functions"
-  printf 'stale content\n' > "${HOME}/.local/share/zsh/site-functions/_VerBump"
+  printf 'stale content\n' > "${HOME}/.local/share/zsh/site-functions/_verbump"
   run ${profile_script} --install-completions=zsh
   assert_success
-  run cat "${HOME}/.local/share/zsh/site-functions/_VerBump"
+  run cat "${HOME}/.local/share/zsh/site-functions/_verbump"
   refute_output --partial "stale content"
 }
 
@@ -87,7 +87,7 @@ teardown() {
   export SHELL=/usr/bin/zsh
   run ${profile_script} --install-completions
   assert_success
-  [ -f "${HOME}/.local/share/zsh/site-functions/_VerBump" ]
+  [ -f "${HOME}/.local/share/zsh/site-functions/_verbump" ]
 }
 
 @test "install-completions: bare flag with unsupported \$SHELL exits 2 with hint" {
@@ -107,6 +107,6 @@ teardown() {
   run ${profile_script} --install-completions bash --dry-run
   assert_success
   assert_output --partial "would write"
-  assert_output --partial "bash-completion/completions/VerBump"
-  refute_output --partial "fish/completions/VerBump.fish"
+  assert_output --partial "bash-completion/completions/verbump"
+  refute_output --partial "fish/completions/verbump.fish"
 }

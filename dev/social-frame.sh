@@ -7,7 +7,7 @@
 set -eo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-help_lines() { CLICOLOR_FORCE=1 ./VerBump.sh --help | sed -n "$1"; }
+help_lines() { CLICOLOR_FORCE=1 ./verbump.sh --help | sed -n "$1"; }
 
 printf '\n'
 help_lines '1,3p' | sed 's/^/                   /'

@@ -52,7 +52,7 @@ Modules: `lib/git-checks.sh` (`check-worktree-clean`,
 `check-release-branch`, `check-remote-sync`, `check-releasable-commits`),
 `lib/args.sh`, `lib/config.sh`.
 
-Verify-section ordering in `main()` (`VerBump.sh`):
+Verify-section ordering in `main()` (`verbump.sh`):
 `check-commits-exist` → `check-worktree-clean` → `check-release-branch` →
 `check-remote-sync` → `process-version` → `check-releasable-commits` →
 `check-branch-notexist` → `check-tag-exists` → `check-pr-deps`.

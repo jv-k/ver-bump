@@ -13,7 +13,7 @@
 
 [![bash 3.2+](https://img.shields.io/badge/bash-3.2%2B-1f425f?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/) [![CI](https://img.shields.io/github/actions/workflow/status/jv-k/VerBump/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/jv-k/VerBump/actions/workflows/ci.yml?query=branch%3Amain) [![CodeFactor](https://www.codefactor.io/repository/github/jv-k/VerBump/badge)](https://www.codefactor.io/repository/github/jv-k/VerBump) [![npm version](https://img.shields.io/npm/v/%40jv-k%2Fverbump?logo=npm&color=cb3837)](https://www.npmjs.com/package/@jv-k/verbump) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-<img src="https://raw.githubusercontent.com/jv-k/VerBump/main/img/screenshot.png" alt="VerBump --help output: the header logo and the full flag reference, covering version input, bump levels, prerelease, changelog, tag, push, and GitHub release options.">
+<img src="https://raw.githubusercontent.com/jv-k/VerBump/main/img/screenshot.png" alt="verbump --help output: the header logo and the full flag reference, covering version input, bump levels, prerelease, changelog, tag, push, and GitHub release options.">
 
 </div>
 
@@ -41,7 +41,7 @@ npm install -g @jv-k/verbump
 
 ```sh
 git clone https://github.com/jv-k/VerBump.git ~/.local/share/verbump
-ln -s ~/.local/share/verbump/VerBump.sh ~/.local/bin/VerBump   # ensure ~/.local/bin is on $PATH
+ln -s ~/.local/share/verbump/verbump.sh ~/.local/bin/verbump   # ensure ~/.local/bin is on $PATH
 ```
 
 See [Installation](#installation) for checksum verification, version pinning, prefix options, and the Homebrew path.
@@ -50,7 +50,7 @@ See [Installation](#installation) for checksum verification, version pinning, pr
 
 ```sh
 cd your-repo
-VerBump --dry-run   # preview a release end-to-end, changes nothing
+verbump --dry-run   # preview a release end-to-end, changes nothing
 VerBump             # cut it: reads commits, suggests a bump, prompts before pushing
 ```
 
@@ -172,7 +172,7 @@ The [`gh`](https://cli.github.com) CLI is an optional dependency, used only by `
 
 ### Install script
 
-Downloads the latest GitHub release, verifies its published sha256 checksum, and installs to `~/.local` (`share/verbump/` for the files, `bin/VerBump` as the command). Re-running upgrades in place, and a failed install restores the previous one:
+Downloads the latest GitHub release, verifies its published sha256 checksum, and installs to `~/.local` (`share/verbump/` for the files, `bin/verbump` as the command). Re-running upgrades in place, and a failed install restores the previous one:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/jv-k/VerBump/main/install.sh | bash
@@ -190,7 +190,7 @@ pnpm add -g @jv-k/verbump
 npm install -g @jv-k/verbump
 ```
 
-> The npm package is **`@jv-k/verbump`** (npm reserves the bare name `verbump` as too similar to the retired `ver-bump`); it installs the **`VerBump`** command. So: `npm i -g @jv-k/verbump`, then run `VerBump`.
+> The npm package is **`@jv-k/verbump`** (npm reserves the bare name `verbump` as too similar to the retired `ver-bump`); it installs the **`verbump`** command. So: `npm i -g @jv-k/verbump`, then run `verbump`.
 
 ### Manual install
 
@@ -198,7 +198,7 @@ Clone and symlink the script:
 
 ```sh
 git clone https://github.com/jv-k/VerBump.git ~/.local/share/verbump
-ln -s ~/.local/share/verbump/VerBump.sh ~/.local/bin/VerBump   # ensure ~/.local/bin is on $PATH
+ln -s ~/.local/share/verbump/verbump.sh ~/.local/bin/verbump   # ensure ~/.local/bin is on $PATH
 ```
 
 ### Homebrew
@@ -207,7 +207,7 @@ ln -s ~/.local/share/verbump/VerBump.sh ~/.local/bin/VerBump   # ensure ~/.local
 brew install jv-k/tap/verbump
 ```
 
-Installs from the [`jv-k/tap` tap](https://github.com/jv-k/homebrew-tap) with the `bash` and `jq` dependencies included. The command it installs is `VerBump`, and the tap's formula tracks the latest stable release automatically.
+Installs from the [`jv-k/tap` tap](https://github.com/jv-k/homebrew-tap) with the `bash` and `jq` dependencies included. The command it installs is `verbump`, and the tap's formula tracks the latest stable release automatically.
 
 ### Basher
 
@@ -219,9 +219,9 @@ Installs from the [`jv-k/tap` tap](https://github.com/jv-k/homebrew-tap) with th
 
 | Workflow | Command | What it does |
 | --- | --- | --- |
-| **Tag-in-place** *(default)* | `VerBump` | Bumps files, writes CHANGELOG, commits, and tags **the current branch**. No branch is created. |
-| **Release branch** | `VerBump --branch` | Cuts a `release-<version>` branch (the [Git branch-based workflow](https://nvie.com/posts/a-successful-git-branching-model/)), commits and tags there, and leaves the merge back to you. |
-| **Release PR** | `VerBump --pr` | Like `--branch`, then pushes and opens a pull request via the [`gh`](https://cli.github.com) CLI. Implies a push to `origin` (override with `-p <remote>`). |
+| **Tag-in-place** *(default)* | `verbump` | Bumps files, writes CHANGELOG, commits, and tags **the current branch**. No branch is created. |
+| **Release branch** | `verbump --branch` | Cuts a `release-<version>` branch (the [Git branch-based workflow](https://nvie.com/posts/a-successful-git-branching-model/)), commits and tags there, and leaves the merge back to you. |
+| **Release PR** | `verbump --pr` | Like `--branch`, then pushes and opens a pull request via the [`gh`](https://cli.github.com) CLI. Implies a push to `origin` (override with `-p <remote>`). |
 
 The `--pr` base branch resolves in this order: `--base <branch>`, then `PR_BASE` from `.verbumprc`, then the branch you ran VerBump from, then the remote's default branch.
 
@@ -231,11 +231,11 @@ The `--pr` base branch resolves in this order: `--base <branch>`, then `PR_BASE`
 
 ## Migrating from ver-bump
 
-The project was renamed from `ver-bump` to **VerBump** in 4.0. The command, repo, and brand are `VerBump`; the npm package is `@jv-k/verbump` and the config file is lowercase `.verbumprc`. What to update:
+The project was renamed from `ver-bump` to **VerBump** in 4.0. The repo and brand are `VerBump` and the command is `verbump`; the npm package is `@jv-k/verbump` and the config file is lowercase `.verbumprc`. What to update:
 
 | Was | Now |
 | --- | --- |
-| command `ver-bump` | `VerBump` |
+| command `ver-bump` | `verbump` |
 | `npm i -g ver-bump` | `npm i -g @jv-k/verbump` *(new package; old one ends at 1.1.8, deprecated)* |
 | `.ver-bumprc` | `.verbumprc` |
 | `VER_BUMP_*` env vars | `VERBUMP_*` |
@@ -246,10 +246,10 @@ The project was renamed from `ver-bump` to **VerBump** in 4.0. The command, repo
 ## Options
 
 ```sh
-VerBump [-v <version>] [options]
+verbump [-v <version>] [options]
 ```
 
-Every option has a short form and a GNU-style long form. Long forms accept `--name value` or `--name=value`. The groups below match `VerBump --help`.
+Every option has a short form and a GNU-style long form. Long forms accept `--name value` or `--name=value`. The groups below match `verbump --help`.
 
 ### Choosing the new version
 
@@ -358,7 +358,7 @@ FLAG_NOCHANGELOG=true
 RELEASE_BRANCHES="main develop release/*"
 ```
 
-`RELEASE_BRANCHES` is a space-separated list of glob patterns naming the branches a release may be cut from. When set, running VerBump from any other branch (or from a detached HEAD) exits with code 3. It is a guard, not a prompt, so `--yes` does not bypass it. Clear it for a single run with an empty environment override, since env beats the file: `RELEASE_BRANCHES= VerBump …`
+`RELEASE_BRANCHES` is a space-separated list of glob patterns naming the branches a release may be cut from. When set, running VerBump from any other branch (or from a detached HEAD) exits with code 3. It is a guard, not a prompt, so `--yes` does not bypass it. Clear it for a single run with an empty environment override, since env beats the file: `RELEASE_BRANCHES= verbump …`
 
 **Security.** `VerBump` *sources* this file as shell, so do not commit one you wouldn't execute. As a safeguard, it refuses to load a world-writable rc and exits with code 3. Run `chmod 644 .verbumprc` to fix it.
 
@@ -432,12 +432,12 @@ No `package.json`? VerBump reads the current version from your latest matching g
 ```sh
 # Text pattern — no extra tool; rewrites only the matching line.
 # Works for a Go const, a Python __version__, a Makefile, a Dockerfile, …
-VerBump --bump 'main.go:Version = "{{version}}"'
-VerBump --bump 'src/mypkg/__init__.py:__version__ = "{{version}}"'
+verbump --bump 'main.go:Version = "{{version}}"'
+verbump --bump 'src/mypkg/__init__.py:__version__ = "{{version}}"'
 
 # Structured dotted path — JSON via jq (built in), TOML/YAML via the
 # jq-based yq suite (tomlq / yq) when installed.
-VerBump --bump pyproject.toml:@project.version --bump Chart.yaml:@version
+verbump --bump pyproject.toml:@project.version --bump Chart.yaml:@version
 
 # Or declare them once (newline-separated) — every run keeps them in sync:
 # .verbumprc
@@ -475,7 +475,7 @@ When `-v` / `--version` is omitted, `VerBump` suggests the next version: it adva
 - `feat:` → **minor**
 - anything else (or no previous tag) → **patch**
 
-You can always override the suggestion at the interactive prompt, or pass `-v <version>` to skip the prompt entirely. Values passed to `-v` are validated against SemVer 2.0, so typos like `VerBump -v banana` fail fast.
+You can always override the suggestion at the interactive prompt, or pass `-v <version>` to skip the prompt entirely. Values passed to `-v` are validated against SemVer 2.0, so typos like `verbump -v banana` fail fast.
 
 For a non-interactive forced bump that doesn't require typing the full version, use `--major` / `--minor` / `--patch`. They bump the current version's matching component, drop any prerelease/build metadata (`1.2.3-dev.5 --patch` → `1.2.4`), and are mutually exclusive with each other and with `-v`. Combining more than one exits with code `2`.
 
@@ -498,7 +498,7 @@ To **enter** or **advance** a prerelease line, add `--preid <id>`:
 Pass `-d` / `--dry-run` to preview a release end-to-end without touching anything: no files written, no `git add`, no commit, no tag, no push:
 
 ```sh
-$ VerBump --dry-run
+$ verbump --dry-run
 ...
 [dry-run] would set .version = '1.0.1' in package.json
 [dry-run] git add package.json
@@ -541,7 +541,7 @@ Hook stdout/stderr stream straight through to your terminal, and the resolved co
 POST_TAG_CMD='echo "released $VERBUMP_TAG" >> releases.log'
 ```
 
-Under `--dry-run` the hook command is printed with the `[dry-run]` prefix and not executed. Pass `--no-hooks` to skip both hooks for a single run (git's `--no-verify` convention). To disable just one hook for a run, empty the key instead, since env beats the file: `PRE_BUMP_CMD= VerBump …`
+Under `--dry-run` the hook command is printed with the `[dry-run]` prefix and not executed. Pass `--no-hooks` to skip both hooks for a single run (git's `--no-verify` convention). To disable just one hook for a run, empty the key instead, since env beats the file: `PRE_BUMP_CMD= verbump …`
 
 > **Migrating from 1.x:** VerBump 2.0 no longer shells out to `npm version`, so npm's `preversion` / `version` / `postversion` lifecycle scripts stopped firing as a side-effect. If you relied on `preversion` to run your tests, one `.verbumprc` line restores it: `PRE_BUMP_CMD="npm test"`.
 
@@ -567,7 +567,7 @@ Every run ends with a stable, documented exit code, so scripts and CI can branch
 
 ## Shell completions
 
-`VerBump --completions <shell>` emits a bash, zsh, or fish completion script, or `VerBump --install-completions` auto-detects your shell and installs it for you.
+`verbump --completions <shell>` emits a bash, zsh, or fish completion script, or `verbump --install-completions` auto-detects your shell and installs it for you.
 
 <details>
 <summary><b>Manual install paths</b> and what you get</summary>
@@ -576,13 +576,13 @@ Drop the emitted script wherever your shell looks for completions:
 
 ```sh
 # bash (with bash-completion installed, e.g. via Homebrew)
-VerBump --completions bash > "$(brew --prefix)/etc/bash_completion.d/VerBump"
+verbump --completions bash > "$(brew --prefix)/etc/bash_completion.d/verbump"
 
 # zsh — any directory on $fpath works
-VerBump --completions zsh  > "${fpath[1]}/_VerBump"
+verbump --completions zsh  > "${fpath[1]}/_verbump"
 
 # fish
-VerBump --completions fish > ~/.config/fish/completions/VerBump.fish
+verbump --completions fish > ~/.config/fish/completions/verbump.fish
 ```
 
 Then restart the shell (or `compinit` / `source` the file). You get:
@@ -601,7 +601,7 @@ This example assumes a `package.json` at `version: "1.0.0"`, on the branch you w
 By default `VerBump` **tags in place**: it commits the bump and tags your current branch, with no release branch. This bumps `package.json` to `1.0.1` and creates the tag `v1.0.1`:
 
 ```sh
-$ VerBump
+$ verbump
 ```
 
 Output:
@@ -643,7 +643,7 @@ DONE
 
 The commit and tag land on your current branch. If you declined the push prompt, push later on a re-run with `-p origin`, or manually with `git push --follow-tags`.
 
-Prefer a release branch and PR instead? `VerBump --pr` cuts a `release-1.0.1` branch, pushes it, and opens a pull request via `gh` against your base branch (`--base`, else the branch you ran from) — the pre-2.0 workflow. `VerBump --branch` cuts the branch and stops there, leaving push and merge to you. See [Workflows](#workflows).
+Prefer a release branch and PR instead? `verbump --pr` cuts a `release-1.0.1` branch, pushes it, and opens a pull request via `gh` against your base branch (`--base`, else the branch you ran from) — the pre-2.0 workflow. `verbump --branch` cuts the branch and stops there, leaving push and merge to you. See [Workflows](#workflows).
 
 ## Development
 

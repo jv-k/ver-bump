@@ -23,7 +23,7 @@ Single-context repo. Domain docs live under `docs/`:
 │   ├── PRD.md              ← release-level product contract
 │   └── features/
 │       └── <feature>/requirements.md
-├── VerBump.sh
+├── verbump.sh
 └── lib/
 ```
 

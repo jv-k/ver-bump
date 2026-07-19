@@ -29,7 +29,7 @@ load 'test_helper'
   local dir
   dir=$(mktemp -d)
   CLEANUP_CMDS+=("rm -rf ${dir}")
-  ${profile_script} --completions zsh > "${dir}/_VerBump"
+  ${profile_script} --completions zsh > "${dir}/_verbump"
   cat > "${dir}/comptest.zsh" <<'ZSH'
 emulate -L zsh
 zmodload zsh/zpty
@@ -54,7 +54,7 @@ done
 zpty -d vb
 print -r -- "$out"
 ZSH
-  run zsh "${dir}/comptest.zsh" "$dir" "VerBump --"
+  run zsh "${dir}/comptest.zsh" "$dir" "verbump --"
   assert_success
   refute_output --partial "invalid option definition"
   assert_output --partial "--branch"

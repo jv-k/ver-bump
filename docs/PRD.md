@@ -125,7 +125,7 @@ Each requirement has an ID so tests and PRs can reference it.
 
 | ID | Requirement |
 | --- | --- |
-| **R-DEP-1** | Runtime dependencies are exactly `bash`, `git`, `jq`. Calling `VerBump.sh` on a clean machine with only those three installed must succeed. |
+| **R-DEP-1** | Runtime dependencies are exactly `bash`, `git`, `jq`. Calling `verbump.sh` on a clean machine with only those three installed must succeed. |
 | **R-DEP-2** | `npm` / `node` MUST NOT be invoked at runtime. Installing via `npm -g` remains supported but is one of several install paths, not a requirement. |
 | **R-DEP-3** | Missing dependencies must exit `3` with a single-line error identifying the missing tool(s) and a hint on how to install them. |
 
@@ -194,7 +194,7 @@ Each requirement has an ID so tests and PRs can reference it.
 | **R-COMP-2** | Completions must offer every short and long flag. |
 | **R-COMP-3** | After `-f`/`--file`, completion must restrict to `*.json`. |
 | **R-COMP-4** | After `--completions`, completion must offer `bash zsh fish`. |
-| **R-COMP-5** | Completions must be registered for both `VerBump` and `VerBump.sh` command names. |
+| **R-COMP-5** | Completions must be registered for both `VerBump` and `verbump.sh` command names. |
 | **R-COMP-6** | `--install-completions [shell]` auto-detects the user's shell from `$SHELL` when no argument is given (exit `2` if detection fails), and installs the matching script to a user-scope location (zsh: `~/.local/share/zsh/site-functions`, with an oh-my-zsh-aware setup hint). |
 | **R-COMP-7** | `--install-completions` honours `--dry-run` regardless of flag order on the command line. |
 
@@ -266,24 +266,24 @@ Each requirement has an ID so tests and PRs can reference it.
 
 1. **US-1** — *As a solo maintainer*, I run `VerBump`, see a bump suggestion derived from my recent commits, press Enter, and the release happens. Outcome: correct bump without me having to think.
 2. **US-2** — *As a maintainer working on a pre-release*, I'm on `4.0.0-dev.6`. I run `VerBump`, see `4.0.0-dev.7` suggested, press Enter.
-3. **US-3** — *As a cautious maintainer*, I run `VerBump --dry-run` first, read the side-effects, satisfy myself nothing surprising is about to happen, then re-run without `--dry-run`.
-4. **US-4** — *As a CI author*, I run `VerBump -v 1.2.3 -p origin -n` in a GH Actions job and branch on exit code: `0` succeeds, `2` fails the workflow with an "invalid input" message, `3` fails with a "precondition" message.
-5. **US-5** — *As a new user*, I pipe `VerBump --completions zsh` into `_VerBump` on my `fpath`, restart my shell, and get tab-completion for every flag.
+3. **US-3** — *As a cautious maintainer*, I run `verbump --dry-run` first, read the side-effects, satisfy myself nothing surprising is about to happen, then re-run without `--dry-run`.
+4. **US-4** — *As a CI author*, I run `verbump -v 1.2.3 -p origin -n` in a GH Actions job and branch on exit code: `0` succeeds, `2` fails the workflow with an "invalid input" message, `3` fails with a "precondition" message.
+5. **US-5** — *As a new user*, I pipe `verbump --completions zsh` into `_verbump` on my `fpath`, restart my shell, and get tab-completion for every flag.
 6. **US-6** — *As a contributor*, I clone the repo, run `pnpm dev`, and can exercise the real release flow end-to-end without touching my clone's working tree.
-7. **US-7** — *As someone with a typo-prone setup*, I run `VerBump -v banana` and get exit `2` with a clear message before anything is mutated.
-8. **US-8** — *As a user with a custom tagging convention*, I run `VerBump --tag-prefix=release/` and get `release/1.2.3` tags instead of `v1.2.3`.
+7. **US-7** — *As someone with a typo-prone setup*, I run `verbump -v banana` and get exit `2` with a clear message before anything is mutated.
+8. **US-8** — *As a user with a custom tagging convention*, I run `verbump --tag-prefix=release/` and get `release/1.2.3` tags instead of `v1.2.3`.
 
 ---
 
 ## 7. Acceptance / success criteria
 
 - **AC-1** All `R-*` requirements above have at least one bats test exercising them.
-- **AC-2** Shellcheck (with `-x`) passes on `VerBump.sh`, `lib/*.sh`, and `dev/sandbox.sh` with zero warnings.
+- **AC-2** Shellcheck (with `-x`) passes on `verbump.sh`, `lib/*.sh`, and `dev/sandbox.sh` with zero warnings.
 - **AC-3** The test suite (`pnpm tests:run`) reports `0 failures`.
-- **AC-4** Running `./VerBump.sh --dry-run -v 1.1.9` against this repo leaves `git status --porcelain` byte-identical to its pre-run state.
-- **AC-5** A fresh container with only `bash`, `git`, `jq` installed can run `./VerBump.sh --dry-run -v 0.0.1` against a minimal repo without missing-dependency errors.
-- **AC-6** `VerBump --completions bash | bash -n` exits `0`; same for `zsh -n`.
-- **AC-7** `README.md` and `./VerBump.sh --help` enumerate the same set of flags.
+- **AC-4** Running `./verbump.sh --dry-run -v 1.1.9` against this repo leaves `git status --porcelain` byte-identical to its pre-run state.
+- **AC-5** A fresh container with only `bash`, `git`, `jq` installed can run `./verbump.sh --dry-run -v 0.0.1` against a minimal repo without missing-dependency errors.
+- **AC-6** `verbump --completions bash | bash -n` exits `0`; same for `zsh -n`.
+- **AC-7** `README.md` and `./verbump.sh --help` enumerate the same set of flags.
 
 ---
 

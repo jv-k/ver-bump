@@ -1,9 +1,9 @@
 #!/usr/bin/env bats
 
 # Integration tests for the env > file > default precedence chain, exercised
-# by actually exec-ing VerBump.sh as a subprocess (not sourcing into the
+# by actually exec-ing verbump.sh as a subprocess (not sourcing into the
 # bats harness). Catches the class of bug where top-level assignments in
-# VerBump.sh clobber inherited env vars before load-config can snapshot
+# verbump.sh clobber inherited env vars before load-config can snapshot
 # them — which sourcing-based tests can't detect.
 
 load 'test_helper'

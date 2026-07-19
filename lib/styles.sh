@@ -76,7 +76,7 @@ S_VAL="${GREEN}"      # inline values (versions, paths, remotes) in run output
 
 # Deprecated — retained as an alias to $GREEN until the last call site migrates
 # to a log_* helper. Tests forbid its use on narrative lines in lib/helpers.sh
-# and VerBump.sh (see test/ui.bats).
+# and verbump.sh (see test/ui.bats).
 S_NOTICE="${GREEN}"
 
 # Inverted-video bold pills for section headers — ` TEXT ` reads as a solid

@@ -120,11 +120,11 @@ change touched one grab-bag file, and review diffs were unreadable.
 **Decision:** Split into focused modules with one reason to change each:
 `args`, `version`, `validate`, `changelog`, `git-checks`, `git-actions`,
 `config`, `json`, `errors`, `completions`, `usage`, `ui`, `styles`,
-`icons`, `hooks`, `textbump`. `VerBump.sh` keeps globals + `main()`
+`icons`, `hooks`, `textbump`. `verbump.sh` keeps globals + `main()`
 orchestration and implements nothing.
 
 **Consequences:** Globals are the integration surface between modules
-(documented at the top of `VerBump.sh`); shellcheck lints files in
+(documented at the top of `verbump.sh`); shellcheck lints files in
 isolation, so cross-module flag reads carry a file-scope `SC2034` waiver.
 
 ---

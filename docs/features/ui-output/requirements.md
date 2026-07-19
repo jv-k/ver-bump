@@ -17,7 +17,7 @@ Backfilled requirements:
 ## Quiet mode (`-q` / `--quiet`) — machine-readable stdout
 
 The missing half of the machine contract R-EXIT started (issue #65):
-`NEW_VERSION=$(VerBump --yes --quiet -p origin)` is the canonical CI
+`NEW_VERSION=$(verbump --yes --quiet -p origin)` is the canonical CI
 capture pattern.
 
 | ID | Requirement | Status |
@@ -30,7 +30,7 @@ capture pattern.
 Implementation is stream discipline, not a renderer: `process-arguments`
 (`lib/args.sh`) pre-scans argv for `-q`/`--quiet`, saves the real stdout on
 FD 3 and redirects FD 1 to stderr (`exec 3>&1 1>&2`) before any option echo
-runs; `main()` (`VerBump.sh`) prints the bare version to FD 3 as its last
+runs; `main()` (`verbump.sh`) prints the bare version to FD 3 as its last
 step. One redirect beats guarding every `log_*`/`echo` call site — nothing
 can leak into the captured pipeline, and warnings/prompts stay visible on
 stderr. `--undo` handles quiet in its own pre-scan (no version to report,
@@ -40,7 +40,7 @@ in `process-arguments` like `BUMP_LEVEL`/`ALLOW_EMPTY`, never a
 choice (same rationale as `FLAG_YES`, R-YES-3).
 
 Modules: `lib/ui.sh`, `lib/styles.sh`, `lib/icons.sh`, `lib/usage.sh`;
-quiet mode: `lib/args.sh`, `VerBump.sh`.
+quiet mode: `lib/args.sh`, `verbump.sh`.
 Tests: `test/ui.bats`, `test/color.bats`, `test/about.bats`,
 `test/quiet.bats`.
 

@@ -25,7 +25,7 @@ Modules: `lib/hooks.sh` (`run-pre-bump-hook`, `run-post-tag-hook`,
 `lib/errors.sh` (exit-code table wording), `lib/usage.sh`,
 `lib/completions.sh`.
 
-Call sites in `main()` (`VerBump.sh`): `run-pre-bump-hook` opens the Release
+Call sites in `main()` (`verbump.sh`): `run-pre-bump-hook` opens the Release
 section — after the entire Verify section (so `process-version` has resolved
 `V_NEW`/`V_PREV` and every preflight has passed) and immediately before
 `do-packagefile-bump`, the first mutation. `run-post-tag-hook` sits between

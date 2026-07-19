@@ -57,7 +57,7 @@ FLAG_QUIET=false # -q/--quiet: decoration to stderr, bare new version on stdout 
 # `export TAG_PREFIX=from-env` here — load-config's env-vs-file snapshot
 # would then see the default, and env would silently lose to .verbumprc.
 # apply-config-defaults (lib/config.sh) is the canonical source of defaults;
-# these `:=` lines just keep sourcing VerBump.sh directly (from tests) sane.
+# these `:=` lines just keep sourcing verbump.sh directly (from tests) sane.
 : "${REL_PREFIX:=release-}"
 : "${TAG_PREFIX:=v}"
 : "${COMMIT_MSG_PREFIX:=chore: }" # Commit msg prefix for the file changes this script makes

@@ -7,6 +7,13 @@ name: Screenshots
 # it flattens inverse-video and ignores SGR-faint, so it could not show the
 # restyled output correctly.)
 #
+# vhs is installed directly as a sha256-pinned release binary (ADR-10 spirit),
+# NOT via charmbracelet/vhs-action: the action's Linux installer looks for an
+# `ffmpeg-n5.1*` asset in BtbN/FFmpeg-Builds' latest release, which no longer
+# exists — it fails with "Failed to install ffmpeg" (still broken on the
+# action's master as of 2026-07). It also never checks PATH, so apt-installed
+# ffmpeg can't satisfy it. ffmpeg + ttyd come from apt instead.
+#
 #   img/screenshot.png          — vhs, `verbump --help` (header logo + flags)
 #   img/verbump-demo.gif        — vhs, sandbox-driven real bump recording
 #   img/verbump-demo-final.png  — the demo's finished DONE frame, as a still
@@ -39,6 +46,12 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  VHS_VERSION: "0.11.0"
+  # sha256 of vhs_0.11.0_Linux_x86_64.tar.gz — verified against the release's
+  # checksums.txt AND two independent downloads hashed locally.
+  VHS_SHA256: "99cb634587eaae0473c1ea377db80c3a048c27f99fe0a7febb1a1e8cb7ee5009"
+
 jobs:
   render:
     name: Render panels + demo via vhs
@@ -52,32 +65,33 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Install JetBrains Mono, gifsicle, and ffmpeg
+      - name: Install JetBrains Mono, gifsicle, ffmpeg, and ttyd
         run: |
-          # Pre-install ffmpeg: charmbracelet/vhs-action's own ffmpeg install
-          # is flaky on ubuntu-latest and failed the v2.0.0-rc.1 release run.
-          # With it already on PATH the action skips its own (failing) install.
           sudo apt-get update -y
-          sudo apt-get install -y fonts-jetbrains-mono gifsicle ffmpeg
+          sudo apt-get install -y fonts-jetbrains-mono gifsicle ffmpeg ttyd
           fc-cache -f
+
+      - name: Install vhs (sha256-pinned release binary)
+        run: |
+          curl -fsSL -o vhs.tar.gz \
+            "https://github.com/charmbracelet/vhs/releases/download/v${VHS_VERSION}/vhs_${VHS_VERSION}_Linux_x86_64.tar.gz"
+          echo "${VHS_SHA256}  vhs.tar.gz" | sha256sum -c -
+          tar -xzf vhs.tar.gz --wildcards '*/vhs' --strip-components=1
+          sudo install -m 0755 vhs /usr/local/bin/vhs
+          rm -f vhs.tar.gz vhs
+          vhs --version
 
       - name: Ensure throwaway gif dir exists
         run: mkdir -p img/tmp
 
       - name: Render help panel
-        uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
-        with:
-          path: dev/help.tape
+        run: vhs dev/help.tape
 
       - name: Render demo gif (also emits img/verbump-demo-final.png)
-        uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
-        with:
-          path: dev/demo.tape
+        run: vhs dev/demo.tape
 
       - name: Render social-preview card
-        uses: charmbracelet/vhs-action@59641cdc7fadf3978db65eb8c6937ea2752f4ec3 # v2.1.0
-        with:
-          path: dev/social.tape
+        run: vhs dev/social.tape
 
       - name: Optimize verbump-demo.gif (lossless — no colour/quality reduction)
         run: |

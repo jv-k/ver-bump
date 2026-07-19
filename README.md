@@ -1,23 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-<details>
-<summary>Details</summary>
-
-- [VerBump](#verbump)
-  - [Quickstart](#quickstart)
-    - [Install with curl (no Node required):](#install-with-curl-no-node-required)
-    - [Install from a registry (npm / pnpm):](#install-from-a-registry-npm--pnpm)
-    - [Install with Homebrew:](#install-with-homebrew)
-    - [Use it in your repo folder:](#use-it-in-your-repo-folder)
-  - [Demo](#demo)
-  - [Documentation](#documentation)
-  - [Requirements](#requirements)
-  - [Development](#development)
-  - [License](#license)
-
-</details>
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 # VerBump
 
 **A plain-bash release tool for any Git repo.**

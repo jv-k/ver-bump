@@ -5,7 +5,11 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  # Scoped to main so a branch with an open PR doesn't run every job twice
+  # (push event on the branch tip + pull_request event on the merge preview).
+  # PRs get the pull_request run; main gets the push run after merge.
   push:
+    branches: [main]
 
   pull_request:
 

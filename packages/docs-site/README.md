@@ -1,45 +1,28 @@
 # docs-site
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
+The VerBump **user docs** site ([verbump.jvk.to](https://verbump.jvk.to)) — a
+[Fumadocs](https://fumadocs.dev) (Next.js) app, private to this workspace and
+never published to npm. See ADR-22 in [`docs/ADR.md`](../../docs/ADR.md) for
+the documentation architecture.
 
-Run development server:
+This repo is pnpm-only (see [`docs/CODE_STYLE.md`](../../docs/CODE_STYLE.md)).
+From the repo root:
 
-```bash
-npm run dev
-# or
-pnpm dev
-# or
-yarn dev
+```sh
+pnpm docs:dev     # dev server
+pnpm docs:build   # production build (what Vercel runs)
 ```
 
-Open http://localhost:3000 with your browser to see the result.
+## Layout
 
-## Explore
+| Path | Description |
+| --- | --- |
+| `content/docs/` | The MDX pages; sidebar order lives in `meta.json` files. |
+| `app/(home)` | Landing page. |
+| `app/docs` | Documentation layout and pages. |
+| `lib/shared.ts` | Site name and GitHub repo constants. |
+| `app/global.css` | Brand color tokens (`--color-vb-*`) and theme accents. |
+| `vercel.json` | Skips deploys when neither the site nor the workspace files changed. |
 
-In the project, you can see:
-
-- `lib/source.ts`: Code for content source adapter, [`loader()`](https://fumadocs.dev/docs/headless/source-api) provides the interface to access your content.
-- `lib/layout.shared.tsx`: Shared options for layouts, optional but preferred to keep.
-
-| Route                     | Description                                            |
-| ------------------------- | ------------------------------------------------------ |
-| `app/(home)`              | The route group for your landing page and other pages. |
-| `app/docs`                | The documentation layout and pages.                    |
-| `app/api/search/route.ts` | The Route Handler for search.                          |
-
-### Fumadocs MDX
-
-A `source.config.ts` config file has been included, you can customise different options like frontmatter schema.
-
-Read the [Introduction](https://fumadocs.dev/docs/mdx) for further details.
-
-## Learn More
-
-To learn more about Next.js and Fumadocs, take a look at the following
-resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
-  features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Fumadocs](https://fumadocs.dev) - learn about Fumadocs
+Deployment: Vercel builds this package (root directory `packages/docs-site`)
+on every push; production tracks `main`, PRs get preview deploys.

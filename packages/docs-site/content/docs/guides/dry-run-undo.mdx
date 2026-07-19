@@ -9,7 +9,10 @@ Pass `-d` / `--dry-run` to preview a release end-to-end without touching
 anything: no files written, no `git add`, no commit, no tag, no push:
 
 ```sh
-$ verbump --dry-run
+verbump --dry-run
+```
+
+```text
 ...
 [dry-run] would set .version = '1.0.1' in package.json
 [dry-run] git add package.json
@@ -20,6 +23,19 @@ $ verbump --dry-run
 
 Combine with `--no-commit` / `--no-changelog` to narrow the preview down to
 just the steps you want to see.
+
+### JSON preview
+
+Add `--json` (with `-y`, `-v`, a bump level, or `--preid`) to print the
+release plan as one JSON object on stdout — everything else goes to stderr,
+so scripts, CI, and agents can consume it directly:
+
+```sh
+verbump --minor --dry-run --json > plan.json
+```
+
+`--json` is preview-only: it requires `--dry-run`, and real runs keep their
+normal output.
 
 ## Undo
 

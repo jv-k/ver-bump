@@ -556,16 +556,19 @@ load 'test_helper'
   assert_equal "${FLAG_DRYRUN}" "true"
 }
 
-@test "help↔README flag parity: every --help long flag appears in README" {
-  local help_out flags flag
+# The user docs site (ADR-22) is canonical for usage; the CLI reference page
+# replaced the README's flag tables as the parity target.
+@test "help↔user-docs flag parity: every --help long flag appears in the CLI reference" {
+  local cli_ref help_out flags flag
+  cli_ref="${repo_dir}/packages/docs-site/content/docs/reference/cli.mdx"
   help_out=$(get_help_msg)
 
   flags=$(printf '%s' "$help_out" | grep -oE -- '--[a-z][-a-z]+' | sort -u)
 
   for flag in $flags; do
     [[ "$flag" == "--name" ]] && continue
-    grep -qF -- "$flag" "${repo_dir}/README.md" \
-      || bats_fail "Flag ${flag} appears in --help but not in README.md"
+    grep -qF -- "$flag" "$cli_ref" \
+      || bats_fail "Flag ${flag} appears in --help but not in ${cli_ref#"${repo_dir}"/}"
   done
 }
 

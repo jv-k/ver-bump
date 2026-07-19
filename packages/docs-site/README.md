@@ -24,5 +24,8 @@ pnpm docs:build   # production build (what Vercel runs)
 | `app/global.css` | Brand color tokens (`--color-vb-*`) and theme accents. |
 | `vercel.json` | Skips deploys when neither the site nor the workspace files changed. |
 
-Deployment: Vercel builds this package (root directory `packages/docs-site`)
-on every push; production tracks `main`, PRs get preview deploys.
+Deployment: the Vercel project `verbump` builds this package (root directory
+`packages/docs-site`); production tracks `main`, PRs get preview deploys.
+`ignoreCommand` skips commits that touch neither this package nor the
+workspace files — so a shell-only commit produces a "Canceled" deployment by
+design.

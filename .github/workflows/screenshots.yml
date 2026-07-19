@@ -65,10 +65,14 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Install JetBrains Mono, gifsicle, ffmpeg, and ttyd
+      - name: Install JetBrains Mono, gifsicle, ffmpeg, ttyd, and zsh
         run: |
+          # zsh: the tapes `Set Shell "zsh"` and the runner image ships
+          # without it — ttyd then fails with "execvp failed: no such file
+          # or directory" INSIDE the rendered frames while the run stays
+          # green, so the images must be eyeballed after any change here.
           sudo apt-get update -y
-          sudo apt-get install -y fonts-jetbrains-mono gifsicle ffmpeg ttyd
+          sudo apt-get install -y fonts-jetbrains-mono gifsicle ffmpeg ttyd zsh
           fc-cache -f
 
       - name: Install vhs (sha256-pinned release binary)

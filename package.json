@@ -27,6 +27,8 @@
   },
   "scripts": {
     "dev": "./dev/sandbox.sh",
+    "docs:dev": "pnpm --filter docs-site dev",
+    "docs:build": "pnpm --filter docs-site build",
     "dev:dry": "./dev/sandbox.sh --dry-run",
     "release": "./verbump.sh --release -p origin && pnpm brew:bump",
     "bump-release": "./verbump.sh --patch -y --release -p origin && pnpm brew:bump",

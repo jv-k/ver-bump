@@ -183,7 +183,7 @@ _verbump() {
     '(-m --message)'{-m,--message}'[custom annotated-tag message]:message:' \
     '(-f --file)'{-f,--file}'[bump version in extra JSON file]:file:_files -g "*.json"' \
     '--source[version source + primary bump target (default package.json)]:file:_files -g "*.json"' \
-    '*--bump[bump a JSON/TOML/YAML/text file: <file>[:@<path>|:<pattern with {{version}}>]]:spec:' \
+    '*--bump[bump a JSON/TOML/YAML/text file: <file>, <file>:@<path>, or <file>:<pattern with {{version}}>]:spec:' \
     '(-p --push)'{-p,--push}'[push branch + tag to <remote>]:remote:' \
     '(-t --tag-prefix)'{-t,--tag-prefix}'[override tag prefix]:prefix:' \
     '(-B --branch-prefix)'{-B,--branch-prefix}'[override branch prefix]:prefix:' \

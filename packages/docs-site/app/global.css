@@ -2,6 +2,65 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
+/* VerBump brand tokens — the 7-color terminal-logo rainbow from lib/styles.sh
+   (xterm-256 codes 196, 202, 226, 82, 21, 93, 163). */
+@theme {
+  --color-vb-red: #ff0000;
+  --color-vb-orange: #ff5f00;
+  --color-vb-yellow: #ffff00;
+  --color-vb-green: #5fff00;
+  --color-vb-blue: #0000ff;
+  --color-vb-violet: #8700ff;
+  --color-vb-magenta: #d700af;
+}
+
+/* Brand accent: violet drives links, active sidebar items, and buttons.
+   Softened per scheme so it stays readable on both backgrounds. */
+:root {
+  --color-fd-primary: color-mix(in oklab, var(--color-vb-violet) 85%, black);
+}
+
+.dark {
+  --color-fd-primary: color-mix(in oklab, var(--color-vb-violet) 65%, white);
+}
+
+/* Feature-card icon chip. Set `--vb-c` to a brand token on the element; the
+   mix keeps even yellow/green legible in light mode and vivid in dark. */
+.vb-icon {
+  background: color-mix(in oklab, var(--vb-c) 12%, transparent);
+  color: color-mix(in oklab, var(--vb-c) 70%, black);
+}
+
+.dark .vb-icon {
+  color: color-mix(in oklab, var(--vb-c) 80%, white);
+}
+
+/* Terminal-logo cut-out: thin yellow/green strokes vanish on white, so give
+   them a faint dark halo in light mode only. */
+.vb-logo {
+  filter: drop-shadow(0 0 1px rgb(0 0 0 / 0.55));
+}
+
+.dark .vb-logo {
+  filter: none;
+}
+
+/* Thin rainbow rule echoing the terminal logo. */
+.vb-rainbow-bar {
+  height: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    var(--color-vb-red),
+    var(--color-vb-orange),
+    var(--color-vb-yellow),
+    var(--color-vb-green),
+    var(--color-vb-blue),
+    var(--color-vb-violet),
+    var(--color-vb-magenta)
+  );
+}
+
 html {
   scrollbar-gutter: stable;
 }

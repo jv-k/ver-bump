@@ -182,9 +182,11 @@ hooks_repo() {
 @test "hooks: --no-hooks skips both hooks (R-HOOK-5)" {
   hooks_repo
 
+  # </dev/null makes the EOF explicit: with inherited stdin an interactive
+  # bats run would hang at the push prompt instead of declining it.
   PRE_BUMP_CMD="touch pre-ran; exit 1" POST_TAG_CMD="touch post-ran; exit 1" \
-    run ${profile_script} -v 1.0.1 -y --no-hooks
-  assert_failure 5 # falls through to the push prompt, declined by empty stdin
+    run ${profile_script} -v 1.0.1 -y --no-hooks </dev/null
+  assert_failure 5 # falls through to the push prompt, declined by stdin EOF
   [ ! -f pre-ran ]
   [ ! -f post-ran ]
   # The release itself went through: bump commit + tag exist.

@@ -7,6 +7,8 @@ implementation detail (see `docs/ADR.md`).
 
 ## Language
 
+### The tool
+
 **Plain-bash release tool** (the canonical self-description):
 What `VerBump` is: a plain-bash release tool for Git repositories with no Node
 runtime, `git` and `jq` its only default-path dependencies. `verbump.sh` is the
@@ -26,6 +28,81 @@ dependencies are preflighted only when it is invoked (e.g. `--release` needs
 `gh`; TOML/YAML bump targets need `tomlq`/`yq`). The counterpart to the default
 path.
 _Avoid_: plugin, extension, add-on
+
+### Versioning
+
+**Version source**:
+The one file the current version is read from — `package.json` by default, any
+JSON file via `--source` — and always the primary bump target. When the file
+doesn't exist, the current version is derived from the latest matching release
+tag instead.
+_Avoid_: version file, source file (unqualified)
+
+**Bump target**:
+A file whose recorded version a release rewrites: the version source plus any
+extras declared with `--bump` / `--file` (structured JSON/TOML/YAML fields, or
+a `{{version}}` text pattern for anything else).
+_Avoid_: bump file, target file
+
+**Bump suggestion**:
+The proposed next version, derived from Conventional Commits since the last
+tag — or, on a prerelease, its trailing counter — and always printed before
+the prompt so pressing Enter does the right thing.
+_Avoid_: auto-bump, guessed version
+
+**Explicit bump switch**:
+`--major` / `--minor` / `--patch` — a CLI-only switch that forces the bump
+level and bypasses the suggestion machinery entirely; mutually exclusive with
+each other and with `-v`.
+_Avoid_: force flag, level flag
+
+### Release mechanics
+
+**Release workflow**:
+One of the three selectable shapes a release can take: **tag-in-place** (the
+default), **release branch** (`--branch`), or **release PR** (`--pr`).
+_Avoid_: release mode, release strategy
+
+**Tag-in-place**:
+The default release workflow — bump commit plus annotated tag on the current
+branch, no release branch created.
+_Avoid_: no-branch mode (its flag `--no-branch` is a deprecated no-op)
+
+**Bump commit**:
+The single commit a release makes, containing every bump target and the
+changelog update; its message comes from `COMMIT_MSG_TEMPLATE` or the
+generated default.
+_Avoid_: release commit, version commit
+
+**Safety preflight**:
+A guard that stops a release before any mutation when repo state looks wrong
+(dirty tree, remote out of sync, wrong branch, nothing to release). Every
+preflight refusal exits `3`, the precondition code.
+_Avoid_: sanity check, safety check
+
+**Release hook**:
+A user-supplied command run at one of the two hook points around the mutation
+phase (`PRE_BUMP_CMD`, `POST_TAG_CMD`). Hook failure is the sole meaning of
+exit code `4`; a fuller plugin system is a non-goal.
+_Avoid_: plugin, lifecycle script
+
+**Local undo**:
+Reverting a just-cut release — tag, release branch, bump commit — before
+anything is pushed. It never touches a remote.
+_Avoid_: rollback, revert (unqualified)
+
+**Release preview**:
+The machine-readable `--dry-run --json` answer to "what would this release
+do?" — the _plan_ before a release, where `--quiet` output is the _result_
+after one.
+_Avoid_: dry-run JSON dump, plan output
+
+**Dev sandbox**:
+An isolated throwaway git repo in which contributors exercise the real release
+flow, not just a dry-run; its cleanup must never fire against the host repo.
+_Avoid_: test repo, playground
+
+### Docs
 
 **User docs**:
 The published documentation site for people who run `VerBump` — how to

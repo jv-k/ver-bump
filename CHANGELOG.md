@@ -1,3 +1,23 @@
+## 4.0.2 (2026-07-19)
+- chore: updated package.json, updated CHANGELOG.md, bumped 4.0.1 -> 4.0.2
+- test(hooks): sanitize inherited VERBUMP_* before the leak assertion
+- test(completions): sync on compinit before TAB in live zpty test
+- docs: standardize git worktrees under .worktrees/
+- chore(publish): gate releases on lint + tests via pre-bump hook
+- chore(publish): add bump-release script for one-shot patch releases
+- fix(completions): unbracket the zsh --bump spec, add live comp test
+- fix(completions): make zsh cache hint ZDOTDIR-aware and glob-safe
+- fix(completions): register lowercase verbump in all three shells
+- ci(screenshots): center the social card and drop requirements line
+- ci(screenshots): add social-preview card tape and 1280x640 render
+- ci(screenshots): freeze legacy demo.gif; rename current verbump-demo
+- ci(screenshots): restore the 2.0.0 demo tape and renders
+- ci(screenshots): land 1.0.0 demo and 4.0.1 help renders
+- ci(screenshots): retarget the demo at an evergreen 1.0.0 bump
+- fix(publish): match npm-pack glob to the scoped package name
+- docs(changelog): correct npm package name in the 4.0.0 note
+- docs(readme): restore live npm version badge
+
 ## 4.0.1 (2026-07-18)
 - chore: updated package.json, updated CHANGELOG.md, bumped 4.0.0 -> 4.0.1
 - docs(readme): use static npm badge until verbump is published

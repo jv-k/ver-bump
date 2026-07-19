@@ -27,7 +27,8 @@ contract); IDs added after the PRD are backfilled here first.
 | [undo](./undo/requirements.md) | R-UNDO | `undo.bats` |
 | [safety-preflights](./safety-preflights/requirements.md) | R-SAFE | `worktree-clean.bats`, `release-branch-guard.bats`, `remote-sync.bats`, `no-release.bats` |
 | [hooks](./hooks/requirements.md) | R-HOOK | `hooks.bats`, `args.bats` |
-| [ui-output](./ui-output/requirements.md) | R-UI, R-OUT | `ui.bats`, `color.bats`, `about.bats`, `quiet.bats` |
+| [ui-output](./ui-output/requirements.md) | R-UI, R-OUT-1..4 | `ui.bats`, `color.bats`, `about.bats`, `quiet.bats` |
+| [dry-run-json](./dry-run-json/requirements.md) | R-OUT-5..7 | `dry-run-json.bats` |
 | [dev-sandbox](./dev-sandbox/requirements.md) | R-DEV | `sandbox.bats` |
 | [json-bump-formatting](./json-bump-formatting/requirements.md) | R-FMT | `json.bats`, `bumpfile.bats` |
 | [bump-targets](./bump-targets/requirements.md) | R-TGT | `bump-targets.bats` |

@@ -32,6 +32,7 @@ _run-hook() {
   local name=$1 cmd=$2
 
   if [ "${FLAG_DRYRUN:-false}" = true ]; then
+    record-effect action run-hook hook "$name" command "$cmd"
     echo -e "${S_LIGHT-}[dry-run]${RESET-} would run ${name} hook: bash -c '${cmd}'" >&2
     return 0
   fi

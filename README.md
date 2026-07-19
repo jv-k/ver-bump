@@ -95,6 +95,7 @@ VerBump             # cut it: reads commits, suggests a bump, prompts before pus
 - [Bumping non-Node projects and extra files](#bumping-non-node-projects-and-extra-files)
 - [Version suggestion](#version-suggestion)
 - [Dry-run](#dry-run)
+  - [The release plan as JSON (`--dry-run --json`)](#the-release-plan-as-json---dry-run---json)
 - [Release hooks](#release-hooks)
 - [Exit codes](#exit-codes)
 - [Shell completions](#shell-completions)
@@ -312,6 +313,7 @@ The three bump levels are mutually exclusive with each other and with `-v`. With
 | `-d`, `--dry-run` | Print every side-effect without executing. |
 | `-y`, `--yes` | Skip interactive confirmation prompts. |
 | `-q`, `--quiet` | Suppress decoration and print only the new version on stdout (needs `-y`, `-v`, a bump level, or `--preid`). |
+| `--json` | With `--dry-run`: print the release plan as a single JSON object on stdout, for scripts and CI (needs `-y`, `-v`, a bump level, or `--preid`). |
 | `-h`, `--help` | Show the help message (paged through `less`/`more` when the terminal is short). |
 | `--completions <shell>` | Emit a completion script for bash, zsh, or fish. |
 | `--install-completions[=<shell>]` | Install the completion script (auto-detects the shell). |
@@ -508,6 +510,26 @@ $ verbump --dry-run
 ```
 
 Combine with `--no-commit` / `--no-changelog` to narrow the preview down to just the steps you want to see.
+
+### The release plan as JSON (`--dry-run --json`)
+
+The preview above is written for people. Add `--json` and the same preview comes out as data: one JSON object on stdout that says what the release would be (`1.4.2 → 1.5.0`) and lists every step VerBump would take — which files it would touch, the commit, the tag, what gets pushed where — in the order it would take them. All the human-readable output moves to stderr, so redirecting stdout captures pure JSON:
+
+```sh
+$ verbump --minor --yes -p origin --dry-run --json > plan.json
+$ jq -r '.version.from + " → " + .version.to' plan.json
+1.4.2 → 1.5.0
+$ jq -r '.effects[].action' plan.json
+bump-json
+changelog
+commit
+tag
+push
+```
+
+This is for anything that isn't a person reading a terminal: a CI job that posts the release plan for approval before the real run, a script that needs the next version number, or an AI agent checking what a release would do before asking you to pull the trigger. The plan only ever lists steps that would actually run — leave out `--pr` and there's no `open-pr` entry to filter around.
+
+Two rules keep it predictable: `--json` only works together with `--dry-run` (it previews a release; it never performs one), and like `--quiet` it needs a non-interactive version choice (`-y`, `-v`, a bump level, or `--preid`). If nothing needs releasing, stdout stays empty. The payload is versioned (`"schema": "verbump.dry-run/v1"`), and the full field reference lives in [`docs/features/dry-run-json/DESIGN.md`](docs/features/dry-run-json/DESIGN.md).
 
 ## Release hooks
 

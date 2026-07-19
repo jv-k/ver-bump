@@ -292,6 +292,7 @@ bump-target-files() {
 
       if [ "$FLAG_DRYRUN" = true ]; then
         if grep -qF -- "$search" "$_BT_FILE"; then
+          record-effect action bump-text target "$_BT_FILE" pattern "$_BT_PATTERN" from "$V_PREV" to "$V_NEW"
           echo -e "${S_LIGHT-}[dry-run]${RESET-} would replace ${S_VAL-}${search}${RESET-} ${I_ARROW-→} ${S_VAL-}${replace}${RESET-} in ${S_VAL-}${_BT_FILE}${RESET-}" >&2
           GIT_MSG+="updated ${_BT_FILE}, "
           PROCESSED+=("$_BT_FILE")
@@ -339,6 +340,7 @@ bump-target-files() {
     fi
 
     if [ "$FLAG_DRYRUN" = true ]; then
+      record-effect action bump-struct target "$_BT_FILE" format "$_BT_FMT" path "$_BT_PATH" from "${cur:-}" to "$V_NEW"
       echo -e "${S_LIGHT-}[dry-run]${RESET-} would set ${S_VAL-}${desc}${RESET-} = '${S_VAL-}${V_NEW}${RESET-}' in ${S_VAL-}${_BT_FILE}${RESET-} (was ${S_VAL-}${cur:-none}${RESET-})" >&2
       GIT_MSG+="updated ${_BT_FILE}, "
       PROCESSED+=("$_BT_FILE")

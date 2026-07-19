@@ -346,6 +346,7 @@ usage() {
   print-opt-row "-d" "--dry-run"       ""            "Dry-run: print every side-effect without executing."
   print-opt-row "-y" "--yes"           ""            "Skip interactive confirmation prompts."
   print-opt-row "-q" "--quiet"         ""            "Suppress decoration; print only the new version on stdout (needs -y, -v, a bump level, or --preid)."
+  print-opt-row ""   "--json"          ""            "With --dry-run: print the release plan as one JSON object on stdout (needs -y, -v, a bump level, or --preid)."
 
   print-opt-group "Help & completions"
   print-opt-row "-h" "--help"          ""            "Show this help message."
@@ -357,6 +358,7 @@ usage() {
   print-example-row "${SCRIPT_CMD}"                       "Interactive — reads commits, suggests bump, prompts."
   print-example-row "${SCRIPT_CMD} -v 2.0.0"              "Non-interactive, explicit version."
   print-example-row "${SCRIPT_CMD} --dry-run"             "Preview every side-effect without executing."
+  print-example-row "${SCRIPT_CMD} --minor --dry-run --json" "Print the release plan as JSON (for scripts, CI, agents)."
   print-example-row "${SCRIPT_CMD} -p origin"             "Push the release branch + tag when done."
   print-example-row "${SCRIPT_CMD} --pr"                  "Branch, push, and open a release PR (needs gh)."
   print-example-row "${SCRIPT_CMD} -t release/"           "Use a custom tag prefix (e.g. release/1.2.3)."

@@ -275,6 +275,20 @@ normalize-long-opts() {
       continue
     fi
 
+    # --json — long-only boolean: with --dry-run, emit the release plan as one
+    # JSON object on stdout (R-OUT-5). CLI-only like --quiet (reset in
+    # process-arguments): a machine-output mode must be an explicit
+    # per-invocation choice. The --dry-run requirement and the prompt guard
+    # are enforced after parsing, once FLAG_DRYRUN is known.
+    if [ "$arg" = "--json" ]; then
+      FLAG_JSON=true
+      continue
+    elif [[ "$arg" == "--json="* ]]; then
+      fail 2 \
+        "Option --json doesn't take a value." \
+        "Drop the '=<value>' — --json is a boolean flag."
+    fi
+
     # --no-hooks — long-only boolean: skip both release hooks (PRE_BUMP_CMD /
     # POST_TAG_CMD) for this run (R-HOOK-5) — git's --no-verify convention.
     # CLI-only like --allow-empty (reset in process-arguments): an rc or env
@@ -434,6 +448,18 @@ normalize-long-opts() {
   done
 }
 
+# Shared guard for the machine-output modes (--quiet R-OUT-2, --json
+# R-OUT-6): both capture stdout, where an interactive version prompt is a
+# hung pipeline. Exits 2 with the caller's message unless the version choice
+# is already non-interactive (--yes, -v, a forced level, or --preid).
+_require-noninteractive-version() {
+  if [ "${FLAG_YES:-false}" != true ] && [ -z "${V_USR_SUPPLIED-}" ] && [ -z "${BUMP_LEVEL-}" ] && [ -z "${PRE_ID-}" ]; then
+    fail 2 \
+      "$1" \
+      "Add --yes to accept the suggested version, pass -v <version>, or force a level with --major/--minor/--patch/--preid."
+  fi
+}
+
 # Process script options
 process-arguments() {
   local OPTIONS OPTIND OPTARG
@@ -452,7 +478,12 @@ process-arguments() {
   PRE_ID=
   ALLOW_EMPTY=false
   FLAG_QUIET=false
+  FLAG_JSON=false
   FLAG_NOHOOKS=false
+  # Effects accumulator (lib/effects.sh): reset alongside FLAG_JSON so a
+  # sourced VerBump running main() twice can't leak run-1 effects into
+  # run-2's --json payload (R-OUT-5).
+  reset-effects
 
   normalize-long-opts "$@"
   set -- ${NORMALIZED_ARGV[@]+"${NORMALIZED_ARGV[@]}"}
@@ -476,7 +507,12 @@ process-arguments() {
       -q*|-[!-]*q*) FLAG_QUIET=true; break ;;
     esac
   done
-  if [ "$FLAG_QUIET" = true ]; then
+  # --json shares the same stream discipline (R-OUT-5): the single JSON
+  # object main() emits at the end goes to the saved real stdout on FD 3,
+  # everything else to stderr — so `VerBump --dry-run --json >plan.json`
+  # captures nothing but JSON. FLAG_JSON is already final here
+  # (normalize-long-opts set it above; it has no short form to pre-scan).
+  if [ "$FLAG_QUIET" = true ] || [ "$FLAG_JSON" = true ]; then
     exec 3>&1 1>&2
   fi
 
@@ -592,10 +628,21 @@ process-arguments() {
         "--quiet is incompatible with -l/--pause-changelog (an interactive pause would hang a captured pipeline)." \
         "Drop -l/--pause-changelog (or unset FLAG_CHANGELOG_PAUSE in .verbumprc), or drop --quiet."
     fi
-    if [ "${FLAG_YES:-false}" != true ] && [ -z "${V_USR_SUPPLIED-}" ] && [ -z "${BUMP_LEVEL-}" ] && [ -z "${PRE_ID-}" ]; then
+    _require-noninteractive-version \
+      "--quiet would hide the interactive version prompt (a hidden prompt is a hung pipeline)."
+  fi
+
+  # --json is preview-only in v1 (R-OUT-6): it describes what a release
+  # *would* do, so it is meaningful only with --dry-run. A post-run result
+  # object is a possible later extension — rejecting now keeps that door
+  # open without a breaking change.
+  if [ "$FLAG_JSON" = true ]; then
+    if [ "${FLAG_DRYRUN:-false}" != true ]; then
       fail 2 \
-        "--quiet would hide the interactive version prompt (a hidden prompt is a hung pipeline)." \
-        "Add --yes to accept the suggested version, pass -v <version>, or force a level with --major/--minor/--patch/--preid."
+        "--json requires --dry-run (it emits a preview of the release plan; real runs keep their normal output)." \
+        "Add -d/--dry-run, or drop --json."
     fi
+    _require-noninteractive-version \
+      "--json needs a non-interactive version choice (a JSON pipeline must not stop at a prompt)."
   fi
 }

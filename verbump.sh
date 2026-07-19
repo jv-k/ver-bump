@@ -30,6 +30,7 @@ source "$MODULE_DIR/lib/errors.sh"
 source "$MODULE_DIR/lib/ui.sh"
 source "$MODULE_DIR/lib/validate.sh"
 source "$MODULE_DIR/lib/json.sh"
+source "$MODULE_DIR/lib/effects.sh"
 source "$MODULE_DIR/lib/textbump.sh"
 
 source "$MODULE_DIR/lib/usage.sh"
@@ -51,6 +52,9 @@ GIT_MSG=""
 REL_NOTE=""
 FLAG_DRYRUN=false
 FLAG_QUIET=false # -q/--quiet: decoration to stderr, bare new version on stdout (R-OUT-1). CLI-only; reset in process-arguments.
+FLAG_JSON=false # --json: with --dry-run, emit the release plan as one JSON object on stdout (R-OUT-5). CLI-only; reset in process-arguments.
+# VB_EFFECTS (declared in lib/effects.sh): JSON-array text of recorded release
+# effects for --json; reset per run in process-arguments via reset-effects.
 
 # Config-keyed defaults use `:=` so exported env values survive. An
 # unconditional assignment (e.g. `TAG_PREFIX="v"`) would clobber
@@ -129,9 +133,16 @@ main() {
   # tag prefix, no colour. A no-op run never reaches this point
   # (check-releasable-commits exits 0 first), so quiet stdout stays empty
   # for "no release happened" (R-OUT-4).
-  if [ "$FLAG_QUIET" = true ]; then
+  # Under --json the payload owns stdout: the bare-version line is skipped
+  # (its information lives at .version.to), so `--quiet --json` still yields
+  # a stream that is exactly one JSON object.
+  if [ "$FLAG_QUIET" = true ] && [ "$FLAG_JSON" != true ]; then
     printf '%s\n' "$V_NEW" >&3
   fi
+
+  # --dry-run --json: one JSON object with the recorded release plan on FD 3
+  # (R-OUT-5). Self-guarded — a no-op without --json.
+  emit-effects-json
 }
 
 # Execute script when it is executed as a script, and when it is brought into the environment with source (so it can be tested)

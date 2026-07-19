@@ -225,7 +225,7 @@ _changelog-grouped-section() {
 do-changelog() {
   [ "$FLAG_NOCHANGELOG" = true ] && return
   subsection "changelog"
-  local ACTION_MSG COMMITS_MSG LOG_MSG LOG_RC RANGE TMP _chlog_line
+  local ACTION_MSG COMMITS_MSG LOG_MSG LOG_RC RANGE TMP _chlog_line _chlog_entries
 
   RANGE=$([ "$(git tag -l "${TAG_PREFIX}${V_PREV}")" ] && echo "${TAG_PREFIX}${V_PREV}..HEAD")
   if [ "${CHANGELOG_STYLE-}" = "grouped" ]; then
@@ -285,6 +285,23 @@ do-changelog() {
   fi
 
   if [ "$FLAG_DRYRUN" = true ]; then
+    # Structured sibling of the preview below (R-OUT-5). `entries` counts the
+    # commit bullets plus the bump commit's own entry — typed via
+    # record-effect-raw so consumers get a number, not a string. Guarded by
+    # FLAG_JSON so the counting work only happens when the payload is wanted.
+    if [ "${FLAG_JSON:-false}" = true ]; then
+      if [ "${CHANGELOG_STYLE-}" = "grouped" ]; then
+        # Grouped records are \x1f-terminated — count the separators.
+        _chlog_entries=$(printf '%s' "$COMMITS_MSG" | tr -cd '\037' | wc -c | tr -d ' ')
+      else
+        _chlog_entries=$(grep -c '^- ' <<<"$COMMITS_MSG" || true)
+      fi
+      record-effect-raw "$(jq -nc \
+        --arg op "$ACTION_MSG" \
+        --arg heading "$(head -n1 "$TMP")" \
+        --argjson entries "$((_chlog_entries + 1))" \
+        '{action:"changelog", target:"CHANGELOG.md", op:$op, heading:$heading, entries:$entries}')"
+    fi
     # Subordinate to the "changelog" pill above: header via log_trace (dim
     # ↳, keeps the "[dry-run]" marker text R-DRY-2 requires), preview body
     # as a dim, 2-space-indented block — so the whole changelog step reads

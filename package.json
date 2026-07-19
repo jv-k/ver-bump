@@ -29,6 +29,7 @@
     "dev": "./dev/sandbox.sh",
     "dev:dry": "./dev/sandbox.sh --dry-run",
     "release": "./VerBump.sh --release -p origin && pnpm brew:bump",
+    "bump-release": "./VerBump.sh --patch -y --release -p origin && pnpm brew:bump",
     "brew:bump": "gh workflow run bump-formula.yml --repo jv-k/homebrew-tap",
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/*.bats",

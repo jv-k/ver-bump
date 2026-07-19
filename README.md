@@ -1,5 +1,9 @@
 # VerBump
 
+<div align="center">
+  <img src="https://raw.githubusercontent.com/jv-k/VerBump/main/img/social-preview.png" alt="VerBump social card: rainbow ASCII wordmark in a dark terminal window, the current version pill, the tagline 'Release tool for any Git repo.', and the pipeline Conventional Commits, SemVer, changelog, tag, push.">
+</div>
+
 **A plain-bash release tool for any Git repo.**
 
 - **Suggests the right bump** — reads your [Conventional Commits](https://www.conventionalcommits.org/) to propose the next [SemVer](https://semver.org/), prereleases included

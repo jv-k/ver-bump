@@ -35,12 +35,18 @@ emulate -L zsh
 zmodload zsh/zpty
 dir=$1 word=$2
 zpty vb 'zsh -f -i'
-zpty -w vb "PS1='%% '; fpath=($dir \$fpath); autoload -U compinit; compinit -u -D; LISTMAX=1000"
-sleep 1
-for i in {1..10}; do zpty -r -t vb chunk 2>/dev/null; sleep 0.1; done
+# The marker is split in the sent line so the pty ECHO of the command text
+# can't satisfy the wait — only compinit actually finishing prints READY.
+zpty -w vb "PS1='%% '; fpath=($dir \$fpath); autoload -U compinit; compinit -u -D; LISTMAX=1000; print RE''ADY"
+buf=""
+for i in {1..100}; do
+  if zpty -r -t vb chunk 2>/dev/null; then buf+="$chunk"; fi
+  [[ $buf == *$'\n'*READY* ]] && break
+  sleep 0.1
+done
 zpty -w -n vb "$word"$'\t'
 out=""
-for i in {1..80}; do
+for i in {1..100}; do
   if zpty -r -t vb chunk 2>/dev/null; then out+="$chunk"; fi
   [[ $out == *"--branch"* || $out == *"invalid option"* ]] && break
   sleep 0.1

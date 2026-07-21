@@ -104,6 +104,41 @@ released_repo() {
   git tag -a v1.2.3 -m "v1.2.3"
 }
 
+# Two-package monorepo (#96, spec #128): pkg-a at 1.2.3 and pkg-b at 0.4.0,
+# each with a per-package .verbumprc carrying its TAG_PREFIX, baseline tags,
+# then one feat(pkg-b) and one fix(pkg-a) commit — the canonical layout from
+# the #118 audit. A bare "remote" is wired up as origin so full (non-dry)
+# runs can push with -p origin. Leaves $PWD at the repo root; tests cd into
+# packages/* themselves (the blessed package-cwd flow). Shared by
+# monorepo-scope.bats / monorepo-preflights.bats.
+monorepo_fixture() {
+  local repo remote
+  repo="$(scratch_repo)"
+  remote=$(mktemp -d)
+  CLEANUP_CMDS+=("rm -rf ${remote}")
+  git init -q --bare "$remote"
+  cd "$repo" || exit 1
+  git remote add origin "$remote"
+  mkdir -p packages/pkg-a packages/pkg-b
+  printf '{ "version": "1.2.3" }\n' > packages/pkg-a/package.json
+  printf '{ "version": "0.4.0" }\n' > packages/pkg-b/package.json
+  printf 'TAG_PREFIX=pkg-a-v\n' > packages/pkg-a/.verbumprc
+  printf 'TAG_PREFIX=pkg-b-v\n' > packages/pkg-b/.verbumprc
+  # load-config refuses group/world-writable rc files — pin the mode so the
+  # fixture can't inherit a permissive umask from the host.
+  chmod 644 packages/pkg-a/.verbumprc packages/pkg-b/.verbumprc
+  git add packages
+  git commit -qm "chore: scaffold packages"
+  git tag -a pkg-a-v1.2.3 -m "pkg-a-v1.2.3"
+  git tag -a pkg-b-v0.4.0 -m "pkg-b-v0.4.0"
+  echo "widget" > packages/pkg-b/widget.txt
+  git add packages/pkg-b/widget.txt
+  git commit -qm "feat(pkg-b): add widget"
+  echo "rounding" > packages/pkg-a/rounding.txt
+  git add packages/pkg-a/rounding.txt
+  git commit -qm "fix(pkg-a): correct rounding"
+}
+
 # Make a throwaway git repo under /tmp and echo its path. Adds cleanup.
 # Initial state: one empty commit on the default branch. No tags.
 scratch_repo() {

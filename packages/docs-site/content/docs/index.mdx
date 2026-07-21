@@ -29,20 +29,20 @@ standard CLI tools.
 
 | Feature | Description |
 | --- | --- |
-| <Yes /> **Zero real dependencies** | Pure bash. Only `git` and `jq` are needed to run it. |
-| <Yes /> **Multi-format file bumps** | Keeps `package.json`, `pyproject.toml`, a Go const, a Helm chart, or any text file in sync with the tag via `--bump`. |
-| <Yes /> **Smart bump suggestion** | Reads Conventional Commits since the last tag to propose **major** / **minor** / **patch**, and advances prerelease counters (`4.0.0-dev.6` → `4.0.0-dev.7`). |
-| <Yes /> **Automatic CHANGELOG** | Generates and updates `CHANGELOG.md`: a flat list, or Conventional-Commit-**grouped** sections with commit/PR/compare links. |
-| <Yes /> **Three release workflows** | Tag-in-place (default), release branch (`--branch`), or release PR (`--pr`). Pick per-run or set a default. |
-| <Yes /> **Monorepo packages** | Per-package tag series and path-scoped commit analysis: run VerBump from a package dir and the suggestion, changelog, and release notes cover only that package. |
-| <Yes /> **Safety preflights** | Refuses to release on a dirty tree, an out-of-sync remote, or a disallowed branch — each individually overridable. |
-| <Yes /> **Dry-run** | `--dry-run` prints every side-effect (file write, `git add`, commit, tag, push) without executing any of them. |
-| <Yes /> **Undo** | `--undo` rolls back a local release (tag + release branch) before anything is pushed. |
-| <Yes /> **GitHub releases & PRs** | `--release` publishes a GitHub release for the new tag; `--pr` opens a pull request. Both use the optional [`gh`](https://cli.github.com) CLI. |
-| <Yes /> **Release hooks** | `PRE_BUMP_CMD` / `POST_TAG_CMD` run your tests before the bump and build artifacts after the tag. |
-| <Yes /> **Signed tags** | Annotated tags by default; `--sign` produces GPG-signed tags using your git config. |
-| <Yes /> **Shell completions** | Built-in completion scripts for **bash**, **zsh**, and **fish**. |
-| <Yes /> **SemVer 2.0 validation** | Every version input is validated against the SemVer 2.0 spec, including `-prerelease` and `+build` metadata. Typos fail fast. |
+| <Feature>Zero real dependencies</Feature> | Pure bash. Only `git` and `jq` are needed to run it. |
+| <Feature>Multi-format file bumps</Feature> | Keeps `package.json`, `pyproject.toml`, a Go const, a Helm chart, or any text file in sync with the tag via `--bump`. |
+| <Feature>Smart bump suggestion</Feature> | Reads Conventional Commits since the last tag to propose **major** / **minor** / **patch**, and advances prerelease counters (`4.0.0-dev.6` → `4.0.0-dev.7`). |
+| <Feature>Automatic CHANGELOG</Feature> | Generates and updates `CHANGELOG.md`: a flat list, or Conventional-Commit-**grouped** sections with commit/PR/compare links. |
+| <Feature>Three release workflows</Feature> | Tag-in-place (default), release branch (`--branch`), or release PR (`--pr`). Pick per-run or set a default. |
+| <Feature>Monorepo packages</Feature> | Per-package tag series and path-scoped commit analysis: run VerBump from a package dir and the suggestion, changelog, and release notes cover only that package. |
+| <Feature>Safety preflights</Feature> | Refuses to release on a dirty tree, an out-of-sync remote, or a disallowed branch — each individually overridable. |
+| <Feature>Dry-run</Feature> | `--dry-run` prints every side-effect (file write, `git add`, commit, tag, push) without executing any of them. |
+| <Feature>Undo</Feature> | `--undo` rolls back a local release (tag + release branch) before anything is pushed. |
+| <Feature>GitHub releases & PRs</Feature> | `--release` publishes a GitHub release for the new tag; `--pr` opens a pull request. Both use the optional [`gh`](https://cli.github.com) CLI. |
+| <Feature>Release hooks</Feature> | `PRE_BUMP_CMD` / `POST_TAG_CMD` run your tests before the bump and build artifacts after the tag. |
+| <Feature>Signed tags</Feature> | Annotated tags by default; `--sign` produces GPG-signed tags using your git config. |
+| <Feature>Shell completions</Feature> | Built-in completion scripts for **bash**, **zsh**, and **fish**. |
+| <Feature>SemVer 2.0 validation</Feature> | Every version input is validated against the SemVer 2.0 spec, including `-prerelease` and `+build` metadata. Typos fail fast. |
 
 ### How it compares
 

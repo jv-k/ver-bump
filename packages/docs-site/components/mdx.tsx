@@ -31,12 +31,22 @@ function Partial() {
   );
 }
 
+// A feature-table row label: green tick + bold name, kept on one line.
+function Feature({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="whitespace-nowrap font-semibold">
+      <Yes /> {children}
+    </span>
+  );
+}
+
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
     Yes,
     No,
     Partial,
+    Feature,
     ...components,
   } satisfies MDXComponents;
 }

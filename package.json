@@ -31,7 +31,7 @@
     "docs:build": "pnpm --filter docs-site build",
     "dev:dry": "./dev/sandbox.sh --dry-run",
     "release": "./verbump.sh --release -p origin && pnpm brew:bump",
-    "bump-release": "./verbump.sh --patch -y --release -p origin && pnpm brew:bump",
+    "bump-release": "./verbump.sh --release --push origin && pnpm brew:bump",
     "brew:bump": "gh workflow run bump-formula.yml --repo jv-k/homebrew-tap",
     "tests:install": "./install_bats.sh",
     "tests:run": "./test/bats/bin/bats ./test/*.bats",

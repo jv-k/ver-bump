@@ -42,7 +42,7 @@ check-worktree-clean() {
 # Unset/empty (the default) = no guard, zero behaviour change. When set, a
 # release from a non-matching branch — or from a detached HEAD — exits 3.
 # Deliberately NOT bypassed by --yes: this is a guard, not a prompt. The
-# one-shot bypass is an empty env override (RELEASE_BRANCHES= VerBump …),
+# one-shot bypass is an empty env override (RELEASE_BRANCHES= verbump …),
 # which beats the rc value per R-CFG-3. Release flow only: --undo,
 # --completions, --about, and --help all exit before the Verify section.
 check-release-branch() {
@@ -53,7 +53,7 @@ check-release-branch() {
   if [ -z "$branch" ]; then
     fail 3 \
       "RELEASE_BRANCHES is set (${RELEASE_BRANCHES}) but HEAD is detached — a release must be cut from a named branch." \
-      "Checkout an allowed branch first, or clear the guard for one run: RELEASE_BRANCHES= VerBump …"
+      "Checkout an allowed branch first, or clear the guard for one run: RELEASE_BRANCHES= verbump …"
   fi
 
   # Glob-match against each pattern. Word-splitting of the unquoted list and
@@ -68,7 +68,7 @@ check-release-branch() {
   if [ "$matched" != true ]; then
     fail 3 \
       "Branch '${branch}' is not a release branch (RELEASE_BRANCHES: ${RELEASE_BRANCHES})." \
-      "Checkout an allowed branch, adjust RELEASE_BRANCHES in .verbumprc, or clear the guard for one run: RELEASE_BRANCHES= VerBump …"
+      "Checkout an allowed branch, adjust RELEASE_BRANCHES in .verbumprc, or clear the guard for one run: RELEASE_BRANCHES= verbump …"
   fi
 }
 

@@ -198,7 +198,7 @@ check-release-deps() {
   if [ "${FLAG_PUSH:-false}" != true ]; then
     fail 2 \
       "--release requires -p / --push <remote> (the tag must be pushed before publishing)." \
-      "Add -p <remote>, e.g. VerBump --release -p origin"
+      "Add -p <remote>, e.g. verbump --release -p origin."
   fi
 
   if ! command -v gh >/dev/null 2>&1; then
@@ -428,13 +428,13 @@ do-undo() {
     else
       fail 2 \
         "No version supplied and current branch '${cur:-<detached>}' isn't a '${REL_PREFIX}X.Y.Z' branch." \
-        "Pass the version explicitly: VerBump --undo <version>"
+        "Pass the version explicitly: verbump --undo <version>."
     fi
   fi
 
   is_semver "$ver" || fail 2 \
     "'$ver' is not a valid SemVer 2.0 version." \
-    "Pass MAJOR.MINOR.PATCH, e.g. --undo 1.2.0"
+    "Pass a SemVer 2.0 version, e.g. --undo 1.2.0."
 
   branch="${REL_PREFIX}${ver}"
   tag="${TAG_PREFIX}${ver}"

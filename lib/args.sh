@@ -125,7 +125,7 @@ normalize-long-opts() {
         undo_ver="${arg#--undo=}"
         [ -z "$undo_ver" ] && fail 2 \
           "--undo= requires a version." \
-          "Pass MAJOR.MINOR.PATCH, e.g. --undo=1.2.0"
+          "Pass a SemVer 2.0 version, e.g. --undo=1.2.0."
       elif (( $# )) && [ "${1:0:1}" != "-" ]; then
         undo_ver="$1"; shift
       else

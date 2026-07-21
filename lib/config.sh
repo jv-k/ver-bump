@@ -226,7 +226,13 @@ resolve-commit-scope() {
   anchor="${VB_RC_DIR:-$top}"
 
   # Word-splitting of the unquoted list is intentional (space-separated
-  # pathspecs, same convention as RELEASE_BRANCHES).
+  # pathspecs, same convention as RELEASE_BRANCHES). Globbing is disabled
+  # around the split — a spec like "src/*" is a GIT pathspec and must reach
+  # git literally, not be expanded by the shell against $PWD. Restore the
+  # caller's glob state afterwards.
+  local had_noglob=false
+  case $- in *f*) had_noglob=true ;; esac
+  set -f
   for spec in ${COMMIT_PATHS:-.}; do
     case "$spec" in
       /*) abs="$spec" ;;
@@ -244,6 +250,7 @@ resolve-commit-scope() {
     fi
     VB_SCOPE_REL+=("$rel")
   done
+  [ "$had_noglob" = true ] || set +f
 
   if [ "$narrowed" != true ]; then
     VB_SCOPE_PATHS=()

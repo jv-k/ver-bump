@@ -368,7 +368,7 @@ not a now step).
 
 ## ADR-18 — `--release` notes default to `gh --generate-notes`; custom command is opt-in
 
-**Status:** Accepted (2.0) · grill 2026-07-16 · refines ADR-11, PRD §5.8 (R-REL-2/4/5)
+**Status:** Accepted (2.0) · grill 2026-07-16 · refines ADR-11, PRD §5.8 (R-REL-2/4/5) · amended by ADR-23 (generated notes stay the default only at whole-repo scope, and gain `--notes-start-tag`)
 
 **Context:** `--release` already requires `gh`. But
 `VERBUMP_RELEASE_NOTES_CMD` defaulted to `npx jv-k/releasetool`, so the
@@ -515,3 +515,56 @@ is unchanged and CI must never make the site build a prerequisite for
 `verbump.sh`. Feature PRs can update their user-docs page in the same diff.
 Deep README edits move to `packages/docs-site/content`; the README stops
 being the manual. Hosting depends on Vercel; the domain is a `jvk.to` CNAME.
+
+---
+
+## ADR-23 — VerBump supports monorepos as a per-package release tool
+
+**Status:** Accepted · 2026-07-21 · grills #119–#122, audit #118 · Refs #96, #117, #128 · amends ADR-18; supersedes the PRD §3.1 "not a monorepo release manager" non-goal
+
+**Context:** VerBump assumed one version per repository. In a monorepo the
+tag machinery already worked per package (every tag lookup is
+`TAG_PREFIX`-anchored — audit #118), but four unscoped commit scans
+(suggestion, changelog, PR body, no-commits gate) and the repo-wide dirty
+check made per-package releases wrong: inflated suggestions, polluted
+changelogs, phantom releases. Users were pushed to Node-based tools even for
+the simple "release this one package correctly" case. Alternatives
+considered: staying out of monorepos entirely (defer to changesets /
+release-please); a `--package <path>` flag (duplicates `cd`, re-bases every
+path); full orchestration (changesets' territory, and Bash 3.2 without
+associative arrays makes graph work genuinely painful).
+
+**Decision:** Monorepo support in the release-it mold, per-package and
+user-orchestrated (R-MONO, `docs/features/monorepo-support`):
+
+- **Blessed package-cwd only.** The package context is "run VerBump from the
+  package directory with a per-package `.verbumprc`" (walk-up discovery
+  already existed). No `--package` flag — possible later as pure sugar.
+- **One new config key, `COMMIT_PATHS`** — space-separated git pathspecs
+  resolved against the rc's own directory, default `"."`. A root rc, or no
+  rc, resolves to the repo root, which is treated as "no scope": whole-repo
+  runs stay byte-identical. A package rc that already sets `TAG_PREFIX`
+  gets correct scoping with zero extra configuration.
+- **Scoped analysis:** the four scan sites and the no-release gate take
+  `-- <pathspecs>`; the dirty-tree preflight splits by index vs worktree
+  (dirt inside the scope fails; staged changes anywhere fail — a bare
+  `git commit` sweeps the whole index; unstaged edits outside the scope are
+  allowed). Branch/upstream/tag-collision preflights stay repo-wide.
+- **Scoped release notes = the package's changelog entry** (gh's generator
+  can't path-scope); at whole-repo scope `--generate-notes` remains the
+  default (ADR-18) and gains `--notes-start-tag` anchored to this series'
+  previous tag. `VERBUMP_RELEASE_NOTES_CMD` beats both.
+- **Additive `--json` `scope.paths` member**, present only when scoped.
+- **Orchestration belongs to the user** — e.g. root scripts
+  `"bump:pkg-a:minor": "cd packages/pkg-a && verbump --minor"` — and is
+  documented as the first-class workflow in the user docs.
+
+**Consequences:** The PRD §3.1 non-goal is superseded; dependency-graph
+bumping, workspace version rewriting, and "release everything that changed"
+remain non-goals. Migration is docs-only (baseline-tag each package before
+its first prefixed run; otherwise the first entry spans the package's full
+history). `--notes-start-tag` changes generated-notes output for existing
+prefixed repos whose auto-picked baseline differed — an intended fix, noted
+for the release notes. The user docs gain a monorepo guide and an updated
+feature comparison; the runtime contract (`bash` + `git` + `jq`) is
+unchanged.

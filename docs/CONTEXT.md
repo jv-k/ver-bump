@@ -91,6 +91,14 @@ Reverting a just-cut release — tag, release branch, bump commit — before
 anything is pushed. It never touches a remote.
 _Avoid_: rollback, revert (unqualified)
 
+**Package scope**:
+The set of paths a release's commit analysis is restricted to, resolved from
+`COMMIT_PATHS` against the `.verbumprc`'s directory (ADR-23, R-MONO). Active
+only when narrower than the repo root; a whole-repo run has no scope. The
+blessed monorepo flow is "run from the package directory with a per-package
+rc".
+_Avoid_: package mode, monorepo mode, path filter
+
 **Release preview**:
 The machine-readable `--dry-run --json` answer to "what would this release
 do?" — the _plan_ before a release, where `--quiet` output is the _result_

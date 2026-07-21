@@ -46,6 +46,8 @@ standard CLI tools.
 
 ### How it compares
 
+<CompareTable>
+
 | Capability | VerBump | [release-it](https://github.com/release-it/release-it) | [semantic-release](https://github.com/semantic-release/semantic-release) | [release-please](https://github.com/googleapis/release-please) | [changesets](https://github.com/changesets/changesets) |
 | --- | --- | --- | --- | --- | --- |
 | Runtime dependencies | **bash + git + jq** | Node | Node + plugin stack | Node / GitHub App | Node |
@@ -58,6 +60,8 @@ standard CLI tools.
 | Monorepo-aware dirty-tree check | <Yes /> | <No /> | n/a | n/a | <No /> |
 | Workspace dependency-graph bumping | <No /> by design | <No /> | <Partial /> plugins | <Partial /> partial | <Yes /> |
 | "Release everything that changed" | <No /> [your scripts](/docs/guides/monorepos) | <No /> | <Yes /> per-package CI | <Yes /> release PR | <Yes /> |
+
+</CompareTable>
 
 VerBump aims to be the strongest *manual, per-package* release tool with zero
 Node runtime. If you want fully automated change detection or interdependent

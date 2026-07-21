@@ -40,6 +40,12 @@ function Feature({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Wrapper for comparison tables: highlights the second column (VerBump)
+// with the accent ring defined in global.css (.vb-compare).
+function CompareTable({ children }: { children: React.ReactNode }) {
+  return <div className="vb-compare">{children}</div>;
+}
+
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
@@ -47,6 +53,7 @@ export function getMDXComponents(components?: MDXComponents) {
     No,
     Partial,
     Feature,
+    CompareTable,
     ...components,
   } satisfies MDXComponents;
 }

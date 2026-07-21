@@ -1,3 +1,44 @@
+## 4.1.0 (2026-07-21)
+- chore: updated package.json, updated CHANGELOG.md, bumped 4.0.3 -> 4.1.0
+- chore: Updated bump-version task
+- fix(tests): pin stdin in the monorepo suites (#131)
+- fix(tests): pin stdin in the monorepo suites
+- feat(config): per-package monorepo support via COMMIT_PATHS scope (#130)
+- docs(docs): ring the VerBump column in the comparison table
+- docs(docs): keep the feature column on one line
+- docs(docs): move features under Why VerBump; lucide table glyphs
+- test(tests): close review coverage gaps
+- fix(config): keep COMMIT_PATHS globs out of shell expansion
+- fix(changelog): scoped notes render grouped regardless of style
+- docs(docs): add hint style rules and an errors catalogue
+- fix(errors): normalise hint wording across fail sites
+- docs(docs): monorepos user guide + feature comparison on the docs site
+- docs(docs): ADR-23 per-package monorepo support + R-MONO requirements
+- test(tests): monorepo fixture + scope and preflight suites
+- feat(json): additive scope member in the release preview
+- feat(changelog): scope changelog, PR body, and release notes
+- feat(checks): scope the no-release gate; split the dirty check
+- feat(version): scope the bump-suggestion scan to COMMIT_PATHS
+- feat(config): COMMIT_PATHS package scope anchored to the rc dir
+- docs(docs): document the package-lock companion bump (#129)
+- docs(docs): tighten companion-bump wording per review
+- docs(docs): document the package-lock companion bump
+- docs(docs): add versioning and release-mechanics terms to the glossary
+- chore: Install Vercel Web Analytics (#113)
+- docs(docs): add social preview card below the readme title [skip ci]
+- Install Vercel Web Analytics
+- Merge branch 'main' of https://github.com/jv-k/VerBump
+- docs(img): regenerate release visuals
+- fix(tests): pin bats harness clones to release tags
+- fix(ui): grow help tape height past the --json help growth
+- ci: install zsh for vhs renders
+- docs(img): regenerate release visuals
+- docs(img): regenerate release visuals
+- docs(img): regenerate release visuals
+- fix(tests): pin vhs release binary, drop broken vhs-action (#112)
+- docs(img): regenerate release visuals
+- fix(tests): pin vhs release binary, drop broken vhs-action
+
 ## 4.0.3 (2026-07-19)
 - chore: updated package.json, updated CHANGELOG.md, bumped 4.0.2 -> 4.0.3
 - ci: render release visuals on tag push, add social card (#111)

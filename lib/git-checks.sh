@@ -3,6 +3,21 @@
 # shellcheck disable=SC2288
 true
 
+# "(count): first, few, paths, …" summary of porcelain lines ($1), so dirty-
+# tree errors are actionable without the user re-running git status. Porcelain
+# lines are "XY <path>" — strip the two status columns and the separator space.
+_dirty-preview() {
+  local dirty=$1 count preview="" line shown=0
+  count=$(printf '%s\n' "$dirty" | grep -c .)
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    (( shown >= 3 )) && { preview+=", …"; break; }
+    preview+="${preview:+, }${line:3}"
+    shown=$((shown + 1))
+  done <<< "$dirty"
+  printf '(%s): %s' "$count" "$preview"
+}
+
 # Refuse to release from a dirty working tree (R-SAFE-1..4). do-commit runs a
 # bare `git commit -m …`, so anything staged before VerBump ran — and any
 # modified tracked file `git add`-ed along the way — would be silently swept
@@ -11,29 +26,40 @@ true
 # nothing can be swept) and under --allow-dirty / ALLOW_DIRTY=true. The check
 # still runs under --dry-run (read-only) so the preview is honest about what
 # a real run would do.
+#
+# Under a package scope (R-MONO-5) the check splits by index vs worktree:
+# any dirt inside the scope fails as before; STAGED changes anywhere in the
+# repo fail (the bare commit sweeps the whole index, wherever the paths
+# live); unstaged edits outside the scope are allowed — staging is
+# explicit-path, so they cannot reach the bump commit. Porcelain's X column
+# is the index side: neither ' ' (clean) nor '?' (untracked) means staged.
 check-worktree-clean() {
   [ "${FLAG_NOCOMMIT:-false}" = true ] && return 0
   [ "${ALLOW_DIRTY:-false}" = true ] && return 0
 
-  local dirty count preview line
+  local dirty
   dirty=$(git status --porcelain --untracked-files=no 2>/dev/null)
   [ -z "$dirty" ] && return 0
 
-  # Name the first few offending paths (+ total), so the error is actionable
-  # without the user re-running git status themselves. Porcelain lines are
-  # "XY <path>" — strip the two status columns and the separator space.
-  count=$(printf '%s\n' "$dirty" | grep -c .)
-  preview=""
-  local shown=0
-  while IFS= read -r line; do
-    [ -z "$line" ] && continue
-    (( shown >= 3 )) && { preview+=", …"; break; }
-    preview+="${preview:+, }${line:3}"
-    shown=$((shown + 1))
-  done <<< "$dirty"
+  if [ "${VB_SCOPE_ACTIVE:-false}" = true ]; then
+    local in_scope staged
+    in_scope=$(git status --porcelain --untracked-files=no -- "${VB_SCOPE_PATHS[@]}" 2>/dev/null)
+    if [ -n "$in_scope" ]; then
+      fail 3 \
+        "Working tree has uncommitted changes to tracked files $(_dirty-preview "$in_scope")" \
+        "Commit or stash them first, or pass --allow-dirty / set ALLOW_DIRTY=true to release anyway (untracked files are ignored)."
+    fi
+    staged=$(printf '%s\n' "$dirty" | grep -v '^[ ?]' || true)
+    if [ -n "$staged" ]; then
+      fail 3 \
+        "Staged changes outside the package scope $(_dirty-preview "$staged") — a bare git commit would sweep them into the bump commit." \
+        "Unstage them (git restore --staged <path>) or commit them first; --allow-dirty / ALLOW_DIRTY=true skips this check."
+    fi
+    return 0
+  fi
 
   fail 3 \
-    "Working tree has uncommitted changes to tracked files (${count}): ${preview}" \
+    "Working tree has uncommitted changes to tracked files $(_dirty-preview "$dirty")" \
     "Commit or stash them first, or pass --allow-dirty / set ALLOW_DIRTY=true to release anyway (untracked files are ignored)."
 }
 
@@ -157,7 +183,12 @@ check-releasable-commits() {
   prev_tag="${TAG_PREFIX}${V_PREV}"
   git rev-parse --verify --quiet "refs/tags/${prev_tag}" >/dev/null || return 0
 
-  count=$(git rev-list --count "${prev_tag}..HEAD" 2>/dev/null) || return 0
+  # Package scope (R-MONO-4): count only commits touching the scope, so a
+  # sibling package's activity can't manufacture a phantom release here.
+  local -a scope_args=()
+  [ "${VB_SCOPE_ACTIVE:-false}" = true ] && scope_args=(-- "${VB_SCOPE_PATHS[@]}")
+
+  count=$(git rev-list --count "${prev_tag}..HEAD" ${scope_args[@]+"${scope_args[@]}"} 2>/dev/null) || return 0
   [ "${count:-1}" -gt 0 ] && return 0
 
   log_info "Nothing to release — no new commits since ${S_VAL}${prev_tag}${RESET-}."
@@ -170,9 +201,14 @@ check-releasable-commits() {
 check-branch-notexist() {
   [ "$FLAG_BRANCH" = true ] || return 0
   if git rev-parse --verify "${REL_PREFIX}${V_NEW}" &> /dev/null; then
+    local hint="Delete the existing branch (git branch -D ${REL_PREFIX}${V_NEW}), pick a different version, or drop --branch/--pr to tag in place instead."
+    # Package scope (R-MONO-10): the colliding branch likely belongs to a
+    # sibling package at the same version — deleting it is the wrong advice.
+    [ "${VB_SCOPE_ACTIVE:-false}" = true ] && \
+      hint="Another package may own <${REL_PREFIX}${V_NEW}> — set a per-package REL_PREFIX (e.g. REL_PREFIX=release-pkg-a-) in this package's .verbumprc. ${hint}"
     fail 3 \
       "Branch <${REL_PREFIX}${V_NEW}> already exists." \
-      "Delete the existing branch (git branch -D ${REL_PREFIX}${V_NEW}), pick a different version, or drop --branch/--pr to tag in place instead."
+      "$hint"
   fi
 }
 

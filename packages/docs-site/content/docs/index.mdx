@@ -25,20 +25,39 @@ pushes, and opens the PR or GitHub release — with every side-effect previewabl
 via `--dry-run`, reversible via `--undo`, and nothing to install beyond
 standard CLI tools.
 
+## Features
+
+| Feature | Description |
+| --- | --- |
+| <Yes /> **Zero real dependencies** | Pure bash. Only `git` and `jq` are needed to run it. |
+| <Yes /> **Multi-format file bumps** | Keeps `package.json`, `pyproject.toml`, a Go const, a Helm chart, or any text file in sync with the tag via `--bump`. |
+| <Yes /> **Smart bump suggestion** | Reads Conventional Commits since the last tag to propose **major** / **minor** / **patch**, and advances prerelease counters (`4.0.0-dev.6` → `4.0.0-dev.7`). |
+| <Yes /> **Automatic CHANGELOG** | Generates and updates `CHANGELOG.md`: a flat list, or Conventional-Commit-**grouped** sections with commit/PR/compare links. |
+| <Yes /> **Three release workflows** | Tag-in-place (default), release branch (`--branch`), or release PR (`--pr`). Pick per-run or set a default. |
+| <Yes /> **Monorepo packages** | Per-package tag series and path-scoped commit analysis: run VerBump from a package dir and the suggestion, changelog, and release notes cover only that package. |
+| <Yes /> **Safety preflights** | Refuses to release on a dirty tree, an out-of-sync remote, or a disallowed branch — each individually overridable. |
+| <Yes /> **Dry-run** | `--dry-run` prints every side-effect (file write, `git add`, commit, tag, push) without executing any of them. |
+| <Yes /> **Undo** | `--undo` rolls back a local release (tag + release branch) before anything is pushed. |
+| <Yes /> **GitHub releases & PRs** | `--release` publishes a GitHub release for the new tag; `--pr` opens a pull request. Both use the optional [`gh`](https://cli.github.com) CLI. |
+| <Yes /> **Release hooks** | `PRE_BUMP_CMD` / `POST_TAG_CMD` run your tests before the bump and build artifacts after the tag. |
+| <Yes /> **Signed tags** | Annotated tags by default; `--sign` produces GPG-signed tags using your git config. |
+| <Yes /> **Shell completions** | Built-in completion scripts for **bash**, **zsh**, and **fish**. |
+| <Yes /> **SemVer 2.0 validation** | Every version input is validated against the SemVer 2.0 spec, including `-prerelease` and `+build` metadata. Typos fail fast. |
+
 ### How it compares
 
 | Capability | VerBump | [release-it](https://github.com/release-it/release-it) | [semantic-release](https://github.com/semantic-release/semantic-release) | [release-please](https://github.com/googleapis/release-please) | [changesets](https://github.com/changesets/changesets) |
 | --- | --- | --- | --- | --- | --- |
 | Runtime dependencies | **bash + git + jq** | Node | Node + plugin stack | Node / GitHub App | Node |
-| Interactive with a smart suggestion | ✅ | ✅ | ❌ CI-only | ❌ PR-driven | ⚠️ intent files |
-| Dry-run preview of every side-effect | ✅ `--dry-run` (+ `--json`) | ✅ | ⚠️ | n/a | ⚠️ |
-| Local undo before pushing | ✅ `--undo` | ❌ | ❌ | n/a | ❌ |
-| Monorepo: per-package tags | ✅ [`TAG_PREFIX`](/docs/guides/monorepos) | ✅ | ⚠️ plugins | ✅ | ✅ |
-| Monorepo: scoped suggestion + changelog | ✅ [`COMMIT_PATHS`](/docs/guides/monorepos) | ⚠️ partial | ⚠️ plugins | ✅ | ✅ |
-| Monorepo: scoped release notes | ✅ | ❌ | ⚠️ | ✅ | ✅ |
-| Monorepo-aware dirty-tree check | ✅ | ❌ | n/a | n/a | ❌ |
-| Workspace dependency-graph bumping | ❌ by design | ❌ | ⚠️ plugins | ⚠️ partial | ✅ |
-| "Release everything that changed" | ❌ [your scripts](/docs/guides/monorepos) | ❌ | ✅ per-package CI | ✅ release PR | ✅ |
+| Interactive with a smart suggestion | <Yes /> | <Yes /> | <No /> CI-only | <No /> PR-driven | <Partial /> intent files |
+| Dry-run preview of every side-effect | <Yes /> `--dry-run` (+ `--json`) | <Yes /> | <Partial /> | n/a | <Partial /> |
+| Local undo before pushing | <Yes /> `--undo` | <No /> | <No /> | n/a | <No /> |
+| Monorepo: per-package tags | <Yes /> [`TAG_PREFIX`](/docs/guides/monorepos) | <Yes /> | <Partial /> plugins | <Yes /> | <Yes /> |
+| Monorepo: scoped suggestion + changelog | <Yes /> [`COMMIT_PATHS`](/docs/guides/monorepos) | <Partial /> partial | <Partial /> plugins | <Yes /> | <Yes /> |
+| Monorepo: scoped release notes | <Yes /> | <No /> | <Partial /> | <Yes /> | <Yes /> |
+| Monorepo-aware dirty-tree check | <Yes /> | <No /> | n/a | n/a | <No /> |
+| Workspace dependency-graph bumping | <No /> by design | <No /> | <Partial /> plugins | <Partial /> partial | <Yes /> |
+| "Release everything that changed" | <No /> [your scripts](/docs/guides/monorepos) | <No /> | <Yes /> per-package CI | <Yes /> release PR | <Yes /> |
 
 VerBump aims to be the strongest *manual, per-package* release tool with zero
 Node runtime. If you want fully automated change detection or interdependent
@@ -59,25 +78,6 @@ A single `verbump` run walks through five phases:
 
 Every side-effecting step honours `--dry-run`, and preconditions fail with a
 [documented exit code](/docs/reference/exit-codes) and an actionable hint.
-
-## Features
-
-| Feature | Description |
-| --- | --- |
-| **Zero real dependencies** | Pure bash. Only `git` and `jq` are needed to run it. |
-| **Multi-format file bumps** | Keeps `package.json`, `pyproject.toml`, a Go const, a Helm chart, or any text file in sync with the tag via `--bump`. |
-| **Smart bump suggestion** | Reads Conventional Commits since the last tag to propose **major** / **minor** / **patch**, and advances prerelease counters (`4.0.0-dev.6` → `4.0.0-dev.7`). |
-| **Automatic CHANGELOG** | Generates and updates `CHANGELOG.md`: a flat list, or Conventional-Commit-**grouped** sections with commit/PR/compare links. |
-| **Three release workflows** | Tag-in-place (default), release branch (`--branch`), or release PR (`--pr`). Pick per-run or set a default. |
-| **Monorepo packages** | Per-package tag series and path-scoped commit analysis: run VerBump from a package dir and the suggestion, changelog, and release notes cover only that package. |
-| **Safety preflights** | Refuses to release on a dirty tree, an out-of-sync remote, or a disallowed branch — each individually overridable. |
-| **Dry-run** | `--dry-run` prints every side-effect (file write, `git add`, commit, tag, push) without executing any of them. |
-| **Undo** | `--undo` rolls back a local release (tag + release branch) before anything is pushed. |
-| **GitHub releases & PRs** | `--release` publishes a GitHub release for the new tag; `--pr` opens a pull request. Both use the optional [`gh`](https://cli.github.com) CLI. |
-| **Release hooks** | `PRE_BUMP_CMD` / `POST_TAG_CMD` run your tests before the bump and build artifacts after the tag. |
-| **Signed tags** | Annotated tags by default; `--sign` produces GPG-signed tags using your git config. |
-| **Shell completions** | Built-in completion scripts for **bash**, **zsh**, and **fish**. |
-| **SemVer 2.0 validation** | Every version input is validated against the SemVer 2.0 spec, including `-prerelease` and `+build` metadata. Typos fail fast. |
 
 <Cards>
   <Card title="Quickstart" href="/docs/quickstart" description="Install and cut your first release in two minutes." />

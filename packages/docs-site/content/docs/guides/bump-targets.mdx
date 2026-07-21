@@ -56,3 +56,21 @@ that the JSON `.version` default can't reach. A `{{version}}` text pattern
 covers everything else with no dependency. Same-version and missing files are
 skipped with a notice, and every change is staged and listed in the bump
 commit.
+
+## npm lock file
+
+One bump target is implicit: when the version source is `package.json` (the
+default) and a `package-lock.json` sits beside it, the release bumps the
+lock file too. Matching `npm version`, this companion bump rewrites the
+lock's top-level `.version` and, when present, the root
+`.packages[""].version` entry — via `jq` alone, so npm is never invoked and
+the git + jq dependency contract holds. The lock file lands in the same bump
+commit as every other target, so there is nothing to declare — leave
+`package-lock.json` out of `--bump` and `--file`.
+
+The companion bump fires only when the version source is actually
+`package.json` — a `--source composer.json` run never touches a stray lock
+file. Like any bump target it appears in `--dry-run` output, and the
+[release preview](/docs/guides/dry-run-undo) records it as its own entry
+(`"role": "lock"`) reporting the lock's real current version, which can
+differ from `package.json` when the two have drifted.

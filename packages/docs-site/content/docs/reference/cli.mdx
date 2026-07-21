@@ -30,7 +30,7 @@ the stable core (`1.2.3-dev.5 --patch` → `1.2.4`) — the full rules live in
 
 | Flag | Description |
 | --- | --- |
-| `--source <file.json>` | Version source and primary bump target (default: `package.json`). If the file is missing, the current version derives from the latest matching git tag. |
+| `--source <file.json>` | Version source and primary bump target (default: `package.json`). If the file is missing, the current version derives from the latest matching git tag. When the source is `package.json`, an adjacent `package-lock.json` is bumped automatically — see [npm lock file](/docs/guides/bump-targets#npm-lock-file). |
 | `--bump <spec>` | Also bump a JSON / TOML / YAML / text file. Repeatable. `<file>` (top-level `.version` by file type), `<file>:@<path>` (explicit dotted path, e.g. `pyproject.toml:@tool.poetry.version`), or `'<file>:<pattern>'` (text search/replace, where the pattern must contain `{{version}}`). |
 | `-f`, `--file <file.json>` | Also bump `"version"` in this JSON file. Repeatable. Superseded by `--bump`. |
 

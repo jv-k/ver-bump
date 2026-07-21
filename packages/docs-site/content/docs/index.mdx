@@ -25,6 +25,26 @@ pushes, and opens the PR or GitHub release — with every side-effect previewabl
 via `--dry-run`, reversible via `--undo`, and nothing to install beyond
 standard CLI tools.
 
+### How it compares
+
+| Capability | VerBump | [release-it](https://github.com/release-it/release-it) | [semantic-release](https://github.com/semantic-release/semantic-release) | [release-please](https://github.com/googleapis/release-please) | [changesets](https://github.com/changesets/changesets) |
+| --- | --- | --- | --- | --- | --- |
+| Runtime dependencies | **bash + git + jq** | Node | Node + plugin stack | Node / GitHub App | Node |
+| Interactive with a smart suggestion | ✅ | ✅ | ❌ CI-only | ❌ PR-driven | ⚠️ intent files |
+| Dry-run preview of every side-effect | ✅ `--dry-run` (+ `--json`) | ✅ | ⚠️ | n/a | ⚠️ |
+| Local undo before pushing | ✅ `--undo` | ❌ | ❌ | n/a | ❌ |
+| Monorepo: per-package tags | ✅ [`TAG_PREFIX`](/docs/guides/monorepos) | ✅ | ⚠️ plugins | ✅ | ✅ |
+| Monorepo: scoped suggestion + changelog | ✅ [`COMMIT_PATHS`](/docs/guides/monorepos) | ⚠️ partial | ⚠️ plugins | ✅ | ✅ |
+| Monorepo: scoped release notes | ✅ | ❌ | ⚠️ | ✅ | ✅ |
+| Monorepo-aware dirty-tree check | ✅ | ❌ | n/a | n/a | ❌ |
+| Workspace dependency-graph bumping | ❌ by design | ❌ | ⚠️ plugins | ⚠️ partial | ✅ |
+| "Release everything that changed" | ❌ [your scripts](/docs/guides/monorepos) | ❌ | ✅ per-package CI | ✅ release PR | ✅ |
+
+VerBump aims to be the strongest *manual, per-package* release tool with zero
+Node runtime. If you want fully automated change detection or interdependent
+workspace versioning, the last two columns are the right tools — and we say
+so in the [monorepos guide](/docs/guides/monorepos).
+
 ## How it works
 
 A single `verbump` run walks through five phases:
@@ -49,6 +69,7 @@ Every side-effecting step honours `--dry-run`, and preconditions fail with a
 | **Smart bump suggestion** | Reads Conventional Commits since the last tag to propose **major** / **minor** / **patch**, and advances prerelease counters (`4.0.0-dev.6` → `4.0.0-dev.7`). |
 | **Automatic CHANGELOG** | Generates and updates `CHANGELOG.md`: a flat list, or Conventional-Commit-**grouped** sections with commit/PR/compare links. |
 | **Three release workflows** | Tag-in-place (default), release branch (`--branch`), or release PR (`--pr`). Pick per-run or set a default. |
+| **Monorepo packages** | Per-package tag series and path-scoped commit analysis: run VerBump from a package dir and the suggestion, changelog, and release notes cover only that package. |
 | **Safety preflights** | Refuses to release on a dirty tree, an out-of-sync remote, or a disallowed branch — each individually overridable. |
 | **Dry-run** | `--dry-run` prints every side-effect (file write, `git add`, commit, tag, push) without executing any of them. |
 | **Undo** | `--undo` rolls back a local release (tag + release branch) before anything is pushed. |

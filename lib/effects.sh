@@ -70,6 +70,14 @@ record-effect-raw() {
 # (an explicit -v X.Y.Z run has no bump level) so payloads carry no null noise.
 emit-effects-json() {
   [ "${FLAG_JSON:-false}" = true ] || return 0
+  # Package scope (R-MONO-7): additive optional member, present only when the
+  # scope is narrower than the repo root — whole-repo payloads stay
+  # byte-identical, so the schema id is unchanged. Paths are repo-root-
+  # relative so an orchestration loop can tell packages' payloads apart.
+  local scope_json="null"
+  if [ "${VB_SCOPE_ACTIVE:-false}" = true ]; then
+    scope_json=$(printf '%s\n' "${VB_SCOPE_REL[@]}" | jq -R . | jq -sc '{paths: .}')
+  fi
   jq -n \
     --arg from   "${V_PREV-}" \
     --arg to     "${V_NEW-}" \
@@ -77,6 +85,7 @@ emit-effects-json() {
     --arg preid  "${PRE_ID-}" \
     --arg source "${VER_FILE-}" \
     --arg tag    "${TAG_PREFIX-}${V_NEW-}" \
+    --argjson scope "$scope_json" \
     --argjson effects "$VB_EFFECTS" \
     '{
       schema:  "verbump.dry-run/v1",
@@ -87,5 +96,6 @@ emit-effects-json() {
       source:  $source,
       tag:     $tag,
       effects: $effects
-    }' >&3
+    }
+    + (if $scope == null then {} else { scope: $scope } end)' >&3
 }

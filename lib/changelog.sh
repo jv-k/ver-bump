@@ -337,13 +337,16 @@ do-changelog() {
 }
 
 # Render the GitHub release-notes body for a package-scoped release
-# (R-MONO-9): the same entry do-changelog writes — heading, sections, commit
-# links, compare link — honouring CHANGELOG_STYLE. Rendered in-memory, so
-# -c/--no-changelog degrades nothing. On the live path the new tag already
-# exists: the range ends at the tag and the bump commit appears with its
-# real SHA (no synthetic entry). Under --dry-run no tag exists yet: the
-# range ends at HEAD and the bump commit's entry is synthesised exactly as
-# do-changelog does.
+# (R-MONO-9): the package's changelog entry in the GROUPED style — heading,
+# sections, commit links, compare link — regardless of CHANGELOG_STYLE.
+# The style key governs the CHANGELOG.md file; release notes are a GitHub
+# page, where the rich form is strictly better and is what the spec
+# promises (#128 story 14). Rendered in-memory, so -c/--no-changelog
+# degrades nothing. On the live path the new tag already exists: the range
+# ends at the tag and the bump commit appears with its real SHA (no
+# synthetic entry). Under --dry-run no tag exists yet: the range ends at
+# HEAD and the bump commit's entry is synthesised exactly as do-changelog
+# does.
 render-release-notes() {
   local tag_new="${TAG_PREFIX}${V_NEW}" tag_prev="${TAG_PREFIX}${V_PREV-}"
   local end synth="" range="" span records
@@ -364,13 +367,6 @@ render-release-notes() {
     span="$end"
   fi
 
-  if [ "${CHANGELOG_STYLE-}" = "grouped" ]; then
-    records=$(git log --format='%h%x1e%s%x1e%b%x1f' "$span" ${scope_args[@]+"${scope_args[@]}"} 2>/dev/null)
-    _changelog-grouped-section "$records" "$synth" "$range"
-  else
-    printf '## %s (%s)\n' "$V_NEW" "$NOW"
-    [ -n "$synth" ] && printf -- '- %s\n' "$synth"
-    git log --pretty=format:"- %s" "$span" ${scope_args[@]+"${scope_args[@]}"} 2>/dev/null
-    printf '\n'
-  fi
+  records=$(git log --format='%h%x1e%s%x1e%b%x1f' "$span" ${scope_args[@]+"${scope_args[@]}"} 2>/dev/null)
+  _changelog-grouped-section "$records" "$synth" "$range"
 }

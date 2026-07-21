@@ -92,9 +92,10 @@ entry points for the whole repo:
 With [`--release`](/docs/guides/workflows), a scoped run doesn't use GitHub's
 auto-generated notes (they can't be path-scoped and would list other
 packages' PRs). Instead the release notes are **the package's own changelog
-entry** — same sections, commit links, and compare link — even when you skip
-the changelog write with `-c`. A custom `VERBUMP_RELEASE_NOTES_CMD` still
-overrides everything.
+entry** in the grouped style — sections, commit links, and a compare link —
+regardless of your `CHANGELOG_STYLE`, and even when you skip the changelog
+write with `-c`. A custom `VERBUMP_RELEASE_NOTES_CMD` still overrides
+everything.
 
 Two GitHub-side caveats worth knowing:
 

@@ -16,7 +16,7 @@ wayfinder map #117 (grills #119–#122, audit #118).
 | R-MONO-6 | The resolved scope is printed in run output whenever it is narrower than the repo root — never silent. | ✅ shipped |
 | R-MONO-7 | The release preview (`--dry-run --json`) gains an optional `scope.paths` member (repo-root-relative), present only when scoped; whole-repo payloads are byte-identical and the schema id stays `verbump.dry-run/v1`. | ✅ shipped |
 | R-MONO-8 | Tag-series isolation is locked by tests: every tag lookup stays `TAG_PREFIX`-anchored with mixed tag styles present, and prefixed tags render valid compare URLs. (Behaviour predates this feature — audit #118.) | ✅ shipped (tests) |
-| R-MONO-9 | Release notes: under scope the default is the package's own changelog entry rendered in-memory (works with `-c`); at whole-repo scope `gh --generate-notes` stays the default (ADR-18) and gains `--notes-start-tag <prev-tag>` when the series' previous tag exists. `VERBUMP_RELEASE_NOTES_CMD` beats both. | ✅ shipped |
+| R-MONO-9 | Release notes: under scope the default is the package's own changelog entry in the **grouped** style (sections, commit links, compare link) regardless of `CHANGELOG_STYLE`, rendered in-memory (works with `-c`); at whole-repo scope `gh --generate-notes` stays the default (ADR-18) and gains `--notes-start-tag <prev-tag>` when the series' previous tag exists. `VERBUMP_RELEASE_NOTES_CMD` beats both. | ✅ shipped |
 | R-MONO-10 | The release-branch collision error's hint mentions per-package `REL_PREFIX` when a scope is active — the colliding branch likely belongs to a sibling package. | ✅ shipped |
 
 Out of scope (ADR-23): dependency-graph bumping, workspace version
@@ -31,5 +31,5 @@ history — documented as expected behaviour, not a bug.
 Modules: `lib/config.sh` (`resolve-commit-scope`), `lib/version.sh`,
 `lib/changelog.sh` (`render-release-notes`), `lib/git-checks.sh`,
 `lib/git-actions.sh`, `lib/effects.sh`. Tests: `test/monorepo-scope.bats`
-(13), `test/monorepo-preflights.bats` (8), fixture `monorepo_fixture` in
+(15), `test/monorepo-preflights.bats` (9), fixture `monorepo_fixture` in
 `test/test_helper.bash`.

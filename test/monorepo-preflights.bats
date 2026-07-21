@@ -92,7 +92,7 @@ load 'test_helper'
   assert_output --partial "notes-start-tag v1.2.3"
 }
 
-@test "release notes: scoped default notes are the package changelog entry (R-MONO-9)" {
+@test "release notes: scoped notes are the grouped package entry, even at default style and with -c (R-MONO-9)" {
   source ${profile_script}
   monorepo_fixture
   git remote set-url origin https://github.com/acme/mono.git
@@ -108,11 +108,15 @@ load 'test_helper'
   apply-config-defaults
   resolve-commit-scope
 
-  V_PREV=1.2.3 V_NEW=1.2.4 CHANGELOG_STYLE=grouped DO_RELEASE=true FLAG_DRYRUN=true \
+  # No CHANGELOG_STYLE (defaults to flat) and the changelog write suppressed
+  # (-c): notes must STILL be the grouped entry — sections, commit links,
+  # compare link — rendered in-memory (spec #128, story 14/15).
+  V_PREV=1.2.3 V_NEW=1.2.4 FLAG_NOCHANGELOG=true DO_RELEASE=true FLAG_DRYRUN=true \
     run do-github-release
   assert_success
   strip_ansi_output
   assert_output --partial "compare/pkg-a-v1.2.3...pkg-a-v1.2.4"
+  assert_output --partial "### Fixes"
   assert_output --partial "correct rounding"
   refute_output --partial "add widget"
 }

@@ -55,6 +55,10 @@ FLAG_QUIET=false # -q/--quiet: decoration to stderr, bare new version on stdout 
 FLAG_JSON=false # --json: with --dry-run, emit the release plan as one JSON object on stdout (R-OUT-5). CLI-only; reset in process-arguments.
 # VB_EFFECTS (declared in lib/effects.sh): JSON-array text of recorded release
 # effects for --json; reset per run in process-arguments via reset-effects.
+# VB_RC_DIR / VB_SCOPE_ACTIVE / VB_SCOPE_PATHS / VB_SCOPE_REL (declared in
+# lib/config.sh): the package scope resolved from COMMIT_PATHS (R-MONO-1) —
+# active only when narrower than the repo root; scoped call sites check
+# VB_SCOPE_ACTIVE so whole-repo runs stay byte-identical.
 
 # Config-keyed defaults use `:=` so exported env values survive. An
 # unconditional assignment (e.g. `TAG_PREFIX="v"`) would clobber
@@ -96,6 +100,7 @@ main() {
   check-dependencies
   check-release-deps
   check-bump-deps # validate --bump / BUMP_FILES specs + conditional tomlq/yq (R-TGT-4)
+  resolve-commit-scope # package scope from COMMIT_PATHS — precedence is final here (R-MONO-1)
 
   section "Verify"
   check-commits-exist

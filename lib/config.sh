@@ -31,6 +31,10 @@ true
 #               R-TGT-1)
 #   PRE_BUMP_CMD (release hook before any mutation; empty = no hook, R-HOOK-1)
 #   POST_TAG_CMD (release hook after tag, before push; empty = no hook, R-HOOK-2)
+#   COMMIT_PATHS (space-separated git pathspecs resolved against the
+#                 .verbumprc's own directory; scopes commit analysis to a
+#                 package in a monorepo. Default "." — a root rc, or no rc,
+#                 resolves to the repo root = whole-repo behaviour, R-MONO-1)
 #   FLAG_NOBRANCH (deprecated, no-op — tag-in-place is the default as of 2.0)
 #
 # Safety: shell-sourced files are code. The rc must be owned by the current
@@ -42,7 +46,15 @@ _CONFIG_KEYS=(TAG_PREFIX REL_PREFIX PUSH_DEST COMMIT_MSG_PREFIX \
               COMMIT_MSG_TEMPLATE FLAG_BRANCH PR_BASE CHANGELOG_STYLE \
               FLAG_NOBRANCH FLAG_NOCHANGELOG FLAG_CHANGELOG_PAUSE \
               ALLOW_DIRTY NO_FETCH RELEASE_BRANCHES TAG_SIGN SOURCE_FILE \
-              BUMP_FILES PRE_BUMP_CMD POST_TAG_CMD)
+              BUMP_FILES PRE_BUMP_CMD POST_TAG_CMD COMMIT_PATHS)
+
+# Package scope resolved from COMMIT_PATHS by resolve-commit-scope (R-MONO-1).
+# VB_SCOPE_ACTIVE is true only when the scope is narrower than the repo root;
+# every scoped call site checks it, so whole-repo runs stay byte-identical.
+VB_RC_DIR=""        # directory of the discovered .verbumprc; empty when none
+VB_SCOPE_ACTIVE=false
+VB_SCOPE_PATHS=()   # absolute pathspecs for `git … -- <paths>`
+VB_SCOPE_REL=()     # repo-root-relative forms (run output + --json scope.paths)
 
 # Walk up from $PWD. Echoes the first .verbumprc found; returns 1 if none.
 # Never touches stdout on the "not found" path — load-config treats that
@@ -134,9 +146,12 @@ _warn-unknown-rc-keys() {
 # completions / help scripts on stdout).
 load-config() {
   local rc
+  VB_RC_DIR=""
   rc=$(_find-rc-upward) || return 0
   _assert-rc-safe "$rc"
   _warn-unknown-rc-keys "$rc"
+  # Anchor for COMMIT_PATHS resolution (R-MONO-1): the rc's own directory.
+  VB_RC_DIR=$(dirname "$rc")
 
   # Snapshot env-exported values BEFORE sourcing, so env wins over file.
   # We only snapshot variables that were inherited from the environment
@@ -187,4 +202,56 @@ apply-config-defaults() {
   # Version source + primary bump target (R-SRC-1/5). VER_FILE derives from
   # it in main() after process-arguments, so --source (CLI) wins per R-CFG-3.
   SOURCE_FILE="${SOURCE_FILE:-package.json}"
+  # Package scope (R-MONO-1): "." resolved against the rc's directory. A root
+  # rc — or no rc at all — therefore resolves to the repo root, which
+  # resolve-commit-scope treats as "no scope" (today's whole-repo behaviour).
+  COMMIT_PATHS="${COMMIT_PATHS:-.}"
+}
+
+# Resolve COMMIT_PATHS into the package scope (R-MONO-1, spec #128). Each
+# space-separated pathspec is resolved against the .verbumprc's directory
+# (repo root when there is no rc). Directory specs normalise physically so
+# "." and "sub/.." compare equal to the repo root; file / glob pathspecs
+# stay textual. The scope is ACTIVE only when at least one resolved path is
+# narrower than the repo root — otherwise the arrays stay empty and every
+# call site behaves exactly as before. Must run after process-arguments so
+# the CLI > env > file > default precedence is final.
+resolve-commit-scope() {
+  VB_SCOPE_ACTIVE=false
+  VB_SCOPE_PATHS=()
+  VB_SCOPE_REL=()
+
+  local top anchor spec abs rel narrowed=false
+  top=$(git rev-parse --show-toplevel 2>/dev/null) || return 0
+  anchor="${VB_RC_DIR:-$top}"
+
+  # Word-splitting of the unquoted list is intentional (space-separated
+  # pathspecs, same convention as RELEASE_BRANCHES).
+  for spec in ${COMMIT_PATHS:-.}; do
+    case "$spec" in
+      /*) abs="$spec" ;;
+      *)  abs="$anchor/$spec" ;;
+    esac
+    if [ -d "$abs" ]; then
+      abs=$(cd "$abs" 2>/dev/null && pwd -P) || abs="$anchor/$spec"
+    fi
+    VB_SCOPE_PATHS+=("$abs")
+    if [ "$abs" = "$top" ]; then
+      rel="."
+    else
+      rel="${abs#"$top"/}"
+      narrowed=true
+    fi
+    VB_SCOPE_REL+=("$rel")
+  done
+
+  if [ "$narrowed" != true ]; then
+    VB_SCOPE_PATHS=()
+    VB_SCOPE_REL=()
+    return 0
+  fi
+  # shellcheck disable=SC2034 # read by the scoped call sites in version.sh / changelog.sh / git-checks.sh / git-actions.sh / effects.sh
+  VB_SCOPE_ACTIVE=true
+
+  log_info "Package scope: commit analysis restricted to <${S_VAL-}${VB_SCOPE_REL[*]}${RESET-}>."
 }

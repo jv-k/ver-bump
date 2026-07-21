@@ -9,6 +9,9 @@
 
 load 'test_helper'
 
+# Runs that clear the preflights reach the interactive version prompt, so
+# stdin is pinned with `</dev/null` — see the header of monorepo-scope.bats.
+
 # ── dirty-tree split (R-MONO-5) ─────────────────────────────────────────────
 
 @test "dirty: unstaged changes outside the scope don't block (R-MONO-5)" {
@@ -16,7 +19,7 @@ load 'test_helper'
   echo "wip" >> packages/pkg-b/widget.txt
   cd packages/pkg-a
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_success
 }
 
@@ -25,7 +28,7 @@ load 'test_helper'
   echo "wip" >> packages/pkg-a/rounding.txt
   cd packages/pkg-a
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_failure 3
   strip_ansi_output
   assert_output --partial "uncommitted changes"
@@ -37,7 +40,7 @@ load 'test_helper'
   git add packages/pkg-b/widget.txt
   cd packages/pkg-a
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_failure 3
   strip_ansi_output
   assert_output --partial "sweep them into the bump commit"
@@ -49,7 +52,7 @@ load 'test_helper'
   echo "wip" >> packages/pkg-a/rounding.txt
   cd packages/pkg-a
 
-  ALLOW_DIRTY=true run ${profile_script} -d -y -p origin
+  ALLOW_DIRTY=true run ${profile_script} -d -y -p origin </dev/null
   assert_success
 }
 
@@ -60,7 +63,7 @@ load 'test_helper'
   git commit -qm "chore: add afile"
   echo "change" >> afile
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_failure 3
   strip_ansi_output
   assert_output --partial "uncommitted changes"
@@ -73,7 +76,7 @@ load 'test_helper'
   git branch release-1.2.4
   cd packages/pkg-a
 
-  run ${profile_script} -d -y -p origin --branch -v 1.2.4
+  run ${profile_script} -d -y -p origin --branch -v 1.2.4 </dev/null
   assert_failure 3
   strip_ansi_output
   assert_output --partial "REL_PREFIX"

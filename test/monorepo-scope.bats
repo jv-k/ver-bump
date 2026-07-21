@@ -11,6 +11,13 @@ load 'test_helper'
 
 # monorepo_fixture (pkg-a 1.2.3 / pkg-b 0.4.0, per-package rc + tags, one
 # feat(pkg-b) + one fix(pkg-a) commit) comes from test_helper.bash.
+#
+# Every full run here MUST pin stdin (`</dev/null`, or a piped answer). None
+# of these pass -v / --major|--minor|--patch, so they reach the interactive
+# version prompt, whose first read is `read -rsn1` — with ambient stdin it
+# consumes whatever the terminal supplies, and a stray ESC aborts the run
+# with exit 5. `-y` does NOT cover this prompt. EOF falls through to the
+# suggested version, which is what these tests assert.
 
 # ── bump suggestion (R-MONO-2) ──────────────────────────────────────────────
 
@@ -18,7 +25,7 @@ load 'test_helper'
   monorepo_fixture
   cd packages/pkg-a
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_success
   strip_ansi_output
   refute_output --partial "suggesting minor bump"
@@ -29,7 +36,7 @@ load 'test_helper'
   monorepo_fixture
   cd packages/pkg-b
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_success
   strip_ansi_output
   assert_output --partial "suggesting minor bump"
@@ -42,7 +49,7 @@ load 'test_helper'
   monorepo_fixture
   cd packages/pkg-a
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_success
   strip_ansi_output
   assert_output --partial "correct rounding"
@@ -76,7 +83,7 @@ load 'test_helper'
   monorepo_fixture
   cd packages/pkg-a
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_success
   strip_ansi_output
   assert_output --partial "packages/pkg-a"
@@ -97,11 +104,11 @@ load 'test_helper'
   git add ../pkg-b/widget.txt
   git commit -qm "feat(pkg-b): more widgets"
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_success
   strip_ansi_output
   assert_output --partial "Nothing to release"
-  run bash -c '"$1" -d -y -p origin | grep -c "^no-release"' _ "${profile_script}"
+  run bash -c '"$1" -d -y -p origin </dev/null | grep -c "^no-release"' _ "${profile_script}"
   assert_output "1"
 }
 
@@ -116,7 +123,7 @@ load 'test_helper'
   git add .verbumprc
   git commit -qm "chore(pkg-a): set COMMIT_PATHS"
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_success
   strip_ansi_output
   refute_output --partial "Unknown .verbumprc key"
@@ -127,7 +134,7 @@ load 'test_helper'
   cd packages/pkg-a
 
   # Env beats the rc-derived default "." — pkg-b's feat now counts.
-  COMMIT_PATHS=". ../pkg-b" run ${profile_script} -d -y -p origin
+  COMMIT_PATHS=". ../pkg-b" run ${profile_script} -d -y -p origin </dev/null
   assert_success
   strip_ansi_output
   assert_output --partial "suggesting minor bump"
@@ -144,7 +151,7 @@ load 'test_helper'
   git add .verbumprc
   git commit -qm "chore(pkg-a): widen COMMIT_PATHS"
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_success
   strip_ansi_output
   # pkg-b's feat commit now counts toward pkg-a's suggestion.
@@ -185,7 +192,7 @@ load 'test_helper'
   git commit -qm "chore: drop pkg-b manifest"
   cd packages/pkg-b
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_success
   strip_ansi_output
   assert_output --partial "derived from git tag <pkg-b-v0.4.0>: 0.4.0"
@@ -196,7 +203,7 @@ load 'test_helper'
   git remote set-url origin https://github.com/acme/mono.git
   cd packages/pkg-a
 
-  CHANGELOG_STYLE=grouped run ${profile_script} -d -y -p origin --no-fetch
+  CHANGELOG_STYLE=grouped run ${profile_script} -d -y -p origin --no-fetch </dev/null
   assert_success
   strip_ansi_output
   assert_output --partial "compare/pkg-a-v1.2.3...pkg-a-v1.2.4"
@@ -209,7 +216,7 @@ load 'test_helper'
   git commit -q --allow-empty -m "fix: something new"
 
   TAG_PREFIX="rel/" CHANGELOG_STYLE=grouped \
-    run ${profile_script} -d -y -p origin --no-fetch
+    run ${profile_script} -d -y -p origin --no-fetch </dev/null
   assert_success
   strip_ansi_output
   assert_output --partial "compare/rel%2F1.2.3...rel%2F1.2.4"
@@ -220,7 +227,7 @@ load 'test_helper'
   printf 'TAG_PREFIX=v\n' > .verbumprc
   chmod 644 .verbumprc
 
-  run ${profile_script} -d -y -p origin
+  run ${profile_script} -d -y -p origin </dev/null
   assert_success
   strip_ansi_output
   refute_output --partial "Package scope"

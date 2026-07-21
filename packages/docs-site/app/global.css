@@ -61,6 +61,34 @@
   );
 }
 
+/* "How it compares" table: ring the VerBump column (2nd) in the brand
+   accent with rounded caps so it reads as the highlighted product column.
+   border-collapse must be separate for the radii to render on cells. */
+.vb-compare table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.vb-compare th:nth-child(2),
+.vb-compare td:nth-child(2) {
+  border-left: 2px solid var(--color-fd-primary);
+  border-right: 2px solid var(--color-fd-primary);
+  background: color-mix(in oklab, var(--color-fd-primary) 6%, transparent);
+  white-space: nowrap;
+}
+
+.vb-compare thead th:nth-child(2) {
+  border-top: 2px solid var(--color-fd-primary);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.vb-compare tbody tr:last-child td:nth-child(2) {
+  border-bottom: 2px solid var(--color-fd-primary);
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
 html {
   scrollbar-gutter: stable;
 }

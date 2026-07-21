@@ -170,13 +170,17 @@ _changelog-grouped-section() {
   # The bump commit is classified like any other commit (its section
   # follows the rendered message — the default "chore: " prefix, or a
   # COMMIT_MSG_TEMPLATE's leading type, lands it in Other/feat/fix/…).
-  entry="- $(_changelog-render-subject "$bump_entry")"$'\n'
-  case "$(classify-commit "$bump_entry" "")" in
-    breaking) breaking+="$entry" ;;
-    feat)     feats+="$entry" ;;
-    fix)      fixes+="$entry" ;;
-    *)        others+="$entry" ;;
-  esac
+  # Empty = no synthetic entry: render-release-notes passes "" once the real
+  # bump commit exists in the range with its own SHA (R-MONO-9).
+  if [ -n "$bump_entry" ]; then
+    entry="- $(_changelog-render-subject "$bump_entry")"$'\n'
+    case "$(classify-commit "$bump_entry" "")" in
+      breaking) breaking+="$entry" ;;
+      feat)     feats+="$entry" ;;
+      fix)      fixes+="$entry" ;;
+      *)        others+="$entry" ;;
+    esac
+  fi
 
   while IFS= read -r -d $'\x1f' record; do
     # Trim the newline git inserts between format records.
@@ -228,14 +232,18 @@ do-changelog() {
   local ACTION_MSG COMMITS_MSG LOG_MSG LOG_RC RANGE TMP _chlog_line _chlog_entries
 
   RANGE=$([ "$(git tag -l "${TAG_PREFIX}${V_PREV}")" ] && echo "${TAG_PREFIX}${V_PREV}..HEAD")
+  # Package scope (R-MONO-3): the entry lists only commits touching the
+  # scope, so a sibling package's changes never pollute this changelog.
+  local -a scope_args=()
+  [ "${VB_SCOPE_ACTIVE:-false}" = true ] && scope_args=(-- "${VB_SCOPE_PATHS[@]}")
   if [ "${CHANGELOG_STYLE-}" = "grouped" ]; then
     # SHA + subject + body records for grouping — see
     # _changelog-grouped-section for the separator discipline.
     # shellcheck disable=SC2086
-    COMMITS_MSG=$( git log --format='%h%x1e%s%x1e%b%x1f' ${RANGE} 2>&1 ); LOG_RC=$?
+    COMMITS_MSG=$( git log --format='%h%x1e%s%x1e%b%x1f' ${RANGE} ${scope_args[@]+"${scope_args[@]}"} 2>&1 ); LOG_RC=$?
   else
     # shellcheck disable=SC2086
-    COMMITS_MSG=$( git log --pretty=format:"- %s" ${RANGE} 2>&1 ); LOG_RC=$?
+    COMMITS_MSG=$( git log --pretty=format:"- %s" ${RANGE} ${scope_args[@]+"${scope_args[@]}"} 2>&1 ); LOG_RC=$?
   fi
   if [ "$LOG_RC" -ne 0 ]; then
     fail 1 \
@@ -326,4 +334,39 @@ do-changelog() {
 
   # Stage log file, to commit later
   dryrun git add CHANGELOG.md
+}
+
+# Render the GitHub release-notes body for a package-scoped release
+# (R-MONO-9): the package's changelog entry in the GROUPED style — heading,
+# sections, commit links, compare link — regardless of CHANGELOG_STYLE.
+# The style key governs the CHANGELOG.md file; release notes are a GitHub
+# page, where the rich form is strictly better and is what the spec
+# promises (#128 story 14). Rendered in-memory, so -c/--no-changelog
+# degrades nothing. On the live path the new tag already exists: the range
+# ends at the tag and the bump commit appears with its real SHA (no
+# synthetic entry). Under --dry-run no tag exists yet: the range ends at
+# HEAD and the bump commit's entry is synthesised exactly as do-changelog
+# does.
+render-release-notes() {
+  local tag_new="${TAG_PREFIX}${V_NEW}" tag_prev="${TAG_PREFIX}${V_PREV-}"
+  local end synth="" range="" span records
+  local -a scope_args=()
+  [ "${VB_SCOPE_ACTIVE:-false}" = true ] && scope_args=(-- "${VB_SCOPE_PATHS[@]}")
+
+  if git rev-parse --verify --quiet "refs/tags/${tag_new}" >/dev/null; then
+    end="$tag_new"
+  else
+    end="HEAD"
+    synth=$(render-commit-msg "$GIT_MSG")
+    synth="${synth%%$'\n'*}"
+  fi
+  if [ -n "${V_PREV-}" ] && git rev-parse --verify --quiet "refs/tags/${tag_prev}" >/dev/null; then
+    span="${tag_prev}..${end}"
+    range="$span" # non-empty = the compare-link condition (R-CHLOG-3)
+  else
+    span="$end"
+  fi
+
+  records=$(git log --format='%h%x1e%s%x1e%b%x1f' "$span" ${scope_args[@]+"${scope_args[@]}"} 2>/dev/null)
+  _changelog-grouped-section "$records" "$synth" "$range"
 }

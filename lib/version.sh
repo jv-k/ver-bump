@@ -252,9 +252,14 @@ suggest-bump-level() {
     echo "patch"; return
   fi
 
+  # Package scope (R-MONO-2): only commits touching the scope may drive the
+  # suggestion — a sibling package's feat: must not inflate this one's bump.
+  local -a scope_args=()
+  [ "${VB_SCOPE_ACTIVE:-false}" = true ] && scope_args=(-- "${VB_SCOPE_PATHS[@]}")
+
   # %s = subject, %b = body. RS (0x1e) separates subject/body; US (0x1f)
   # separates commits. Both are unlikely in any sane commit message.
-  log=$(git log --format='%s%x1e%b%x1f' "${prev_tag}..HEAD" 2>/dev/null) || {
+  log=$(git log --format='%s%x1e%b%x1f' "${prev_tag}..HEAD" ${scope_args[@]+"${scope_args[@]}"} 2>/dev/null) || {
     echo "patch"; return
   }
 

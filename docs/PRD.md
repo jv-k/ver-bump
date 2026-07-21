@@ -101,7 +101,7 @@ real script (not just dry-run) without touching their working repo.
 ### 3.1 Non-goals
 
 - **Not a CHANGELOG rewriter.** The existing `git log` dump is preserved as-is. A grouped, conventional-commit-aware changelog is scope for a later release.
-- **Not a monorepo release manager.** One tool, one `package.json`, one bump. `-f` remains a secondary knob.
+- ~~**Not a monorepo release manager.**~~ *Superseded by ADR-23 (2026-07-21, issue #96/#128): VerBump supports monorepos as a **per-package** release tool — run from inside a package with a per-package `.verbumprc` (`TAG_PREFIX` + `COMMIT_PATHS`-scoped commit analysis, R-MONO). Orchestration — which packages, when, in what order — stays with the user's scripts; dependency-graph bumping and "release everything that changed" remain non-goals.*
 - **Not an npm publisher.** Registry publishing stays in the user's CI. (GitHub-release creation *did* land in 2.0, behind the opt-in `--release` flag — see §5.8; it is off by default and adds no default-path dependencies.)
 - **No plugin system** in this release. *Post-2.0, issue #62 added a deliberately minimal two-hook surface — `PRE_BUMP_CMD` / `POST_TAG_CMD` (R-HOOK-1..6, [`docs/features/hooks`](features/hooks/requirements.md)) — which stays short of a plugin system; exit code `4`, previously reserved, is now in use for hook failures.*
 

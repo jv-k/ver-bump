@@ -1,0 +1,145 @@
+---
+title: Monorepos
+description: Release each package independently — per-package tags, scoped changelogs, and scoped bump suggestions from one repo.
+---
+
+VerBump supports monorepos as a **per-package release tool**: you release one
+package at a time by running VerBump *from inside that package's directory*,
+and everything — the bump suggestion, the changelog, the release notes, the
+safety preflights — scopes to that package. Orchestration (which packages to
+release, when, in what order) stays with you, typically as scripts in your
+repo root.
+
+VerBump deliberately does **not** do dependency-graph bumping, workspace
+version rewriting, or "release everything that changed" detection. If you
+need interdependent workspace packages versioned together, use
+[changesets](https://github.com/changesets/changesets) or
+[release-please](https://github.com/googleapis/release-please) — they solve a
+bigger problem. VerBump's niche is making the single-package release correct,
+with no Node toolchain in the release environment.
+
+## Setup
+
+Give each package its own `.verbumprc` with a distinct tag prefix:
+
+```bash title="packages/pkg-a/.verbumprc"
+TAG_PREFIX=pkg-a-v
+```
+
+```bash title="packages/pkg-b/.verbumprc"
+TAG_PREFIX=pkg-b-v
+```
+
+That's the whole setup. Each package now has:
+
+- **Its own tag series** — `pkg-a-v1.2.3` and `pkg-b-v0.4.0` never collide;
+  every tag lookup is prefix-anchored.
+- **Scoped commit analysis** — the [bump suggestion](/docs/guides/version-suggestion)
+  and [changelog](/docs/guides/changelog) only consider commits touching the
+  package's directory, so a `feat:` in `pkg-b` can't inflate `pkg-a`'s bump
+  or pollute its changelog.
+- **A package-local `CHANGELOG.md`** — written in the directory you run from.
+
+The scoping comes from the `COMMIT_PATHS` config key, which defaults to `"."`
+resolved against the `.verbumprc`'s own directory. A `.verbumprc` at the repo
+root (or none at all) resolves to the whole repo — exactly today's
+single-package behaviour.
+
+```bash title="packages/pkg-a/.verbumprc — package with extra paths"
+TAG_PREFIX=pkg-a-v
+# Space-separated git pathspecs, resolved against this file's directory.
+# Quote multi-value keys — the rc is shell-sourced.
+COMMIT_PATHS=". ../../shared"
+```
+
+When a scope is active, VerBump prints it
+(`Package scope: commit analysis restricted to <packages/pkg-a>`) so a run is
+never silently scoped.
+
+## Releasing a package
+
+Run VerBump from the package directory:
+
+```bash
+cd packages/pkg-a && verbump --minor
+```
+
+Most teams wrap this in root-level scripts, which become the release
+entry points for the whole repo:
+
+```json title="package.json (repo root)"
+{
+  "scripts": {
+    "bump:pkg-a": "cd packages/pkg-a && verbump",
+    "bump:pkg-a:minor": "cd packages/pkg-a && verbump --minor",
+    "bump:pkg-b": "cd packages/pkg-b && verbump",
+    "release:pkg-a": "cd packages/pkg-a && verbump --release"
+  }
+}
+```
+
+## What scopes, what doesn't
+
+| Check / step | Under a package scope |
+| --- | --- |
+| Bump suggestion, changelog, PR body | Only commits touching `COMMIT_PATHS`. |
+| Nothing-to-release gate | Only commits touching `COMMIT_PATHS` — releasing an unchanged package is a clean no-op even when siblings moved. |
+| Dirty-tree preflight | Uncommitted changes **inside** the package still block. **Staged** changes anywhere in the repo still block (the bump commit would sweep them in). Unstaged edits in *other* packages no longer block. |
+| Branch / remote-sync / tag-collision preflights | Repo-wide, unchanged — they're properties of the branch, not the package. |
+
+## GitHub releases in a monorepo
+
+With [`--release`](/docs/guides/workflows), a scoped run doesn't use GitHub's
+auto-generated notes (they can't be path-scoped and would list other
+packages' PRs). Instead the release notes are **the package's own changelog
+entry** in the grouped style — sections, commit links, and a compare link —
+regardless of your `CHANGELOG_STYLE`, and even when you skip the changelog
+write with `-c`. A custom `VERBUMP_RELEASE_NOTES_CMD` still overrides
+everything.
+
+Two GitHub-side caveats worth knowing:
+
+- **The "Latest release" badge is repo-global.** Whichever package released
+  most recently wears it — inherent to monorepos on GitHub, not specific to
+  VerBump. Pass `--latest=false` to `gh` yourself if you care (via a custom
+  notes flow), or just ignore the badge.
+- **Release branches can collide.** `--branch` / `--pr` name branches
+  `release-<version>`, so two packages at the same version would fight over
+  the name. Set a per-package `REL_PREFIX` if you use those workflows:
+
+```bash title="packages/pkg-a/.verbumprc"
+TAG_PREFIX=pkg-a-v
+REL_PREFIX=release-pkg-a-
+```
+
+## Scripting: the release preview
+
+[`--dry-run --json`](/docs/guides/dry-run-undo) payloads gain an optional
+`scope` member when a package scope is active, so orchestration loops can
+tell packages' payloads apart:
+
+```json
+{
+  "schema": "verbump.dry-run/v1",
+  "tag": "pkg-a-v1.3.0",
+  "scope": { "paths": ["packages/pkg-a"] }
+}
+```
+
+Whole-repo runs emit exactly the same payload as before — no `scope` member.
+
+## Adopting prefixes in an existing repo
+
+Already have unprefixed `v1.2.3`-style tags? Nothing needs renaming:
+
+1. **Keep the root series as-is.** Old tags are inert to the new per-package
+   series — tag matching is prefix-anchored in both directions.
+2. **Baseline each package before its first prefixed run:**
+
+   ```bash
+   git tag pkg-a-v1.2.3 <commit-of-current-released-state>
+   ```
+
+   This gives the first real release a correct changelog range.
+3. If you skip the baseline, the package's first changelog entry spans its
+   full history — expected behaviour, not a bug.

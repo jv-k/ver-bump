@@ -59,14 +59,14 @@ commit.
 
 ## npm lock file
 
-One bump target is implicit: when the version source is the default
-`package.json` and a `package-lock.json` sits beside it, the release bumps
-the lock file too. Matching `npm version`, this companion bump rewrites the
+One bump target is implicit: when the version source is `package.json` (the
+default) and a `package-lock.json` sits beside it, the release bumps the
+lock file too. Matching `npm version`, this companion bump rewrites the
 lock's top-level `.version` and, when present, the root
 `.packages[""].version` entry — via `jq` alone, so npm is never invoked and
 the git + jq dependency contract holds. The lock file lands in the same bump
-commit as every other target, so there is nothing to declare: never list
-`package-lock.json` under `--bump` or `--file`.
+commit as every other target, so there is nothing to declare — leave
+`package-lock.json` out of `--bump` and `--file`.
 
 The companion bump fires only when the version source is actually
 `package.json` — a `--source composer.json` run never touches a stray lock

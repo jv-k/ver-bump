@@ -106,6 +106,23 @@ but preferred — it turns an error into self-service. Errors go to stderr;
 normal output (completion scripts, `--help`) stays on stdout so users can
 pipe them cleanly.
 
+Hint style:
+
+- Complete imperative sentence(s), ending with a period.
+- Runnable commands use the installed command name `verbump` (lowercase).
+  `VerBump` is the display brand (banner, `--about`, prose) — never what
+  the user types.
+- Name an escape hatch when one exists (`or drop --x`, `or pass --y`, the
+  matching `.verbumprc` key). If the guard has a one-shot bypass, show it.
+- After a mutation, state what survived before the recovery command
+  (e.g. "The tag was pushed; re-run 'gh release create <tag>' …").
+- Version examples say "SemVer 2.0", not "MAJOR.MINOR.PATCH", wherever
+  prerelease/build forms are accepted (`is_semver` takes the full grammar).
+
+Every `fail` site is catalogued in the docs-site
+[Errors reference](../packages/docs-site/content/docs/reference/errors.mdx)
+— add a row there (and a case in `test/errors.bats`) when you add one.
+
 ## Testing
 
 ### Framework

@@ -1,0 +1,149 @@
+---
+title: Errors & hints
+description: Every error VerBump can raise, with its exit code and self-service hint.
+---
+
+Every error VerBump raises follows the same shape on **stderr** (stdout
+stays clean for piping): a red `ERROR` pill with the message, then — for
+every error — a gray `HINT` pill with a self-service fix:
+
+```
+ ERROR 
+--json requires --dry-run (it emits a preview of the release plan; real runs keep their normal output).
+
+ HINT 
+Add -d/--dry-run, or drop --json.
+```
+
+The process then exits with a stable code from the
+[exit-code contract](/docs/reference/exit-codes). The tables below catalogue
+every error, grouped by the stage that raises it. Placeholders like
+`<file>` and `<tag>` are filled with your actual values at runtime.
+
+## Command line
+
+All argument-parse errors exit `2`.
+
+| Error | Hint |
+| --- | --- |
+| Invalid option: `--<name>` / `-<X>` | Run `verbump --help` to see the list of supported options. |
+| Option `--<name>` requires an argument / a non-empty value | Pass a value: `--<name> <value>` or `--<name>=<value>`. |
+| A boolean flag was given a value (`--release`, `--pr`, `--branch`, `--allow-dirty`, `--allow-empty`, `--no-fetch`, `--json`, `--no-hooks`, `--sign`) | Drop the `=<value>`. The `--pr` variant points at `--base <branch>` for the PR target; the `--branch` variant asks if you meant `--branch-prefix=`. |
+| `--source` without a file path | Pass a JSON file: `--source <file.json>` or `--source=<file.json>`. |
+| `--bump` without a spec | Pass `<file>`, `<file>:@<path>`, or `'<file>:<pattern with {{version}}>'`. |
+| `--base` without a branch name | Pass a base branch: `--base <branch>` or `--base=<branch>`. |
+| `--preid` without a value | Pass a prerelease id: `--preid <id>` or `--preid=<id>`. |
+| Invalid `--preid` value (not a SemVer prerelease identifier) | Use dot-separated alphanumeric/hyphen identifiers with no leading-zero numeric parts, e.g. `rc`, `beta`, `dev-2`. |
+| Conflicting bump-level flags (two of `--major`/`--minor`/`--patch`) | Pass only one. |
+| `-v <version>` is not valid SemVer 2.0 | Pass a SemVer 2.0 version, e.g. `-v 1.2.3` or `-v 1.2.3-rc.1+build.42`. |
+| `-v` combined with a bump level or `--preid` | Pass either an explicit version or a bump level / `--preid`, not both. |
+| `--quiet` with `-l`/`--pause-changelog` (interactive pause would hang a captured pipeline) | Drop `-l/--pause-changelog` (or unset `FLAG_CHANGELOG_PAUSE` in `.verbumprc`), or drop `--quiet`. |
+| `--quiet` / `--json` would leave the version choice interactive | Add `--yes` to accept the suggested version, pass `-v <version>`, or force a level with `--major`/`--minor`/`--patch`/`--preid`. |
+| `--json` without `--dry-run` | Add `-d/--dry-run`, or drop `--json`. |
+| `--quiet` with `--undo` but no `--yes` (the undo confirmation is interactive) | Add `--yes` to auto-confirm the undo, or drop `--quiet`. |
+| `--install-completions=` without a shell name | Supported: `bash`, `zsh`, `fish`. |
+| Could not auto-detect your shell from `$SHELL` | Pass `--install-completions=<bash\|zsh\|fish>` explicitly. |
+
+## Resolving the version
+
+| Exit | Error | Hint |
+| ---: | --- | --- |
+| `3` | `<source>` doesn't contain a `version` field | Add a top-level `"version"` key, or pass an explicit version with `-v <version>`. |
+| `3` | Source file unusable and the latest matching tag is not `<prefix>` + SemVer | Tag releases as `<prefix>MAJOR.MINOR.PATCH`, pass `-v <version>`, or create the source file with a `"version"` field. |
+| `3` | Source file unusable and no `<prefix>*` release tag exists | First release? Pass `-v <version>`. Otherwise create the source file, or point `--source` / `SOURCE_FILE` at the right file. |
+| `3` | Cannot apply `--major`/`--minor`/`--patch`/`--preid`: current version is not valid SemVer | Ensure the source file contains a SemVer `"version"` field, or pass an explicit `-v <version>`. |
+| `3` | Cannot compute the requested bump from the current version | Use `--major`, `--minor`, or `--patch`, or pass an explicit `-v <version>`. |
+| `2` | `--preid` on a stable version is ambiguous | Combine with `--major`, `--minor`, or `--patch` to enter a prerelease, e.g. `--major --preid rc`. |
+| `5` | Version prompt aborted | Re-run and enter a version (or Enter for the suggestion), or pass `-v <version>` to skip the prompt. |
+| `3` | Entered version is not valid SemVer 2.0 | Enter a SemVer 2.0 version (`MAJOR.MINOR.PATCH[-prerelease][+build]`), e.g. `1.2.3` or `1.2.3-rc.1`. |
+| `1` | Error updating the version source file / `package-lock.json` | Check the file is valid JSON (run `jq . <file>`) and writable. |
+
+## Bump targets (`--bump`)
+
+| Exit | Error | Hint |
+| ---: | --- | --- |
+| `2` | Spec has no file part | Use `--bump <file>`, `--bump <file>:@<path>`, or `--bump '<file>:<pattern with {{version}}>'`. |
+| `2` | Can't infer where the version lives in a non-JSON/TOML/YAML file | Give an explicit text pattern with `{{version}}`, e.g. `'Version = "{{version}}"'`. |
+| `2` | `@<path>` used on a file that isn't JSON, TOML, or YAML | Use a text pattern instead. |
+| `2` | `@<path>` is not a simple dotted path | Only simple dotted paths are supported (e.g. `@tool.poetry.version`); for array indices or exotic keys use a text pattern. |
+| `2` | Text pattern doesn't contain `{{version}}` | Mark the version position with `{{version}}`. |
+| `3` | Bumping a TOML/YAML path needs `tomlq`/`yq`, which isn't installed | Install it (the jq-based yq suite: `pip install yq`, or `brew install python-yq`), or bump the file with a text pattern instead (no extra tool). |
+
+## Config, dependencies & completions
+
+| Exit | Error | Hint |
+| ---: | --- | --- |
+| `3` | `.verbumprc` is not owned by the current user | Take ownership: `chown <you> <path>`. |
+| `3` | `.verbumprc` is group- or world-writable | Restrict permissions: `chmod 644 <path>`. |
+| `3` | Missing required tool(s) (`git`, `jq`) | Install them (e.g. `brew install <tool>` on macOS, or your system package manager) and retry. |
+| `2` | Unsupported completions shell | Supported: `bash`, `zsh`, `fish`. |
+| `3` | Cannot create the completions directory / write the script | Check filesystem permissions, or use a writable `HOME`. |
+
+## Preflight checks
+
+All preflights run before anything is mutated and exit `3`.
+
+| Error | Hint |
+| --- | --- |
+| Working tree has uncommitted changes to tracked files | Commit or stash them first, or pass `--allow-dirty` / set `ALLOW_DIRTY=true` to release anyway (untracked files are ignored). |
+| `RELEASE_BRANCHES` is set but `HEAD` is detached | Checkout an allowed branch first, or clear the guard for one run: `RELEASE_BRANCHES= verbump …` |
+| Current branch is not in `RELEASE_BRANCHES` | Checkout an allowed branch, adjust `RELEASE_BRANCHES` in `.verbumprc`, or clear the guard for one run: `RELEASE_BRANCHES= verbump …` |
+| Branch is behind its upstream — releasing would tag a stale `HEAD` | Run `git pull --rebase` first, or pass `--no-fetch` / set `NO_FETCH=true` to skip the remote-sync preflight. |
+| No commits yet — can't tag | Make an initial commit first: `git commit --allow-empty -m 'initial commit'`. |
+| Release branch `<prefix><version>` already exists | Delete it (`git branch -D <branch>`), pick a different version, or drop `--branch`/`--pr` to tag in place instead. |
+| Tag for that version already exists | Delete it with `git tag -d <tag>`, or pick a different version. |
+
+## Commit, tag & push
+
+| Exit | Error | Hint |
+| ---: | --- | --- |
+| `1` | Failed to create the release branch | Resolve the git error above, or drop `--branch`/`--pr` to tag in place instead. |
+| `1` | `git commit` failed | Resolve the git error above, or pass `-n/--no-commit` to skip committing. |
+| `1` | Failed to create the git tag | If a previous run left a partial release, check `git tag -l <tag>` and your release branch, then retry. |
+| `5` | Push declined at the confirmation prompt | Re-run and answer `y`, or pass `-p/--push <remote>` to skip the prompt. |
+
+## GitHub release & PR
+
+| Exit | Error | Hint |
+| ---: | --- | --- |
+| `2` | `--release` with `-n/--no-commit` (nothing would be pushed to release) | Drop one of them. |
+| `2` | `--release` without `-p/--push` (the tag must be pushed first) | Add `-p <remote>`, e.g. `verbump --release -p origin`. |
+| `3` | `--release` / `--pr` needs the GitHub CLI (`gh`), which isn't on `PATH` | Install `gh` (https://cli.github.com) or drop the flag. |
+| `3` | `gh` is not authenticated | Run `gh auth login` (or set `GH_TOKEN`) and retry. |
+| `2` | `--pr` with `-n/--no-commit` (a PR needs a commit to propose) | Drop one of them. |
+| `3` | `--pr` could not determine a base branch (detached `HEAD`, no remote `HEAD`) | Pass one explicitly: `--base <branch>`. |
+| `2` | `--pr` base branch is the same as the release branch head | Pass a different base: `--base <branch>`. |
+| `1` | Release-notes command (`VERBUMP_RELEASE_NOTES_CMD`) failed | Fix the notes command, or unset `VERBUMP_RELEASE_NOTES_CMD` to use `gh --generate-notes`. |
+| `1` | `gh release create` failed | The tag was pushed; re-run `gh release create <tag>` manually once the underlying issue is fixed. |
+| `1` | `gh pr create` failed | The branch and tag were pushed; re-run `gh pr create --head <head> --base <base>` once the issue is fixed. |
+
+## Undo (`--undo`)
+
+| Exit | Error | Hint |
+| ---: | --- | --- |
+| `3` | `git` is not installed / not inside a git repository | Install git / run `--undo` from inside the repo. |
+| `2` | No version supplied and the current branch isn't a `<prefix>X.Y.Z` release branch | Pass the version explicitly: `verbump --undo <version>`. |
+| `2` | The supplied version is not valid SemVer 2.0 | Pass a SemVer 2.0 version, e.g. `--undo 1.2.0`. |
+| `3` | Working tree has uncommitted changes | Stash or commit unrelated work before running `--undo` (untracked files are ignored). |
+| `3` | Tag doesn't exist locally — nothing to undo | Check `git tag -l <prefix>*` for what's available. |
+| `3` | Release artefacts are present on remote(s) | Delete the remote tag/branch first (commands are printed above the error), then re-run `--undo`. |
+| `3` | Release branch is already merged | Use `git revert` on the merge or bump commit instead — undo would lose history. |
+| `3` | Could not determine which branch to switch to before deleting the release branch | Checkout your intended branch first, then re-run `--undo`. |
+| `5` | Undo declined at the confirmation prompt | Re-run with `--yes` to skip the prompt. |
+| `1` | Checkout / branch delete / tag delete failed mid-undo | Finish manually with the exact command in the hint (`git branch -D <branch>` / `git tag -d <tag>`). |
+
+## Hooks
+
+Both hook failures exit `4` and state exactly what survived — see
+[Release hooks](/docs/guides/hooks).
+
+| Error | Hint |
+| --- | --- |
+| pre-bump hook failed | Nothing was changed. Fix the `PRE_BUMP_CMD` command, or skip hooks for one run with `--no-hooks`. |
+| post-tag hook failed | The release commit and tag were kept (nothing was pushed). Recover with `verbump --undo <version>`, or fix the hook and push manually. |
+
+## Changelog
+
+| Exit | Error | Hint |
+| ---: | --- | --- |
+| `1` | Error getting the commit history since the last version bump | Verify the previous tag exists (`git tag -l`) and that `git log <range>` runs, or pass `-c/--no-changelog` to skip. |

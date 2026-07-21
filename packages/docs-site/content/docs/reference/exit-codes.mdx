@@ -14,3 +14,6 @@ branch on `$?`.
 | `3` | Precondition failure (missing `git`/`jq`, dirty tree, disallowed branch, SemVer validation, insecure `.verbumprc`, branch/tag already exists). |
 | `4` | Hook failure: `PRE_BUMP_CMD` or `POST_TAG_CMD` exited non-zero (see [Release hooks](/docs/guides/hooks)). |
 | `5` | User abort (declined a prompt, e.g. push confirmation). |
+
+Every individual error — and the self-service hint printed with it — is
+catalogued in [Errors & hints](/docs/reference/errors).

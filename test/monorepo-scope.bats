@@ -122,6 +122,17 @@ load 'test_helper'
   refute_output --partial "Unknown .verbumprc key"
 }
 
+@test "config: env COMMIT_PATHS overrides the rc default (R-MONO-1, R-CFG-3)" {
+  monorepo_fixture
+  cd packages/pkg-a
+
+  # Env beats the rc-derived default "." — pkg-b's feat now counts.
+  COMMIT_PATHS=". ../pkg-b" run ${profile_script} -d -y -p origin
+  assert_success
+  strip_ansi_output
+  assert_output --partial "suggesting minor bump"
+}
+
 @test "config: explicit COMMIT_PATHS widens the scope to extra paths (R-MONO-1)" {
   monorepo_fixture
   cd packages/pkg-a
@@ -189,4 +200,34 @@ load 'test_helper'
   assert_success
   strip_ansi_output
   assert_output --partial "compare/pkg-a-v1.2.3...pkg-a-v1.2.4"
+}
+
+@test "compare-url: a slash-containing TAG_PREFIX is %2F-encoded in the compare link (R-MONO-8)" {
+  released_repo
+  git remote add origin https://github.com/acme/widget.git
+  git tag -a "rel/1.2.3" -m "rel/1.2.3"
+  git commit -q --allow-empty -m "fix: something new"
+
+  TAG_PREFIX="rel/" CHANGELOG_STYLE=grouped \
+    run ${profile_script} -d -y -p origin --no-fetch
+  assert_success
+  strip_ansi_output
+  assert_output --partial "compare/rel%2F1.2.3...rel%2F1.2.4"
+}
+
+@test "root rc: whole-repo runs have no scope — no print, no JSON member (R-MONO-1/7)" {
+  releasable_repo
+  printf 'TAG_PREFIX=v\n' > .verbumprc
+  chmod 644 .verbumprc
+
+  run ${profile_script} -d -y -p origin
+  assert_success
+  strip_ansi_output
+  refute_output --partial "Package scope"
+
+  run bash -c '"$1" --minor --yes -p origin --dry-run --json >"$2/out" 2>/dev/null </dev/null' _ \
+    "${profile_script}" "$BATS_TEST_TMPDIR"
+  assert_success
+  run jq -r 'has("scope")' "$BATS_TEST_TMPDIR/out"
+  assert_output "false"
 }
